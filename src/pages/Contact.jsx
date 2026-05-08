@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Phone, Mail, CheckCircle, AlertCircle, Send, Loader } from 'lucide-react';
 
 // Adresse email de destination
-const CONTACT_EMAIL = 'hariventsosantatra@gmail.com';
+const CONTACT_EMAIL = 'contact@domain.com';
 
 function Contact() {
   // --- Contact Form State ---
@@ -54,35 +54,61 @@ function Contact() {
     if (formErrors[name]) setFormErrors(prev => ({ ...prev, [name]: '' }));
   };
 
-  const handleContactSubmit = (e) => {
+  const handleContactSubmit = async (e) => {
     e.preventDefault();
     const errors = validateContact();
     if (Object.keys(errors).length > 0) {
       setFormErrors(errors);
       return;
     }
-    // Ouvre le client email avec le message pré-rempli
-    const subject = encodeURIComponent(`Message de ${formData.name}`);
-    const body = encodeURIComponent(
-      `Nom: ${formData.name}\nEmail: ${formData.email}\n\nMessage:\n${formData.message}`
-    );
-    window.location.href = `mailto:${CONTACT_EMAIL}?subject=${subject}&body=${body}`;
-    setFormStatus('success');
-    setFormData({ name: '', email: '', message: '' });
+    
+    setFormStatus('loading');
+    try {
+      const res = await fetch('http://localhost:5000/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sender: formData.name,
+          email: formData.email,
+          subject: 'Nouveau message de contact',
+          content: formData.message
+        })
+      });
+      if (res.ok) {
+        setFormStatus('success');
+        setFormData({ name: '', email: '', message: '' });
+      }
+    } catch (err) {
+      console.error(err);
+      setFormStatus('error');
+    }
   };
 
-  const handleNewsletterSubmit = (e) => {
+  const handleNewsletterSubmit = async (e) => {
     e.preventDefault();
     const errors = validateNewsletter();
     if (Object.keys(errors).length > 0) return;
-    // Ouvre le client email pour la newsletter
-    const subject = encodeURIComponent(`Inscription Newsletter de ${newsletter.name}`);
-    const body = encodeURIComponent(
-      `Nom: ${newsletter.name}\nEmail: ${newsletter.email}\n\nCette personne souhaite s'inscrire à la newsletter.`
-    );
-    window.location.href = `mailto:${CONTACT_EMAIL}?subject=${subject}&body=${body}`;
-    setNewsletterStatus('success');
-    setNewsletter({ name: '', email: '' });
+
+    setNewsletterStatus('loading');
+    try {
+      const res = await fetch('http://localhost:5000/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sender: newsletter.name,
+          email: newsletter.email,
+          subject: 'Inscription Newsletter',
+          content: `${newsletter.name} souhaite s'inscrire à la newsletter.`
+        })
+      });
+      if (res.ok) {
+        setNewsletterStatus('success');
+        setNewsletter({ name: '', email: '' });
+      }
+    } catch (err) {
+      console.error(err);
+      setNewsletterStatus('error');
+    }
   };
 
   // --- Shared input style ---
@@ -114,13 +140,13 @@ function Contact() {
       {/* Hero Contact */}
       <section style={{
         position: 'relative',
-        minHeight: isMobile ? '40vh' : '60vh',
+        minHeight: isMobile ? '60vh' : '70vh',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         textAlign: 'center',
         overflow: 'hidden',
-        paddingTop: isMobile ? '100px' : '120px'
+        paddingTop: isMobile ? '120px' : '140px'
       }}>
         <img
           src="/image/mountain.png"
@@ -129,12 +155,12 @@ function Contact() {
         />
         <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 1 }}></div>
         <div className="container" style={{ position: 'relative', zIndex: 2, padding: isMobile ? '0 20px' : '0 20px' }}>
-          <h1 className="page-hero-h1" style={{ 
-            color: '#FF8C00', 
-            fontWeight: 700, 
-            marginBottom: isMobile ? '20px' : '24px', 
+          <h1 className="page-hero-h1" style={{
+            color: '#FF8C00',
+            fontWeight: 700,
+            marginBottom: isMobile ? '20px' : '24px',
             marginTop: isMobile ? '20px' : '0',
-            fontFamily: "'Plus Jakarta Sans', sans-serif" 
+            fontFamily: "'Plus Jakarta Sans', sans-serif"
           }}>
             Contact
           </h1>
@@ -157,13 +183,13 @@ function Contact() {
           {/* Left Side: Info */}
           <div style={{ textAlign: 'left', padding: isMobile ? '0 16px' : '0' }}>
             <h2 className="page-hero-h2" style={{ color: '#FF8C00', fontWeight: 600, fontFamily: "'Plus Jakarta Sans', sans-serif", marginBottom: '16px', letterSpacing: '-1px', fontSize: isMobile ? '1.8rem' : '3rem' }}>
-              We'd love to hear from you
+              Nous aimerions vous entendre
             </h2>
             <h3 style={{ color: '#fff', fontSize: isMobile ? '1.1rem' : '1.25rem', fontWeight: 500, marginBottom: '24px' }}>
-              Send us a message and we'll respond as soon as possible
+              Envoyez-nous un message et nous vous répondrons dès que possible
             </h3>
             <p style={{ color: '#ccc', fontSize: '1rem', lineHeight: 1.6, marginBottom: '40px', maxWidth: '500px', textAlign: 'justify' }}>
-              If you have an inquiry or would like more information about any of our tours, please use the contact form. We will get back to you within 24 hours.
+              Si vous avez une question ou souhaitez plus d'informations sur l'un de nos circuits, n'hésitez pas à utiliser le formulaire de contact. Nous vous répondrons sous 24 heures.
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
@@ -182,11 +208,22 @@ function Contact() {
 
             {/* Success Message */}
             {formStatus === 'success' && (
-              <div style={{ backgroundColor: '#052e16', border: '1px solid #16a34a', borderRadius: '8px', padding: '20px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{ backgroundColor: 'rgba(34, 197, 94, 0.1)', border: '1px solid #22c55e', borderRadius: '12px', padding: '20px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <CheckCircle size={22} color="#22c55e" />
                 <div>
                   <p style={{ color: '#22c55e', fontWeight: 700, margin: 0 }}>Message envoyé !</p>
-                  <p style={{ color: '#86efac', fontSize: '0.9rem', margin: '4px 0 0' }}>Nous vous répondrons dans les 24h.</p>
+                  <p style={{ color: '#86efac', fontSize: '0.9rem', margin: '4px 0 0' }}>Nous avons bien reçu votre demande.</p>
+                </div>
+              </div>
+            )}
+
+            {/* Error Message */}
+            {formStatus === 'error' && (
+              <div style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', borderRadius: '12px', padding: '20px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <AlertCircle size={22} color="#ef4444" />
+                <div>
+                  <p style={{ color: '#ef4444', fontWeight: 700, margin: 0 }}>Erreur d'envoi</p>
+                  <p style={{ color: '#fca5a5', fontSize: '0.9rem', margin: '4px 0 0' }}>Impossible de contacter le serveur. Vérifiez que le backend est lancé.</p>
                 </div>
               </div>
             )}
@@ -246,6 +283,7 @@ function Contact() {
               <button
                 id="contact-submit"
                 type="submit"
+                disabled={formStatus === 'loading'}
                 style={{
                   backgroundColor: '#FF8C00',
                   color: '#fff',
@@ -254,20 +292,22 @@ function Contact() {
                   borderRadius: '8px',
                   fontSize: '1rem',
                   fontWeight: 700,
-                  cursor: 'pointer',
-                  transition: 'background-color 0.2s',
+                  cursor: formStatus === 'loading' ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.2s',
                   textTransform: 'uppercase',
                   letterSpacing: '1px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '10px',
+                  opacity: formStatus === 'loading' ? 0.7 : 1
                 }}
-                onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#E67E00'; }}
-                onMouseOut={(e) => { e.currentTarget.style.backgroundColor = '#FF8C00'; }}
               >
-                <Send size={18} />
-                Envoyer
+                {formStatus === 'loading' ? (
+                  <><Loader size={18} style={{ animation: 'spin 1s linear infinite' }} /> Envoi...</>
+                ) : (
+                  <><Send size={18} /> Envoyer</>
+                )}
               </button>
             </form>
           </div>
@@ -314,10 +354,10 @@ function Contact() {
             </svg>
           </div>
           <h2 className="page-section-h2" style={{ color: '#FF8C00', fontWeight: 600, fontFamily: "'Plus Jakarta Sans', sans-serif", marginBottom: '12px', fontSize: isMobile ? '1.8rem' : '2.5rem' }}>
-            Stay In Touch
+            Restons en Contact
           </h2>
           <p style={{ color: '#fff', fontSize: isMobile ? '1rem' : '1.2rem', fontWeight: 500, marginBottom: '40px' }}>
-            Hot Deals. Awesome Chat. Straight to Your Inbox
+            Offres Exclusives. Actualités. Directement dans votre Boîte Mail.
           </p>
 
           {/* Newsletter success */}
@@ -403,7 +443,7 @@ function Contact() {
                 {newsletterStatus === 'loading' ? (
                   <><Loader size={16} style={{ animation: 'spin 1s linear infinite' }} />Envoi...</>
                 ) : (
-                  <>SUBSCRIBE
+                  <>S'ABONNER
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="#FF8C00" stroke="#FF8C00" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
                       <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>

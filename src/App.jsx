@@ -1,12 +1,23 @@
-import React, { useState, useEffect } from 'react';
-import { Menu, X } from 'lucide-react';
-import Home from './pages/Home';
-import Destination from './pages/Destination';
-import Contact from './pages/Contact';
-import Blog from './pages/Blog';
-import PostDetail from './pages/PostDetail';
-import Details from './pages/Details';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
+import { Menu, X, User } from 'lucide-react';
 import './index.css';
+
+// Lazy loading pages for better performance
+const Home = lazy(() => import('./pages/Home'));
+const Destination = lazy(() => import('./pages/Destination'));
+const Contact = lazy(() => import('./pages/Contact'));
+const Blog = lazy(() => import('./pages/Blog'));
+const PostDetail = lazy(() => import('./pages/PostDetail'));
+const Details = lazy(() => import('./pages/Details'));
+const About = lazy(() => import('./pages/About'));
+const Admin = lazy(() => import('./pages/Admin'));
+
+// Loading component
+const PageLoader = () => (
+  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#f8fafc' }}>
+    <div className="spinner" style={{ width: '40px', height: '40px', border: '3px solid #f1f5f9', borderTopColor: '#0A2E36', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }}></div>
+  </div>
+);
 
 function App() {
   const [scrolled, setScrolled] = useState(false);
@@ -35,11 +46,21 @@ function App() {
   const isContactPage = currentHash === '#contact';
   const isBlogPage = currentHash === '#blog';
   const isDetailPage = currentHash === '#detail';
+  const isAboutPage = currentHash === '#about';
+  const isAdminPage = currentHash === '#admin';
   const isPostPage = currentHash.startsWith('#post-');
   const postId = isPostPage ? currentHash.split('-')[1] : null;
 
-  const isScrolledOrInnerPage = scrolled || isDestinationPage || isDetailPage || isContactPage || isBlogPage || isPostPage;
+  const isScrolledOrInnerPage = scrolled || isDestinationPage || isDetailPage || isAboutPage || isContactPage || isBlogPage || isPostPage;
   const linkColor = (active) => active ? '#FF8C00' : (isScrolledOrInnerPage ? '#222' : '#fff');
+
+  if (isAdminPage) {
+    return (
+      <Suspense fallback={<PageLoader />}>
+        <Admin />
+      </Suspense>
+    );
+  }
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -69,8 +90,22 @@ function App() {
             <a href="#" style={{ color: linkColor(currentHash === '' || currentHash === '#'), fontWeight: 600, fontSize: '15px', textDecoration: 'none' }}>Accueil</a>
             <a href="#destinations" style={{ color: linkColor(isDestinationPage), fontWeight: 600, fontSize: '15px', textDecoration: 'none' }}>Destinations</a>
             <a href="#blog" style={{ color: linkColor(isBlogPage || isPostPage), fontWeight: 600, fontSize: '15px', textDecoration: 'none' }}>Blog</a>
-            <a href="#detail" style={{ color: linkColor(isDetailPage), fontWeight: 600, fontSize: '15px', textDecoration: 'none' }}>Détail</a>
+            <a href="#about" style={{ color: linkColor(isAboutPage), fontWeight: 600, fontSize: '15px', textDecoration: 'none' }}>À propos</a>
             <a href="#contact" style={{ color: linkColor(isContactPage), fontWeight: 600, fontSize: '15px', textDecoration: 'none' }}>Contact</a>
+            <a href="#admin" title="Admin" style={{
+              color: linkColor(isAdminPage),
+              marginLeft: '10px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '36px',
+              height: '36px',
+              borderRadius: '50%',
+              backgroundColor: isScrolledOrInnerPage ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.1)',
+              transition: 'all 0.3s'
+            }}>
+              <User size={18} />
+            </a>
           </div>
 
           {/* Hamburger Button (Mobile) */}
@@ -96,32 +131,45 @@ function App() {
           <a href="#" onClick={() => setMobileMenuOpen(false)} style={{ color: currentHash === '' || currentHash === '#' ? '#FF8C00' : '#222' }}>Accueil</a>
           <a href="#destinations" onClick={() => setMobileMenuOpen(false)} style={{ color: isDestinationPage ? '#FF8C00' : '#222' }}>Destinations</a>
           <a href="#blog" onClick={() => setMobileMenuOpen(false)} style={{ color: isBlogPage || isPostPage ? '#FF8C00' : '#222' }}>Blog</a>
-          <a href="#detail" onClick={() => setMobileMenuOpen(false)} style={{ color: isDetailPage ? '#FF8C00' : '#222' }}>Détail</a>
+          <a href="#about" onClick={() => setMobileMenuOpen(false)} style={{ color: isAboutPage ? '#FF8C00' : '#222' }}>À propos</a>
           <a href="#contact" onClick={() => setMobileMenuOpen(false)} style={{ color: isContactPage ? '#FF8C00' : '#222' }}>Contact</a>
+          <a href="#admin" onClick={() => setMobileMenuOpen(false)} style={{
+            color: isAdminPage ? '#FF8C00' : '#222',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            marginTop: '10px',
+            paddingTop: '10px',
+            borderTop: '1px solid #eee'
+          }}>
+            <User size={18} /> Admin
+          </a>
         </div>
       </nav>
 
       {/* Page Content */}
       <main style={{ flex: 1 }}>
-        {isPostPage ? <PostDetail postId={postId} /> : isBlogPage ? <Blog /> : isContactPage ? <Contact /> : isDestinationPage ? <Destination /> : isDetailPage ? <Details /> : <Home />}
+        <Suspense fallback={<PageLoader />}>
+          {isPostPage ? <PostDetail postId={postId} /> : isBlogPage ? <Blog /> : isContactPage ? <Contact /> : isDestinationPage ? <Destination /> : isDetailPage ? <Details /> : isAboutPage ? <About /> : <Home />}
+        </Suspense>
       </main>
 
       {/* Footer */}
       <footer className="footer">
         <div className="container">
           <div className="footer-grid">
-            <div className="footer-logo-container" style={{ alignItems: 'flex-start' }}>
-              <div className="footer-logo" style={{ alignSelf: 'flex-start', width: '100%' }}>
-                <img src="/image/Logo.png" alt="Logo" style={{ height: '100px', width: '100%', objectFit: 'contain', objectPosition: 'left', marginBottom: '16px' }} />
+            <div className="footer-logo-container">
+              <div className="footer-logo">
+                <img src="/image/Logo.png" alt="Logo" style={{ height: '80px', objectFit: 'contain', objectPosition: 'left', marginBottom: '12px' }} />
               </div>
-              <p className="footer-address">
+              <p className="footer-address" style={{ marginBottom: '12px' }}>
                 Antananarivo,<br />
                 Madagascar
               </p>
-              <p style={{ color: '#aaa', lineHeight: 1.6 }}>
+              <p style={{ color: '#aaa', lineHeight: 1.5, fontSize: '14px', marginBottom: '12px' }}>
                 Explor’île vous invite à découvrir Madagascar au-delà des sentiers battus à travers un tourisme culturel, authentique et responsable.
               </p>
-              <a href="mailto:contact@explorile.mg" className="footer-email">contact@explorile.mg</a>
+              <a href="mailto:contact@domain.com" className="footer-email">contact@domain.com</a>
             </div>
 
             <div className="footer-col">
@@ -165,6 +213,7 @@ function App() {
             <div className="footer-legal-links">
               <a href="#">Cookies</a>
               <a href="#">Confidentialité</a>
+              <a href="#admin" style={{ opacity: 0.3 }}>Administration</a>
             </div>
           </div>
         </div>

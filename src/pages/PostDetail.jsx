@@ -91,15 +91,39 @@ const blogPosts = {
 };
 
 const PostDetail = ({ postId }) => {
-  const post = blogPosts[postId];
+  const [post, setPost] = React.useState(null);
+  const [loading, setLoading] = React.useState(true);
   const [isMobile, setIsMobile] = React.useState(window.innerWidth < 768);
 
   useEffect(() => {
     window.scrollTo(0, 0);
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener('resize', handleResize);
+    fetchPost();
     return () => window.removeEventListener('resize', handleResize);
   }, [postId]);
+
+  const fetchPost = async () => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/posts`);
+      const data = await res.json();
+      // Since our API returns all posts, we find the one matching the ID
+      const currentPost = data.find(p => String(p.id) === String(postId));
+      setPost(currentPost);
+    } catch (e) {
+      console.error("Error fetching post:", e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div style={{ padding: '150px 20px', textAlign: 'center', backgroundColor: '#000', color: '#fff', minHeight: '100vh' }}>
+        <p>Chargement de l'article...</p>
+      </div>
+    );
+  }
 
   if (!post) {
     return (
@@ -132,7 +156,7 @@ const PostDetail = ({ postId }) => {
         paddingBottom: isMobile ? '60px' : '80px',
         overflow: 'hidden'
       }}>
-        <img src={post.image} alt={post.title} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: 0 }} />
+        <img src={post.image_url || "/image/placeholder.png"} alt={post.title} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: 0 }} />
         <div style={{ 
           position: 'absolute', 
           top: 0, 
@@ -184,15 +208,11 @@ const PostDetail = ({ postId }) => {
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <User size={isMobile ? 16 : 18} color="#FF8C00" />
-              <span>{post.author}</span>
+              <span>Explor'île Team</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <Calendar size={isMobile ? 16 : 18} color="#FF8C00" />
-              <span>{post.date}</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Clock size={isMobile ? 16 : 18} color="#FF8C00" />
-              <span>{post.readTime}</span>
+              <span>{new Date(post.created_at).toLocaleDateString()}</span>
             </div>
           </div>
         </div>

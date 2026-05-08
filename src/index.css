@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
 
 :root {
   --primary: #0A2E36;
@@ -12,6 +11,11 @@
   --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
   --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
   --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 * {
@@ -951,15 +955,15 @@ img {
 .footer {
   background-color: #2D2D32;
   color: #fff;
-  padding: 80px 0 40px;
+  padding: 60px 0 30px;
   font-family: 'Plus Jakarta Sans', sans-serif;
 }
 
 .footer-grid {
   display: grid;
-  grid-template-columns: 2fr 1fr 1.5fr 1fr 1fr;
+  grid-template-columns: 2fr 1fr 1.2fr 1fr;
   gap: 40px;
-  margin-bottom: 64px;
+  margin-bottom: 40px;
 }
 
 .footer-logo-container {
@@ -1004,7 +1008,7 @@ img {
 .footer-col h4 {
   font-size: 14px;
   font-weight: 600;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
   color: #fff;
 }
 
@@ -1014,7 +1018,7 @@ img {
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 10px;
 }
 
 .footer-col a {
@@ -1035,9 +1039,9 @@ img {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-bottom: 24px;
+  padding-bottom: 16px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 
 .footer-disclaimer {
@@ -1097,7 +1101,7 @@ img {
   max-height: 0;
   overflow: hidden;
   transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s ease;
-  border-top: 1px solid rgba(0,0,0,0.05);
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .mobile-menu.open {
@@ -1572,3 +1576,14 @@ img {
 }
 
 /* (ancien bloc media queries supprimé — remplacé par les nouveaux ci-dessus) */
+
+/* Spinner animation for form submit button */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}

@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, Tag, MapPin, ChevronRight, Share2, Heart, Calendar, CheckCircle, Info, Sparkles, CreditCard, Leaf } from 'lucide-react';
+import { Clock, Tag, MapPin, ChevronRight, Share2, Heart, Calendar, CheckCircle, Info, Sparkles, CreditCard, Leaf, Send, User, Mail, Phone, Users, MessageSquare } from 'lucide-react';
 
 const Details = () => {
   const [showStickyBar, setShowStickyBar] = useState(false);
   const [activeTab, setActiveTab] = useState('hébergement');
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [formData, setFormData] = useState({ nom: '', email: '', telephone: '', participants: '2', dateDepart: '', duree: '', typeVoyage: 'devis', message: '' });
+  const [formStatus, setFormStatus] = useState('idle'); // idle | submitting | success | error
 
   useEffect(() => {
     const handleScroll = () => {
@@ -20,6 +22,45 @@ const Details = () => {
       window.removeEventListener('resize', handleResize);
     };
   }, []);
+
+  const handleFormChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleFormSubmit = async (e) => {
+    e.preventDefault();
+    if (!formData.nom || !formData.email || !formData.dateDepart) {
+      alert('Veuillez remplir les champs obligatoires : Nom, Email et Date de départ.');
+      return;
+    }
+    setFormStatus('submitting');
+    try {
+      const response = await fetch('http://localhost:5000/api/bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: formData.typeVoyage,
+          sender: formData.nom,
+          email: formData.email,
+          phone: formData.telephone,
+          participants: parseInt(formData.participants),
+          departure_date: formData.dateDepart,
+          duration: formData.duree,
+          message: formData.message,
+          tour_name: "L'été indien : autotour au Canada en automne" // À rendre dynamique plus tard
+        }),
+      });
+      if (response.ok) {
+        setFormStatus('success');
+        setFormData({ nom: '', email: '', telephone: '', participants: '2', dateDepart: '', duree: '', typeVoyage: 'devis', message: '' });
+      } else {
+        setFormStatus('error');
+      }
+    } catch {
+      setFormStatus('error');
+    }
+  };
 
   return (
     <div className="details-page" style={{ overflowX: 'hidden' }}>
@@ -640,6 +681,270 @@ const Details = () => {
             </div>
           </div>
         </section>
+
+      {/* ═══════════════ FORMULAIRE DEVIS & RÉSERVATION ═══════════════ */}
+      <section id="formulaire-devis" style={{
+        backgroundColor: '#f8f7f4',
+        padding: isMobile ? '60px 0' : '100px 0',
+        borderTop: '1px solid #eee'
+      }}>
+        <div className="container" style={{ maxWidth: '900px' }}>
+
+          {/* En-tête */}
+          <div style={{ textAlign: 'center', marginBottom: '56px' }}>
+            <span style={{
+              display: 'inline-block',
+              backgroundColor: '#e8f5e9',
+              color: '#2e7d32',
+              fontSize: '11px',
+              fontWeight: 800,
+              textTransform: 'uppercase',
+              letterSpacing: '2px',
+              padding: '6px 16px',
+              borderRadius: '100px',
+              marginBottom: '20px'
+            }}>Contactez-nous</span>
+            <h2 style={{
+              fontSize: isMobile ? '28px' : '40px',
+              fontFamily: '"Playfair Display", serif',
+              color: '#0a2e24',
+              marginBottom: '16px',
+              fontWeight: 700
+            }}>Demande de devis & Réservation</h2>
+            <p style={{ color: '#666', fontSize: '16px', maxWidth: '560px', margin: '0 auto', lineHeight: 1.6 }}>
+              Complétez ce formulaire et notre équipe vous répondra dans les <strong>24h</strong> avec une offre personnalisée.
+            </p>
+          </div>
+
+          {/* Carte du formulaire */}
+          <div style={{
+            backgroundColor: '#fff',
+            borderRadius: '16px',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.08)',
+            overflow: 'hidden'
+          }}>
+
+            {/* Bandeau type de demande */}
+            <div style={{
+              display: 'flex',
+              borderBottom: '1px solid #eee'
+            }}>
+              {[
+                { val: 'devis', label: '📋 Demande de devis' },
+                { val: 'reservation', label: '✈️ Réservation directe' }
+              ].map(opt => (
+                <button
+                  key={opt.val}
+                  onClick={() => setFormData(prev => ({ ...prev, typeVoyage: opt.val }))}
+                  style={{
+                    flex: 1,
+                    padding: '20px',
+                    fontSize: isMobile ? '13px' : '15px',
+                    fontWeight: 700,
+                    border: 'none',
+                    cursor: 'pointer',
+                    backgroundColor: formData.typeVoyage === opt.val ? '#0a2e24' : '#fff',
+                    color: formData.typeVoyage === opt.val ? '#fff' : '#555',
+                    transition: 'all 0.3s'
+                  }}
+                >{opt.label}</button>
+              ))}
+            </div>
+
+            {/* Message succès */}
+            {formStatus === 'success' && (
+              <div style={{ padding: '60px 40px', textAlign: 'center' }}>
+                <div style={{ width: '72px', height: '72px', backgroundColor: '#e8f5e9', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
+                  <CheckCircle size={36} color="#2e7d32" />
+                </div>
+                <h3 style={{ fontSize: '24px', color: '#0a2e24', fontFamily: '"Playfair Display", serif', marginBottom: '12px' }}>
+                  Demande envoyée avec succès !
+                </h3>
+                <p style={{ color: '#666', lineHeight: 1.6, maxWidth: '420px', margin: '0 auto 32px' }}>
+                  Merci <strong>{formData.nom || 'pour votre demande'}</strong>. Notre équipe vous contactera dans les <strong>24h</strong> pour finaliser votre voyage.
+                </p>
+                <button
+                  onClick={() => setFormStatus('idle')}
+                  style={{ backgroundColor: '#0a2e24', color: '#fff', padding: '12px 28px', borderRadius: '8px', border: 'none', fontWeight: 700, fontSize: '13px', cursor: 'pointer' }}
+                >Faire une autre demande</button>
+              </div>
+            )}
+
+            {/* Formulaire */}
+            {formStatus !== 'success' && (
+              <form onSubmit={handleFormSubmit} style={{ padding: isMobile ? '32px 20px' : '48px' }}>
+
+                {/* Erreur */}
+                {formStatus === 'error' && (
+                  <div style={{ backgroundColor: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', padding: '14px 20px', marginBottom: '32px', color: '#b91c1c', fontSize: '14px', fontWeight: 600 }}>
+                    ⚠️ Une erreur est survenue. Veuillez réessayer ou nous contacter directement à <a href="mailto:contact@explorile.mg" style={{ color: '#b91c1c' }}>contact@explorile.mg</a>
+                  </div>
+                )}
+
+                {/* Grille champs */}
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
+
+                  {/* Nom complet */}
+                  <div>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#333', marginBottom: '8px' }}>
+                      <User size={14} /> Nom complet <span style={{ color: '#e53e3e' }}>*</span>
+                    </label>
+                    <input
+                      type="text" name="nom" value={formData.nom} onChange={handleFormChange}
+                      placeholder="Votre nom et prénom"
+                      required
+                      style={{ width: '100%', padding: '13px 16px', borderRadius: '8px', border: '1.5px solid #e5e7eb', fontSize: '14px', outline: 'none', transition: 'border-color 0.2s', boxSizing: 'border-box', fontFamily: 'inherit' }}
+                      onFocus={e => e.target.style.borderColor = '#2e7d32'}
+                      onBlur={e => e.target.style.borderColor = '#e5e7eb'}
+                    />
+                  </div>
+
+                  {/* Email */}
+                  <div>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#333', marginBottom: '8px' }}>
+                      <Mail size={14} /> Adresse email <span style={{ color: '#e53e3e' }}>*</span>
+                    </label>
+                    <input
+                      type="email" name="email" value={formData.email} onChange={handleFormChange}
+                      placeholder="votre@email.com"
+                      required
+                      style={{ width: '100%', padding: '13px 16px', borderRadius: '8px', border: '1.5px solid #e5e7eb', fontSize: '14px', outline: 'none', transition: 'border-color 0.2s', boxSizing: 'border-box', fontFamily: 'inherit' }}
+                      onFocus={e => e.target.style.borderColor = '#2e7d32'}
+                      onBlur={e => e.target.style.borderColor = '#e5e7eb'}
+                    />
+                  </div>
+
+                  {/* Téléphone */}
+                  <div>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#333', marginBottom: '8px' }}>
+                      <Phone size={14} /> Téléphone
+                    </label>
+                    <input
+                      type="tel" name="telephone" value={formData.telephone} onChange={handleFormChange}
+                      placeholder="+261 XX XX XXX XX"
+                      style={{ width: '100%', padding: '13px 16px', borderRadius: '8px', border: '1.5px solid #e5e7eb', fontSize: '14px', outline: 'none', transition: 'border-color 0.2s', boxSizing: 'border-box', fontFamily: 'inherit' }}
+                      onFocus={e => e.target.style.borderColor = '#2e7d32'}
+                      onBlur={e => e.target.style.borderColor = '#e5e7eb'}
+                    />
+                  </div>
+
+                  {/* Nombre de participants */}
+                  <div>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#333', marginBottom: '8px' }}>
+                      <Users size={14} /> Nombre de participants
+                    </label>
+                    <select
+                      name="participants" value={formData.participants} onChange={handleFormChange}
+                      style={{ width: '100%', padding: '13px 16px', borderRadius: '8px', border: '1.5px solid #e5e7eb', fontSize: '14px', outline: 'none', appearance: 'none', backgroundColor: '#fff', boxSizing: 'border-box', fontFamily: 'inherit', cursor: 'pointer' }}
+                    >
+                      {['1', '2', '3', '4', '5', '6+'].map(n => <option key={n} value={n}>{n} {n === '1' ? 'personne' : 'personnes'}</option>)}
+                    </select>
+                  </div>
+
+                  {/* Date de départ */}
+                  <div>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#333', marginBottom: '8px' }}>
+                      <Calendar size={14} /> Date de départ <span style={{ color: '#e53e3e' }}>*</span>
+                    </label>
+                    <input
+                      type="date" name="dateDepart" value={formData.dateDepart} onChange={handleFormChange}
+                      required
+                      style={{ width: '100%', padding: '13px 16px', borderRadius: '8px', border: '1.5px solid #e5e7eb', fontSize: '14px', outline: 'none', transition: 'border-color 0.2s', boxSizing: 'border-box', fontFamily: 'inherit' }}
+                      onFocus={e => e.target.style.borderColor = '#2e7d32'}
+                      onBlur={e => e.target.style.borderColor = '#e5e7eb'}
+                    />
+                  </div>
+
+                  {/* Durée */}
+                  <div>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#333', marginBottom: '8px' }}>
+                      <Clock size={14} /> Durée souhaitée
+                    </label>
+                    <select
+                      name="duree" value={formData.duree} onChange={handleFormChange}
+                      style={{ width: '100%', padding: '13px 16px', borderRadius: '8px', border: '1.5px solid #e5e7eb', fontSize: '14px', outline: 'none', appearance: 'none', backgroundColor: '#fff', boxSizing: 'border-box', fontFamily: 'inherit', cursor: 'pointer' }}
+                    >
+                      <option value="">Selon l'itinéraire (14 j)</option>
+                      <option value="7">7 jours</option>
+                      <option value="10">10 jours</option>
+                      <option value="14">14 jours (recommandé)</option>
+                      <option value="21">21 jours</option>
+                      <option value="Sur mesure">Sur mesure</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Message */}
+                <div style={{ marginBottom: '32px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: '#333', marginBottom: '8px' }}>
+                    <MessageSquare size={14} /> Message ou demande particulière
+                  </label>
+                  <textarea
+                    name="message" value={formData.message} onChange={handleFormChange}
+                    placeholder="Partagez vos envies, contraintes ou questions spécifiques (allergies, mobilité réduite, anniversaire, voyage de noces…)"
+                    rows={4}
+                    style={{ width: '100%', padding: '13px 16px', borderRadius: '8px', border: '1.5px solid #e5e7eb', fontSize: '14px', outline: 'none', resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box', transition: 'border-color 0.2s', lineHeight: 1.6 }}
+                    onFocus={e => e.target.style.borderColor = '#2e7d32'}
+                    onBlur={e => e.target.style.borderColor = '#e5e7eb'}
+                  />
+                </div>
+
+                {/* Infos circuit sélectionné */}
+                <div style={{ backgroundColor: '#f0faf1', border: '1px solid #c6e6c8', borderRadius: '10px', padding: '16px 20px', marginBottom: '32px', display: 'flex', gap: '20px', flexWrap: 'wrap', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#2e7d32', fontWeight: 600 }}>
+                    <MapPin size={15} /> Circuit : L'été indien – Canada
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#2e7d32', fontWeight: 600 }}>
+                    <Clock size={15} /> 14 jours / 13 nuits
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#2e7d32', fontWeight: 600 }}>
+                    <Tag size={15} /> À partir de 1 980€ / pers.
+                  </div>
+                </div>
+
+                {/* Bouton */}
+                <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'stretch' : 'center', justifyContent: 'space-between', gap: '16px' }}>
+                  <p style={{ fontSize: '12px', color: '#999', margin: 0, maxWidth: '360px', lineHeight: 1.5 }}>
+                    <span style={{ color: '#e53e3e' }}>*</span> Champs obligatoires. Vos données sont traitées conformément à notre politique de confidentialité.
+                  </p>
+                  <button
+                    type="submit"
+                    disabled={formStatus === 'submitting'}
+                    style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+                      backgroundColor: formStatus === 'submitting' ? '#555' : '#0a2e24',
+                      color: '#fff',
+                      padding: '15px 36px',
+                      borderRadius: '8px',
+                      fontSize: '13px',
+                      fontWeight: 800,
+                      textTransform: 'uppercase',
+                      letterSpacing: '1px',
+                      border: 'none',
+                      cursor: formStatus === 'submitting' ? 'not-allowed' : 'pointer',
+                      transition: 'all 0.3s',
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0
+                    }}
+                    onMouseOver={e => { if (formStatus !== 'submitting') e.currentTarget.style.backgroundColor = '#154a3a'; }}
+                    onMouseOut={e => { if (formStatus !== 'submitting') e.currentTarget.style.backgroundColor = '#0a2e24'; }}
+                  >
+                    {formStatus === 'submitting' ? (
+                      <>
+                        <span style={{ display: 'inline-block', width: '16px', height: '16px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                        Envoi en cours…
+                      </>
+                    ) : (
+                      <><Send size={16} /> {formData.typeVoyage === 'devis' ? 'Demander mon devis' : 'Confirmer ma réservation'}</>
+                    )}
+                  </button>
+                </div>
+
+              </form>
+            )}
+          </div>
+        </div>
+      </section>
 
       {/* Sticky Bottom Bar */}
       <div className="sticky-cta-bar" style={{
