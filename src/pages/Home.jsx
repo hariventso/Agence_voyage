@@ -83,7 +83,7 @@ function Home() {
             <div className="travel-grid">
               {destinations.length > 0 ? destinations.map(dest => (
                 <div key={dest.id} className="travel-card" style={{ cursor: 'pointer' }} onClick={() => window.location.hash = '#destinations'}>
-                  <img src={dest.image_url || '/image/hero_new.png'} alt={dest.name} className="travel-image" loading="lazy" style={{ height: '200px', objectFit: 'cover' }} />
+                  <img src={dest.image_url || '/image/hero_new.png'} alt={dest.name} className="travel-image" loading="lazy" style={{ height: '300px', objectFit: 'cover' }} />
                   <div style={{ padding: '20px' }}>
                     <h3 style={{ color: '#1B5E20', margin: '0 0 8px 0' }}>{dest.name}</h3>
                     <p style={{ fontSize: '14px', color: '#666', lineHeight: '1.4', marginBottom: '10px' }}>{dest.description || 'Découvrez Madagascar au-delà des sentiers battus...'}</p>

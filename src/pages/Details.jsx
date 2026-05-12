@@ -7,6 +7,7 @@ const Details = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [formData, setFormData] = useState({ nom: '', email: '', telephone: '', participants: '2', dateDepart: '', duree: '', typeVoyage: 'devis', message: '' });
   const [formStatus, setFormStatus] = useState('idle'); // idle | submitting | success | error
+  const [dialog, setDialog] = useState({ show: false, message: '' });
 
   useEffect(() => {
     const handleScroll = () => {
@@ -31,7 +32,7 @@ const Details = () => {
   const handleFormSubmit = async (e) => {
     e.preventDefault();
     if (!formData.nom || !formData.email || !formData.dateDepart) {
-      alert('Veuillez remplir les champs obligatoires : Nom, Email et Date de départ.');
+      setDialog({ show: true, message: 'Veuillez remplir les champs obligatoires : Nom, Email et Date de départ.' });
       return;
     }
     setFormStatus('submitting');
@@ -1014,6 +1015,50 @@ const Details = () => {
             </button>
         </div>
       </div>
+
+      {/* Custom Dialog Modal */}
+      {dialog.show && (
+        <div style={{
+          position: 'fixed', inset: 0, backgroundColor: 'rgba(0, 0, 0, 0.4)',
+          backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center',
+          justifyContent: 'center', zIndex: 2000, padding: '20px'
+        }}>
+          <div style={{
+            backgroundColor: '#fff', width: '100%', maxWidth: '400px',
+            borderRadius: '24px', padding: '32px', textAlign: 'center',
+            boxShadow: '0 20px 50px rgba(0,0,0,0.1)',
+            animation: 'fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1)'
+          }}>
+            <div style={{
+              width: '56px', height: '56px', borderRadius: '18px',
+              backgroundColor: '#fee2e2', display: 'flex', alignItems: 'center',
+              justifyContent: 'center', margin: '0 auto 20px', color: '#ef4444'
+            }}>
+              <Info size={28} />
+            </div>
+            <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#1B5E20', marginBottom: '12px' }}>
+              Information
+            </h3>
+            <p style={{ color: '#666', fontSize: '14px', lineHeight: 1.6, marginBottom: '32px' }}>
+              {dialog.message}
+            </p>
+            <button
+              onClick={() => setDialog({ ...dialog, show: false })}
+              style={{
+                width: '100%', padding: '12px', borderRadius: '14px', border: 'none',
+                backgroundColor: '#1B5E20', color: '#fff', fontWeight: 700,
+                fontSize: '14px', cursor: 'pointer'
+              }}
+            >D'accord</button>
+          </div>
+        </div>
+      )}
+      <style>{`
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </div>
   );
 };

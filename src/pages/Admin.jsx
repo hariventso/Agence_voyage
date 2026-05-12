@@ -17,15 +17,23 @@ const Admin = () => {
   const [messages, setMessages] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [team, setTeam] = useState([]);
+  const [testimonials, setTestimonials] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [viewMode, setViewMode] = useState('grid');
+  const [dialog, setDialog] = useState({ show: false, message: '', type: 'alert', onConfirm: null });
+  const [loginError, setLoginError] = useState('');
 
   const [showModal, setShowModal] = useState(false);
+  const [showBookingModal, setShowBookingModal] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState(null);
   const [modalType, setModalType] = useState('post');
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
     name: '', type: '', price: '', status: 'Actif', image_url: '', description: '',
     title: '', category: '', content: '',
-    role: '', bio: '', facebook_url: '', twitter_url: '', instagram_url: '', pinterest_url: ''
+    role: '', bio: '', facebook_url: '', twitter_url: '', instagram_url: '', pinterest_url: '',
+    rating: 5
   });
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploading, setUploading] = useState(false);
@@ -39,32 +47,38 @@ const Admin = () => {
 
   const fetchData = async () => {
     try {
-      const [dRes, mRes, pRes, bRes, tRes] = await Promise.all([
+      const [dRes, mRes, pRes, bRes, tRes, teRes] = await Promise.all([
         fetch('http://localhost:5000/api/destinations'),
         fetch('http://localhost:5000/api/messages'),
         fetch('http://localhost:5000/api/posts'),
         fetch('http://localhost:5000/api/bookings'),
-        fetch('http://localhost:5000/api/team')
+        fetch('http://localhost:5000/api/team'),
+        fetch('http://localhost:5000/api/testimonials')
       ]);
       setDestinations(await dRes.json());
       setMessages(await mRes.json());
       setPosts(await pRes.json());
       setBookings(await bRes.json());
       setTeam(await tRes.json());
+      setTestimonials(await teRes.json());
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
   };
 
   const handleLogin = (e) => {
     e.preventDefault();
-    if (loginData.username === 'admin' && loginData.password === 'admin') setIsLoggedIn(true);
-    else alert('Identifiants incorrects');
+    if (loginData.username === 'Tourisme' && loginData.password === '2026') {
+      setIsLoggedIn(true);
+      setLoginError('');
+    } else {
+      setLoginError('Nom d\'utilisateur ou mot de passe incorrect');
+    }
   };
 
   const openAddModal = (type = 'post') => {
     setModalType(type);
     setEditingId(null);
-    setFormData({ name: '', type: '', price: '', status: 'Actif', image_url: '', description: '', title: '', category: '', content: '', role: '', bio: '', facebook_url: '', twitter_url: '', instagram_url: '', pinterest_url: '' });
+    setFormData({ name: '', type: '', price: '', status: 'Actif', image_url: '', description: '', title: '', category: '', content: '', role: '', bio: '', facebook_url: '', twitter_url: '', instagram_url: '', pinterest_url: '', rating: 5 });
     setSelectedFile(null);
     setShowModal(true);
   };
@@ -89,7 +103,7 @@ const Admin = () => {
       finalImageUrl = uData.imageUrl;
     }
 
-    const endpoint = modalType === 'destination' ? 'destinations' : modalType === 'post' ? 'posts' : 'team';
+    const endpoint = modalType === 'destination' ? 'destinations' : modalType === 'post' ? 'posts' : modalType === 'team' ? 'team' : 'testimonials';
     const url = editingId ? `http://localhost:5000/api/${endpoint}/${editingId}` : `http://localhost:5000/api/${endpoint}`;
 
     let body = {};
@@ -108,6 +122,14 @@ const Admin = () => {
         instagram_url: formData.instagram_url,
         pinterest_url: formData.pinterest_url
       };
+    } else if (modalType === 'testimonial') {
+      body = {
+        name: formData.name,
+        role: formData.role,
+        content: formData.content,
+        rating: formData.rating,
+        image_url: finalImageUrl
+      };
     }
 
     const res = await fetch(url, {
@@ -116,16 +138,22 @@ const Admin = () => {
       body: JSON.stringify(body)
     });
     if (res.ok) { setShowModal(false); fetchData(); }
-    else alert('Erreur lors de la sauvegarde');
+    else setDialog({ show: true, message: 'Erreur lors de la sauvegarde', type: 'alert' });
     setUploading(false);
   };
 
-  const handleDelete = async (id, type = 'destination') => {
-    if (window.confirm('Supprimer cet élément ?')) {
-      const endpoint = type === 'destination' ? 'destinations' : type === 'post' ? 'posts' : 'team';
-      await fetch(`http://localhost:5000/api/${endpoint}/${id}`, { method: 'DELETE' });
-      fetchData();
-    }
+  const handleDelete = (id, type = 'destination') => {
+    setDialog({
+      show: true,
+      message: 'Voulez-vous vraiment supprimer cet élément ?',
+      type: 'confirm',
+      onConfirm: async () => {
+        const endpoint = type === 'destination' ? 'destinations' : type === 'post' ? 'posts' : type === 'team' ? 'team' : 'testimonials';
+        await fetch(`http://localhost:5000/api/${endpoint}/${id}`, { method: 'DELETE' });
+        fetchData();
+        setDialog({ ...dialog, show: false });
+      }
+    });
   };
 
   const handleMarkRead = async (id) => {
@@ -133,11 +161,17 @@ const Admin = () => {
     fetchData();
   };
 
-  const handleDeleteMessage = async (id) => {
-    if (window.confirm('Supprimer ce message ?')) {
-      await fetch(`http://localhost:5000/api/messages/${id}`, { method: 'DELETE' });
-      fetchData();
-    }
+  const handleDeleteMessage = (id) => {
+    setDialog({
+      show: true,
+      message: 'Supprimer ce message définitivement ?',
+      type: 'confirm',
+      onConfirm: async () => {
+        await fetch(`http://localhost:5000/api/messages/${id}`, { method: 'DELETE' });
+        fetchData();
+        setDialog({ ...dialog, show: false });
+      }
+    });
   };
 
   const handleUpdateBookingStatus = async (id, status) => {
@@ -149,11 +183,17 @@ const Admin = () => {
     fetchData();
   };
 
-  const handleDeleteBooking = async (id) => {
-    if (window.confirm('Supprimer cette demande ?')) {
-      await fetch(`http://localhost:5000/api/bookings/${id}`, { method: 'DELETE' });
-      fetchData();
-    }
+  const handleDeleteBooking = (id) => {
+    setDialog({
+      show: true,
+      message: 'Supprimer cette demande de réservation ?',
+      type: 'confirm',
+      onConfirm: async () => {
+        await fetch(`http://localhost:5000/api/bookings/${id}`, { method: 'DELETE' });
+        fetchData();
+        setDialog({ ...dialog, show: false });
+      }
+    });
   };
 
   if (!isLoggedIn) return (
@@ -213,7 +253,7 @@ const Admin = () => {
                 <UserIcon size={16} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#cbd5e1' }} />
                 <input
                   type="text"
-                  placeholder="admin"
+                  placeholder="Nom d'utilisateur"
                   style={{ ...inputStyle, padding: '12px 12px 12px 44px', fontSize: '13px', backgroundColor: '#f8fafc' }}
                   value={loginData.username}
                   onChange={e => setLoginData({ ...loginData, username: e.target.value })}
@@ -234,6 +274,12 @@ const Admin = () => {
                 />
               </div>
             </div>
+
+            {loginError && (
+              <div style={{ color: '#ef4444', fontSize: '12px', fontWeight: 700, textAlign: 'center', animation: 'fadeIn 0.3s ease' }}>
+                ⚠️ {loginError}
+              </div>
+            )}
 
             <button style={{
               width: '100%',
@@ -256,6 +302,11 @@ const Admin = () => {
               Se connecter <LogIn size={18} />
             </button>
           </div>
+          <div style={{ textAlign: 'center', marginTop: '24px' }}>
+            <a href="#" style={{ color: '#94a3b8', fontSize: '13px', fontWeight: 600, textDecoration: 'none', transition: 'color 0.2s' }}>
+              ← Retour au site
+            </a>
+          </div>
         </form>
 
         <p style={{ textAlign: 'center', marginTop: '24px', color: '#94a3b8', fontSize: '12px', fontWeight: 500 }}>
@@ -277,7 +328,8 @@ const Admin = () => {
       case 'destinations': return 'DESTINATIONS';
       case 'blog': return 'ARTICLES';
       case 'team': return 'ÉQUIPE';
-      case 'bookings': return 'COMMANDES';
+      case 'testimonials': return 'TÉMOIGNAGES';
+      case 'bookings': return 'RÉSERVATIONS';
       case 'messages': return 'MESSAGES';
       default: return 'ADMIN';
     }
@@ -309,30 +361,21 @@ const Admin = () => {
             <NavItem icon={<LayoutDashboard size={18} />} label="Dashboard" active={activeTab === 'dashboard'} onClick={() => { setActiveTab('dashboard'); if (isMobile) setShowSidebar(false); }} />
 
             <p style={sectionTitle}>OPÉRATIONS</p>
-            <NavItem icon={<Map size={18} />} label="Produits" active={activeTab === 'destinations'} onClick={() => { setActiveTab('destinations'); if (isMobile) setShowSidebar(false); }} />
-            <NavItem icon={<ShoppingCart size={18} />} label="Commandes" active={activeTab === 'bookings'} onClick={() => { setActiveTab('bookings'); if (isMobile) setShowSidebar(false); }} badge={bookings.filter(b => b.status === 'En attente').length} />
+            <NavItem icon={<Map size={18} />} label="Destinations" active={activeTab === 'destinations'} onClick={() => { setActiveTab('destinations'); if (isMobile) setShowSidebar(false); }} />
+            <NavItem icon={<ShoppingCart size={18} />} label="Réservations" active={activeTab === 'bookings'} onClick={() => { setActiveTab('bookings'); if (isMobile) setShowSidebar(false); }} badge={bookings.filter(b => b.status === 'En attente').length} />
             <NavItem icon={<Mail size={18} />} label="Messages" active={activeTab === 'messages'} onClick={() => { setActiveTab('messages'); if (isMobile) setShowSidebar(false); }} badge={messages.filter(m => m.unread).length} />
 
             <p style={sectionTitle}>RÉDACTIONNEL</p>
             <NavItem icon={<Users size={18} />} label="Équipe" active={activeTab === 'team'} onClick={() => { setActiveTab('team'); if (isMobile) setShowSidebar(false); }} />
+            <NavItem icon={<MessageSquare size={18} />} label="Témoignages" active={activeTab === 'testimonials'} onClick={() => { setActiveTab('testimonials'); if (isMobile) setShowSidebar(false); }} />
             <NavItem icon={<FileText size={18} />} label="Articles" active={activeTab === 'blog'} onClick={() => { setActiveTab('blog'); if (isMobile) setShowSidebar(false); }} />
             <NavItem icon={<PlusCircle size={18} />} label="Nouvel Article" active={false} onClick={() => { openAddModal('post'); if (isMobile) setShowSidebar(false); }} />
 
           </nav>
 
-          <div style={{ padding: '0 16px', marginTop: '20px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', borderRadius: '12px', cursor: 'pointer' }}>
-              <div style={{ width: '36px', height: '36px', borderRadius: '12px', backgroundColor: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b' }}>
-                <UserIcon size={20} />
-              </div>
-              <div style={{ overflow: 'hidden' }}>
-                <p style={{ margin: 0, fontSize: '13px', fontWeight: 700 }}>Admin</p>
-                <p style={{ margin: 0, fontSize: '11px', color: '#64748b' }}>admin@explorile.com</p>
-              </div>
-              <ChevronRight size={14} color="#94a3b8" style={{ marginLeft: 'auto' }} />
-            </div>
+          <div style={{ padding: '0 16px', marginTop: 'auto' }}>
 
-            <div onClick={() => setIsLoggedIn(false)} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', borderRadius: '12px', cursor: 'pointer', marginTop: '8px', color: '#ef4444', transition: 'all 0.2s' }}>
+            <div onClick={() => { setIsLoggedIn(false); window.location.hash = '#'; }} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', borderRadius: '12px', cursor: 'pointer', marginTop: '8px', color: '#ef4444', transition: 'all 0.2s' }}>
               <LogOut size={18} />
               <span style={{ fontSize: '13px', fontWeight: 700 }}>Déconnexion</span>
             </div>
@@ -348,7 +391,6 @@ const Admin = () => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             {isMobile && <List onClick={() => setShowSidebar(true)} size={24} style={{ marginRight: '8px', cursor: 'pointer' }} />}
             <h2 style={{ fontSize: '14px', fontWeight: 800, margin: 0, color: '#000', letterSpacing: '0.05em' }}>{getTabTitle()}</h2>
-            <span className="mobile-hide" style={{ backgroundColor: '#dcfce7', color: '#15803d', padding: '2px 8px', borderRadius: '6px', fontSize: '10px', fontWeight: 800 }}>● LIVE</span>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
@@ -362,27 +404,35 @@ const Admin = () => {
         <main className="main-content" style={{ flex: 1, padding: '40px', boxSizing: 'border-box', position: 'relative', overflowY: 'auto' }}>
           {!showModal ? (
             <>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '40px' }}>
+              <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'stretch' : 'center', gap: '20px', marginBottom: '40px' }}>
                 <div style={{ position: 'relative', flex: 1 }}>
                   <Search size={18} style={{ position: 'absolute', left: '24px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
-                  <input placeholder="Rechercher..." style={{ ...searchBar, borderRadius: '50px', paddingLeft: '60px', height: '54px' }} />
+                  <input
+                    placeholder="Rechercher..."
+                    style={{ ...searchBar, borderRadius: '50px', paddingLeft: '60px', height: '54px', width: '100%' }}
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
                 </div>
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  <IconButton icon={<Grid size={18} />} active={true} />
-                  <IconButton icon={<List size={18} />} active={false} />
-                  <button onClick={() => openAddModal(activeTab === 'blog' ? 'post' : activeTab === 'destinations' ? 'destination' : 'team')} style={{ backgroundColor: '#000', color: '#fff', padding: '0 20px', borderRadius: '14px', border: 'none', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px' }}>
+                <div style={{ display: 'flex', gap: '10px', justifyContent: isMobile ? 'space-between' : 'flex-start' }}>
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <IconButton icon={<Grid size={18} />} active={viewMode === 'grid'} onClick={() => setViewMode('grid')} />
+                    <IconButton icon={<List size={18} />} active={viewMode === 'list'} onClick={() => setViewMode('list')} />
+                  </div>
+                  <button onClick={() => openAddModal(activeTab === 'blog' ? 'post' : activeTab === 'destinations' ? 'destination' : activeTab === 'team' ? 'team' : 'testimonial')} style={{ backgroundColor: '#000', color: '#fff', padding: '0 24px', borderRadius: '14px', border: 'none', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', height: '44px' }}>
                     <Plus size={18} /> AJOUTER
                   </button>
                 </div>
               </div>
 
               {activeTab === 'dashboard' ? <DashboardView d={destinations} m={messages} p={posts} b={bookings} /> :
-                activeTab === 'destinations' ? <ProductGrid d={destinations} openEdit={(item) => openEditModal(item, 'destination')} onDelete={(id) => handleDelete(id, 'destination')} /> :
-                  activeTab === 'blog' ? <ProductGrid p={posts} openEdit={(item) => openEditModal(item, 'post')} onDelete={(id) => handleDelete(id, 'post')} /> :
-                    activeTab === 'team' ? <TeamView t={team} openEdit={(item) => openEditModal(item, 'team')} onDelete={(id) => handleDelete(id, 'team')} /> :
-                      activeTab === 'bookings' ? <BookingsView b={bookings} onUpdateStatus={handleUpdateBookingStatus} onDelete={handleDeleteBooking} /> :
-                        activeTab === 'messages' ? <MessagesView m={messages} onDelete={(id) => handleDeleteMessage(id)} onMarkRead={handleMarkRead} /> :
-                          <div style={{ textAlign: 'center', padding: '100px', color: '#64748b' }}>Section en développement</div>
+                activeTab === 'destinations' ? <ProductGrid d={destinations.filter(i => i.name.toLowerCase().includes(searchTerm.toLowerCase()))} viewMode={viewMode} openEdit={(item) => openEditModal(item, 'destination')} onDelete={(id) => handleDelete(id, 'destination')} /> :
+                  activeTab === 'blog' ? <ProductGrid p={posts.filter(i => i.title.toLowerCase().includes(searchTerm.toLowerCase()))} viewMode={viewMode} openEdit={(item) => openEditModal(item, 'post')} onDelete={(id) => handleDelete(id, 'post')} /> :
+                    activeTab === 'team' ? <TeamView t={team.filter(i => i.name.toLowerCase().includes(searchTerm.toLowerCase()))} viewMode={viewMode} openEdit={(item) => openEditModal(item, 'team')} onDelete={(id) => handleDelete(id, 'team')} /> :
+                      activeTab === 'bookings' ? <BookingsView b={bookings.filter(i => i.sender.toLowerCase().includes(searchTerm.toLowerCase()) || i.tour_name.toLowerCase().includes(searchTerm.toLowerCase()))} onUpdateStatus={handleUpdateBookingStatus} onDelete={handleDeleteBooking} onView={(item) => { setSelectedBooking(item); setShowBookingModal(true); }} /> :
+                        activeTab === 'messages' ? <MessagesView m={messages.filter(i => i.sender.toLowerCase().includes(searchTerm.toLowerCase()) || i.content.toLowerCase().includes(searchTerm.toLowerCase()))} onDelete={(id) => handleDeleteMessage(id)} onMarkRead={handleMarkRead} /> :
+                          activeTab === 'testimonials' ? <TestimonialsView t={testimonials.filter(i => i.name.toLowerCase().includes(searchTerm.toLowerCase()))} viewMode={viewMode} openEdit={(item) => openEditModal(item, 'testimonial')} onDelete={(id) => handleDelete(id, 'testimonial')} /> :
+                            <div style={{ textAlign: 'center', padding: '100px', color: '#64748b' }}>Section en développement</div>
               }
             </>
           ) : (
@@ -424,6 +474,17 @@ const Admin = () => {
                       <label style={labelStyle}>BIO</label>
                       <textarea style={{ ...inputStyle, height: '200px' }} value={formData.bio} onChange={e => setFormData({ ...formData, bio: e.target.value })} />
                     </>
+                  ) : modalType === 'testimonial' ? (
+                    <>
+                      <label style={labelStyle}>NOM</label>
+                      <input style={inputStyle} value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+                      <label style={labelStyle}>RÔLE / TYPE</label>
+                      <input style={inputStyle} value={formData.role} onChange={e => setFormData({ ...formData, role: e.target.value })} placeholder="Ex: Voyageuse Solo" />
+                      <label style={labelStyle}>NOTE (1-5)</label>
+                      <input type="number" min="1" max="5" style={inputStyle} value={formData.rating} onChange={e => setFormData({ ...formData, rating: e.target.value })} />
+                      <label style={labelStyle}>MESSAGE</label>
+                      <textarea style={{ ...inputStyle, height: '200px' }} value={formData.content} onChange={e => setFormData({ ...formData, content: e.target.value })} />
+                    </>
                   ) : (
                     <>
                       <label style={labelStyle}>NOM</label>
@@ -443,6 +504,122 @@ const Admin = () => {
           )}
         </main>
       </div>
+
+      {/* Custom Dialog Modal */}
+      {dialog.show && (
+        <div style={{
+          position: 'fixed', inset: 0, backgroundColor: 'rgba(10, 46, 54, 0.4)',
+          backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center',
+          justifyContent: 'center', zIndex: 2000, padding: '20px'
+        }}>
+          <div style={{
+            backgroundColor: '#fff', width: '100%', maxWidth: '400px',
+            borderRadius: '24px', padding: '32px', textAlign: 'center',
+            boxShadow: '0 20px 50px rgba(0,0,0,0.1)',
+            animation: 'fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1)'
+          }}>
+            <div style={{
+              width: '56px', height: '56px', borderRadius: '18px',
+              backgroundColor: dialog.type === 'confirm' ? '#fff7ed' : '#fee2e2',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              margin: '0 auto 20px', color: dialog.type === 'confirm' ? '#f97316' : '#ef4444'
+            }}>
+              {dialog.type === 'confirm' ? <Clock size={28} /> : <X size={28} />}
+            </div>
+            <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0A2E36', marginBottom: '12px' }}>
+              {dialog.type === 'confirm' ? 'Confirmation' : 'Attention'}
+            </h3>
+            <p style={{ color: '#64748b', fontSize: '14px', lineHeight: 1.6, marginBottom: '32px' }}>
+              {dialog.message}
+            </p>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              {dialog.type === 'confirm' ? (
+                <>
+                  <button
+                    onClick={() => setDialog({ ...dialog, show: false })}
+                    style={{ flex: 1, padding: '12px', borderRadius: '14px', border: '1px solid #e2e8f0', backgroundColor: '#fff', color: '#64748b', fontWeight: 700, fontSize: '14px', cursor: 'pointer' }}
+                  >Annuler</button>
+                  <button
+                    onClick={dialog.onConfirm}
+                    style={{ flex: 1, padding: '12px', borderRadius: '14px', border: 'none', backgroundColor: '#ef4444', color: '#fff', fontWeight: 700, fontSize: '14px', cursor: 'pointer' }}
+                  >Confirmer</button>
+                </>
+              ) : (
+                <button
+                  onClick={() => setDialog({ ...dialog, show: false })}
+                  style={{ flex: 1, padding: '12px', borderRadius: '14px', border: 'none', backgroundColor: '#0A2E36', color: '#fff', fontWeight: 700, fontSize: '14px', cursor: 'pointer' }}
+                >D'accord</button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Booking Detail Modal */}
+      {showBookingModal && selectedBooking && (
+        <div style={{
+          position: 'fixed', inset: 0, backgroundColor: 'rgba(10, 46, 54, 0.4)',
+          backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center',
+          justifyContent: 'center', zIndex: 2000, padding: '20px'
+        }}>
+          <div style={{
+            backgroundColor: '#fff', width: '100%', maxWidth: '600px',
+            borderRadius: '32px', overflow: 'hidden', boxShadow: '0 40px 100px rgba(0,0,0,0.2)',
+            animation: 'fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1)'
+          }}>
+            <div style={{ padding: '32px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h2 style={{ fontSize: '20px', fontWeight: 900, margin: 0 }}>DÉTAILS DE LA RÉSERVATION</h2>
+              <button onClick={() => setShowBookingModal(false)} style={{ background: '#f1f5f9', border: 'none', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                <X size={20} />
+              </button>
+            </div>
+            <div style={{ padding: '32px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }}>
+              <div>
+                <p style={labelStyle}>CLIENT</p>
+                <p style={{ fontWeight: 800, margin: '4px 0' }}>{selectedBooking.sender}</p>
+                <p style={{ color: '#64748b', fontSize: '14px', margin: 0 }}>{selectedBooking.email}</p>
+                <p style={{ color: '#64748b', fontSize: '14px', margin: '4px 0 0' }}>{selectedBooking.phone}</p>
+              </div>
+              <div>
+                <p style={labelStyle}>CIRCUIT</p>
+                <p style={{ fontWeight: 800, margin: '4px 0' }}>{selectedBooking.tour_name}</p>
+                <p style={{ color: '#22c55e', fontSize: '12px', fontWeight: 800, margin: 0 }}>TYPE: {selectedBooking.type?.toUpperCase()}</p>
+              </div>
+              <div>
+                <p style={labelStyle}>LOGISTIQUE</p>
+                <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginTop: '8px' }}>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 800 }}>PERS.</div>
+                    <div style={{ fontWeight: 800 }}>{selectedBooking.participants}</div>
+                  </div>
+                  <div style={{ width: '1px', height: '24px', backgroundColor: '#e2e8f0' }}></div>
+                  <div>
+                    <div style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 800 }}>DATE DÉPART</div>
+                    <div style={{ fontWeight: 800 }}>{new Date(selectedBooking.departure_date).toLocaleDateString()}</div>
+                  </div>
+                  <div style={{ width: '1px', height: '24px', backgroundColor: '#e2e8f0' }}></div>
+                  <div>
+                    <div style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 800 }}>DURÉE</div>
+                    <div style={{ fontWeight: 800 }}>{selectedBooking.duration || 'N/A'} j</div>
+                  </div>
+                </div>
+              </div>
+              <div style={{ gridColumn: 'span 2' }}>
+                <p style={labelStyle}>MESSAGE / DEMANDE PARTICULIÈRE</p>
+                <div style={{ backgroundColor: '#f8fafc', padding: '20px', borderRadius: '16px', fontSize: '14px', color: '#444', lineHeight: 1.6, border: '1px solid #f1f5f9' }}>
+                  {selectedBooking.message || "Aucun message particulier."}
+                </div>
+              </div>
+            </div>
+            <div style={{ padding: '24px 32px', backgroundColor: '#f8fafc', display: 'flex', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setShowBookingModal(false)}
+                style={{ backgroundColor: '#0A2E36', color: '#fff', padding: '12px 32px', borderRadius: '14px', border: 'none', fontWeight: 800, cursor: 'pointer', fontSize: '14px' }}
+              >FERMER</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <style>{`
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -487,15 +664,53 @@ const FilterTab = ({ label, active }) => (
   }}>{label}</button>
 );
 
-const IconButton = ({ icon, active }) => (
-  <button style={{
-    width: '44px', height: '44px', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-    border: '1px solid #f1f5f9', backgroundColor: active ? '#fff' : 'transparent', color: active ? '#000' : '#94a3b8', boxShadow: active ? '0 4px 12px rgba(0,0,0,0.05)' : 'none', transition: 'all 0.2s'
-  }}>{icon}</button>
+const IconButton = ({ icon, active, onClick }) => (
+  <button
+    onClick={onClick}
+    style={{
+      width: '44px', height: '44px', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+      border: '1px solid #f1f5f9', backgroundColor: active ? '#fff' : 'transparent', color: active ? '#000' : '#94a3b8', boxShadow: active ? '0 4px 12px rgba(0,0,0,0.05)' : 'none', transition: 'all 0.2s'
+    }}
+  >{icon}</button>
 );
 
-const ProductGrid = ({ p, d, openEdit, onDelete }) => {
+const ProductGrid = ({ p, d, viewMode, openEdit, onDelete }) => {
   const items = p || d || [];
+
+  if (viewMode === 'list') {
+    return (
+      <div style={{ backgroundColor: '#fff', borderRadius: '24px', border: '1px solid #f1f5f9', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '600px' }}>
+          <thead>
+            <tr style={{ textAlign: 'left', borderBottom: '1px solid #f1f5f9' }}>
+              <th style={thStyle}>Image</th>
+              <th style={thStyle}>Nom / Titre</th>
+              <th style={thStyle}>Détails</th>
+              <th style={thStyle}>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.map(item => (
+              <tr key={item.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                <td style={tdStyle}>
+                  <img src={item.image_url || '/image/placeholder.png'} style={{ width: '44px', height: '44px', borderRadius: '10px', objectFit: 'cover' }} />
+                </td>
+                <td style={tdStyle}><b>{item.title || item.name}</b></td>
+                <td style={tdStyle}><span style={{ fontSize: '12px', color: '#64748b' }}>{item.price || item.category || 'Article'}</span></td>
+                <td style={tdStyle}>
+                  <div style={{ display: 'flex', gap: '12px' }}>
+                    <button onClick={() => openEdit(item)} style={{ color: '#6366f1', background: 'none', border: 'none', cursor: 'pointer' }}><Edit size={18} /></button>
+                    <button onClick={() => onDelete(item.id)} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer' }}><Trash2 size={18} /></button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '32px' }}>
       {items.map(item => (
@@ -624,9 +839,9 @@ const DashboardView = ({ d, b, m }) => (
   </div>
 );
 
-const BookingsView = ({ b, onUpdateStatus, onDelete }) => (
-  <div style={{ backgroundColor: '#fff', borderRadius: '24px', border: '1px solid #f1f5f9', overflow: 'hidden' }}>
-    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+const BookingsView = ({ b, onUpdateStatus, onDelete, onView }) => (
+  <div style={{ backgroundColor: '#fff', borderRadius: '24px', border: '1px solid #f1f5f9', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+    <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '700px' }}>
       <thead>
         <tr style={{ textAlign: 'left', borderBottom: '1px solid #f1f5f9' }}><th style={thStyle}>Client</th><th style={thStyle}>Circuit</th><th style={thStyle}>Statut</th><th style={thStyle}>Actions</th></tr>
       </thead>
@@ -650,7 +865,12 @@ const BookingsView = ({ b, onUpdateStatus, onDelete }) => (
                 <option value="Annulé">ANNULÉ</option>
               </select>
             </td>
-            <td style={tdStyle}><button onClick={() => onDelete(item.id)} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer' }}><Trash2 size={18} /></button></td>
+            <td style={tdStyle}>
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button onClick={() => onView(item)} style={{ color: '#6366f1', background: 'none', border: 'none', cursor: 'pointer' }}><Eye size={18} /></button>
+                <button onClick={() => onDelete(item.id)} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer' }}><Trash2 size={18} /></button>
+              </div>
+            </td>
           </tr>
         ))}
       </tbody>
@@ -676,24 +896,139 @@ const MessagesView = ({ m, onDelete, onMarkRead }) => (
   </div>
 );
 
-const TeamView = ({ t, openEdit, onDelete }) => (
-  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '32px' }}>
-    {t.map(member => (
-      <div key={member.id} style={cardStyle}>
-        <div style={{ position: 'relative', height: '280px', borderRadius: '24px', overflow: 'hidden', marginBottom: '24px' }}>
-          <img src={member.image_url || '/image/placeholder.png'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          <div style={{ position: 'absolute', top: '20px', left: '20px', backgroundColor: '#6366f1', color: '#fff', padding: '4px 12px', borderRadius: '8px', fontSize: '10px', fontWeight: 900 }}>{member.role?.toUpperCase()}</div>
-        </div>
-        <h3 style={{ fontSize: '18px', fontWeight: 900, marginBottom: '8px', textTransform: 'uppercase' }}>{member.name}</h3>
-        <p style={{ fontSize: '13px', color: '#64748b', lineHeight: 1.6, marginBottom: '24px' }}>{member.bio?.substring(0, 100)}...</p>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <button onClick={() => openEdit(member)} style={{ background: 'none', border: 'none', color: '#6366f1', fontSize: '11px', fontWeight: 800, cursor: 'pointer' }}>MODIFIER →</button>
-          <button onClick={() => onDelete(member.id)} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer' }}><Trash2 size={18} /></button>
-        </div>
+const TeamView = ({ t, viewMode, openEdit, onDelete }) => {
+  if (viewMode === 'list') {
+    return (
+      <div style={{ backgroundColor: '#fff', borderRadius: '24px', border: '1px solid #f1f5f9', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '600px' }}>
+          <thead>
+            <tr style={{ textAlign: 'left', borderBottom: '1px solid #f1f5f9' }}>
+              <th style={thStyle}>Membre</th>
+              <th style={thStyle}>Poste</th>
+              <th style={thStyle}>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {t.map(member => (
+              <tr key={member.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                <td style={tdStyle}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <img src={member.image_url || '/image/placeholder.png'} style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} />
+                    <b>{member.name}</b>
+                  </div>
+                </td>
+                <td style={tdStyle}>{member.role}</td>
+                <td style={tdStyle}>
+                  <div style={{ display: 'flex', gap: '12px' }}>
+                    <button onClick={() => openEdit(member)} style={{ color: '#6366f1', background: 'none', border: 'none', cursor: 'pointer' }}><Edit size={18} /></button>
+                    <button onClick={() => onDelete(member.id)} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer' }}><Trash2 size={18} /></button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
-    ))}
-  </div>
-);
+    );
+  }
+
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '32px' }}>
+      {t.map(member => (
+        <div key={member.id} style={cardStyle}>
+          <div style={{ position: 'relative', height: '280px', borderRadius: '24px', overflow: 'hidden', marginBottom: '24px' }}>
+            <img src={member.image_url || '/image/placeholder.png'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <div style={{ position: 'absolute', top: '20px', left: '20px', backgroundColor: '#6366f1', color: '#fff', padding: '4px 12px', borderRadius: '8px', fontSize: '10px', fontWeight: 900 }}>{member.role?.toUpperCase()}</div>
+          </div>
+          <h3 style={{ fontSize: '18px', fontWeight: 900, marginBottom: '8px', textTransform: 'uppercase' }}>{member.name}</h3>
+          <p style={{ fontSize: '13px', color: '#64748b', lineHeight: 1.6, marginBottom: '24px' }}>{member.bio?.substring(0, 100)}...</p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <button onClick={() => openEdit(member)} style={{ background: 'none', border: 'none', color: '#6366f1', fontSize: '11px', fontWeight: 800, cursor: 'pointer' }}>MODIFIER →</button>
+            <button onClick={() => onDelete(member.id)} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer' }}><Trash2 size={18} /></button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const TestimonialsView = ({ t, viewMode, openEdit, onDelete }) => {
+  if (viewMode === 'list') {
+    return (
+      <div style={{ backgroundColor: '#fff', borderRadius: '24px', border: '1px solid #f1f5f9', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '700px' }}>
+          <thead>
+            <tr style={{ textAlign: 'left', borderBottom: '1px solid #f1f5f9' }}>
+              <th style={thStyle}>Voyageur</th>
+              <th style={thStyle}>Note</th>
+              <th style={thStyle}>Message</th>
+              <th style={thStyle}>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {t.map(item => (
+              <tr key={item.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                <td style={tdStyle}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <img src={item.image_url || '/image/placeholder.png'} style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} />
+                    <div>
+                      <b>{item.name}</b>
+                      <div style={{ fontSize: '11px', color: '#64748b' }}>{item.role}</div>
+                    </div>
+                  </div>
+                </td>
+                <td style={tdStyle}>
+                  <div style={{ display: 'flex', gap: '2px' }}>
+                    {[...Array(5)].map((_, i) => (
+                      <span key={i} style={{ color: i < item.rating ? '#f59e0b' : '#e2e8f0', fontSize: '12px' }}>★</span>
+                    ))}
+                  </div>
+                </td>
+                <td style={tdStyle}>
+                  <div style={{ fontSize: '12px', color: '#64748b', maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {item.content}
+                  </div>
+                </td>
+                <td style={tdStyle}>
+                  <div style={{ display: 'flex', gap: '12px' }}>
+                    <button onClick={() => openEdit(item)} style={{ color: '#6366f1', background: 'none', border: 'none', cursor: 'pointer' }}><Edit size={18} /></button>
+                    <button onClick={() => onDelete(item.id)} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer' }}><Trash2 size={18} /></button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))', gap: '32px' }}>
+      {t.map(item => (
+        <div key={item.id} style={cardStyle}>
+          <div style={{ display: 'flex', gap: '20px', marginBottom: '24px' }}>
+            <img src={item.image_url || '/image/placeholder.png'} style={{ width: '80px', height: '80px', borderRadius: '20px', objectFit: 'cover' }} />
+            <div>
+              <h3 style={{ fontSize: '18px', fontWeight: 900, margin: '0 0 4px', textTransform: 'uppercase' }}>{item.name}</h3>
+              <p style={{ fontSize: '12px', color: '#22c55e', fontWeight: 800, margin: '0 0 8px' }}>{item.role}</p>
+              <div style={{ display: 'flex', gap: '2px' }}>
+                {[...Array(5)].map((_, i) => (
+                  <span key={i} style={{ color: i < item.rating ? '#f59e0b' : '#e2e8f0', fontSize: '14px' }}>★</span>
+                ))}
+              </div>
+            </div>
+          </div>
+          <p style={{ fontSize: '13px', color: '#64748b', lineHeight: 1.6, marginBottom: '24px', fontStyle: 'italic' }}>"{item.content}"</p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <button onClick={() => openEdit(item)} style={{ background: 'none', border: 'none', color: '#6366f1', fontSize: '11px', fontWeight: 800, cursor: 'pointer' }}>MODIFIER →</button>
+            <button onClick={() => onDelete(item.id)} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer' }}><Trash2 size={18} /></button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
 
 const sectionTitle = { fontSize: '10px', fontWeight: 800, color: '#cbd5e1', letterSpacing: '0.1em', margin: '24px 24px 12px' };
 const inputStyle = { width: '100%', padding: '14px 18px', borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '14px', boxSizing: 'border-box', outline: 'none' };

@@ -94,6 +94,19 @@ const repairDB = async () => {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
+
+    // Table Testimonials
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS testimonials (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        role VARCHAR(255),
+        content TEXT NOT NULL,
+        rating INTEGER DEFAULT 5,
+        image_url TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
     
     console.log("Base de données vérifiée et à jour !");
     client.release();
@@ -325,6 +338,51 @@ app.put('/api/team/:id', async (req, res) => {
 app.delete('/api/team/:id', async (req, res) => {
   try {
     await pool.query('DELETE FROM team WHERE id = $1', [req.params.id]);
+    res.json({ message: 'Deleted' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// TESTIMONIALS
+app.get('/api/testimonials', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM testimonials ORDER BY created_at DESC');
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/testimonials', async (req, res) => {
+  try {
+    const { name, role, content, rating, image_url } = req.body;
+    const result = await pool.query(
+      'INSERT INTO testimonials (name, role, content, rating, image_url) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      [name, role, content, rating, image_url]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/testimonials/:id', async (req, res) => {
+  try {
+    const { name, role, content, rating, image_url } = req.body;
+    const result = await pool.query(
+      'UPDATE testimonials SET name=$1, role=$2, content=$3, rating=$4, image_url=$5 WHERE id=$6 RETURNING *',
+      [name, role, content, rating, image_url, req.params.id]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/testimonials/:id', async (req, res) => {
+  try {
+    await pool.query('DELETE FROM testimonials WHERE id = $1', [req.params.id]);
     res.json({ message: 'Deleted' });
   } catch (err) {
     res.status(500).json({ error: err.message });

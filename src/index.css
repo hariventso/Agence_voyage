@@ -137,7 +137,8 @@ img {
 
 .nav-links {
   display: flex;
-  gap: 40px;
+  align-items: center;
+  gap: 30px;
 }
 
 .nav-links a {
@@ -1085,7 +1086,8 @@ img {
    ========================================= */
 .nav-links-desktop {
   display: flex;
-  gap: 32px;
+  align-items: center;
+  gap: 30px;
 }
 
 .hamburger-btn {

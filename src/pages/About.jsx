@@ -56,6 +56,7 @@ function About() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [activeReview, setActiveReview] = useState(0);
   const [teamMembers, setTeamMembers] = useState([]);
+  const [testimonials, setTestimonials] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -71,15 +72,34 @@ function About() {
       } catch (err) {
         console.error("Error fetching team:", err);
         setTeamMembers(staticTeamMembers);
+      }
+    };
+
+    // Fetch Testimonials
+    const fetchTestimonials = async () => {
+      try {
+        const res = await fetch('http://localhost:5000/api/testimonials');
+        const data = await res.json();
+        setTestimonials(data.length > 0 ? data : travelReviews);
+      } catch (err) {
+        console.error("Error fetching testimonials:", err);
+        setTestimonials(travelReviews);
       } finally {
         setLoading(false);
       }
     };
+
     fetchTeam();
+    fetchTestimonials();
 
     // Auto-slide logic
     const interval = setInterval(() => {
-      setActiveReview(prev => (prev + 1) % travelReviews.length);
+      setTestimonials(current => {
+        if (current.length > 0) {
+          setActiveReview(prev => (prev + 1) % current.length);
+        }
+        return current;
+      });
     }, 5000);
 
     return () => {
@@ -604,50 +624,52 @@ function About() {
           </div>
 
           {/* Testimonial Card */}
-          <div style={{
-            maxWidth: '800px',
-            margin: '0 auto',
-            backgroundColor: '#fff',
-            borderRadius: '20px',
-            padding: isMobile ? '30px 20px' : '40px',
-            textAlign: 'left',
-            position: 'relative',
-            color: '#000',
-            transition: 'all 0.5s ease-in-out',
-            opacity: 1,
-            transform: 'translateY(0)'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '24px' }}>
-              <img
-                src={travelReviews[activeReview].image}
-                alt={travelReviews[activeReview].name}
-                style={{ width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover' }}
-              />
-              <div>
-                <h4 style={{ fontSize: '1.2rem', fontWeight: 700, margin: 0 }}>{travelReviews[activeReview].name}</h4>
-                <div style={{ fontSize: '0.85rem', color: '#1B5E20', fontWeight: 600 }}>{travelReviews[activeReview].role}</div>
-                <div style={{ display: 'flex', gap: '4px', marginTop: '4px' }}>
-                  {Array.from({ length: travelReviews[activeReview].rating }).map((_, s) => (
-                    <span key={s} style={{ color: '#FF8C00' }}>★</span>
-                  ))}
+          {testimonials.length > 0 && (
+            <div style={{
+              maxWidth: '800px',
+              margin: '0 auto',
+              backgroundColor: '#fff',
+              borderRadius: '20px',
+              padding: isMobile ? '30px 20px' : '40px',
+              textAlign: 'left',
+              position: 'relative',
+              color: '#000',
+              transition: 'all 0.5s ease-in-out',
+              opacity: 1,
+              transform: 'translateY(0)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '24px' }}>
+                <img
+                  src={testimonials[activeReview]?.image_url || testimonials[activeReview]?.image || '/image/placeholder.png'}
+                  alt={testimonials[activeReview]?.name}
+                  style={{ width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover' }}
+                />
+                <div>
+                  <h4 style={{ fontSize: '1.2rem', fontWeight: 700, margin: 0 }}>{testimonials[activeReview]?.name}</h4>
+                  <div style={{ fontSize: '0.85rem', color: '#1B5E20', fontWeight: 600 }}>{testimonials[activeReview]?.role}</div>
+                  <div style={{ display: 'flex', gap: '4px', marginTop: '4px' }}>
+                    {Array.from({ length: testimonials[activeReview]?.rating || 5 }).map((_, s) => (
+                      <span key={s} style={{ color: '#FF8C00' }}>★</span>
+                    ))}
+                  </div>
                 </div>
               </div>
+              <div style={{ borderTop: '1px solid #eee', paddingTop: '24px' }}>
+                <p style={{
+                  fontSize: isMobile ? '1rem' : '1.1rem',
+                  fontStyle: 'italic',
+                  lineHeight: 1.6,
+                  margin: 0
+                }}>
+                  "{testimonials[activeReview]?.content || testimonials[activeReview]?.quote}"
+                </p>
+              </div>
             </div>
-            <div style={{ borderTop: '1px solid #eee', paddingTop: '24px' }}>
-              <p style={{
-                fontSize: isMobile ? '1rem' : '1.1rem',
-                fontStyle: 'italic',
-                lineHeight: 1.6,
-                margin: 0
-              }}>
-                "{travelReviews[activeReview].quote}"
-              </p>
-            </div>
-          </div>
+          )}
 
           {/* Pagination dots */}
           <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', marginTop: '40px' }}>
-            {travelReviews.map((_, i) => (
+            {testimonials.map((_, i) => (
               <div 
                 key={i} 
                 onClick={() => setActiveReview(i)}

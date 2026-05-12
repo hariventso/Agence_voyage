@@ -94,7 +94,6 @@ function App() {
             <a href="#contact" style={{ color: linkColor(isContactPage), fontWeight: 600, fontSize: '15px', textDecoration: 'none' }}>Contact</a>
             <a href="#admin" title="Admin" style={{
               color: linkColor(isAdminPage),
-              marginLeft: '10px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
