@@ -33,6 +33,11 @@ const repairDB = async () => {
     // Table Destinations
     await client.query("ALTER TABLE destinations ADD COLUMN IF NOT EXISTS image_url TEXT;");
     await client.query("ALTER TABLE destinations ADD COLUMN IF NOT EXISTS description TEXT;");
+    await client.query("ALTER TABLE destinations ADD COLUMN IF NOT EXISTS itinerary TEXT;");
+    await client.query("ALTER TABLE destinations ADD COLUMN IF NOT EXISTS accommodation TEXT;");
+    await client.query("ALTER TABLE destinations ADD COLUMN IF NOT EXISTS budget TEXT;");
+    await client.query("ALTER TABLE destinations ADD COLUMN IF NOT EXISTS tips TEXT;");
+    await client.query("ALTER TABLE destinations ADD COLUMN IF NOT EXISTS highlights TEXT;");
     
     // Table Blog Posts
     await client.query(`
@@ -131,12 +136,25 @@ app.get('/api/destinations', async (req, res) => {
   }
 });
 
+app.get('/api/destinations/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query('SELECT * FROM destinations WHERE id = $1', [id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Destination not found' });
+    }
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.post('/api/destinations', async (req, res) => {
   try {
-    const { name, type, price, status, image_url, description } = req.body;
+    const { name, type, price, status, image_url, description, itinerary, accommodation, budget, tips, highlights } = req.body;
     const result = await pool.query(
-      'INSERT INTO destinations (name, type, price, status, image_url, description) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-      [name, type, price, status, image_url, description]
+      'INSERT INTO destinations (name, type, price, status, image_url, description, itinerary, accommodation, budget, tips, highlights) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *',
+      [name, type, price, status, image_url, description, itinerary, accommodation, budget, tips, highlights]
     );
     res.json(result.rows[0]);
   } catch (err) {
@@ -148,10 +166,10 @@ app.post('/api/destinations', async (req, res) => {
 app.put('/api/destinations/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, type, price, status, image_url, description } = req.body;
+    const { name, type, price, status, image_url, description, itinerary, accommodation, budget, tips, highlights } = req.body;
     const result = await pool.query(
-      'UPDATE destinations SET name = $1, type = $2, price = $3, status = $4, image_url = $5, description = $6 WHERE id = $7 RETURNING *',
-      [name, type, price, status, image_url, description, id]
+      'UPDATE destinations SET name = $1, type = $2, price = $3, status = $4, image_url = $5, description = $6, itinerary = $7, accommodation = $8, budget = $9, tips = $10, highlights = $11 WHERE id = $12 RETURNING *',
+      [name, type, price, status, image_url, description, itinerary, accommodation, budget, tips, highlights, id]
     );
     res.json(result.rows[0]);
   } catch (err) {
