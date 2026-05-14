@@ -15,7 +15,7 @@ const AboutHero = ({ isMobile }) => {
     }}>
       {/* Background */}
       <img
-        src="/image/mountain.png"
+        src="/image/about_hero.png"
         alt="À propos de Explor'île"
         style={{
           position: 'absolute', top: 0, left: 0,
@@ -27,7 +27,7 @@ const AboutHero = ({ isMobile }) => {
       <div style={{
         position: 'absolute', top: 0, left: 0,
         width: '100%', height: '100%',
-        backgroundColor: 'rgba(0,0,0,0.62)', zIndex: 1,
+        backgroundColor: 'rgba(0,0,0,0.4)', zIndex: 1,
       }} />
 
       {/* Content */}
@@ -38,6 +38,7 @@ const AboutHero = ({ isMobile }) => {
           fontWeight: 700,
           color: '#FF8C00',
           marginBottom: '24px',
+          textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
         }}>
           À propos
         </h1>
@@ -48,9 +49,10 @@ const AboutHero = ({ isMobile }) => {
           maxWidth: '760px',
           margin: '0 auto',
           fontWeight: 400,
+          textShadow: '1px 1px 3px rgba(0,0,0,0.5)',
         }}>
-          Explor'île vous invite à vivre une aventure humaine et sensorielle unique. 
-          Spécialistes de la Grande Île, nous concevons des voyages sur mesure qui privilégient 
+          Explor'île vous invite à vivre une aventure humaine et sensorielle unique.
+          Spécialistes de la Grande Île, nous concevons des voyages sur mesure qui privilégient
           l'immersion, le respect des traditions et l'émerveillement face à une biodiversité exceptionnelle.
         </p>
       </div>

@@ -62,7 +62,7 @@ function Contact() {
       return;
     }
     
-    const whatsappNumber = '261340000000'; // Numéro à adapter
+    const whatsappNumber = '261341776169'; // Numéro à adapter
     const text = `Bonjour, je m'appelle ${formData.name}. %0AEmail: ${formData.email} %0A%0A${formData.message}`;
     const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${text}`;
     
@@ -137,7 +137,7 @@ function Contact() {
         paddingTop: isMobile ? '80px' : '100px'
       }}>
         <img
-          src="/image/mountain.png"
+          src="/image/beach_sunset_hero.png"
           alt="Contact Background"
           style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: 0 }}
         />
@@ -182,7 +182,7 @@ function Contact() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                 <Phone size={20} color="#FF8C00" />
-                <span style={{ fontSize: '1rem', fontWeight: 500 }}>+1234567890</span>
+                <span style={{ fontSize: '1rem', fontWeight: 500 }}>034 17 761 69</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                 <Mail size={20} color="#FF8C00" />

@@ -1,5 +1,4 @@
 import React from 'react';
-import { Play } from 'lucide-react';
 
 const DestinationPopular = ({ isMobile, destinations = [] }) => {
 
@@ -29,28 +28,11 @@ const DestinationPopular = ({ isMobile, destinations = [] }) => {
           {/* Video/Image Left */}
           <div style={{ position: 'relative', borderRadius: '24px', overflow: 'hidden', height: isMobile ? '300px' : '500px' }}>
             <img 
-              src="/image/popular_resort.png" 
+              src="/image/isalo_destination.png" 
               alt="Popular Destination" 
               style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
             />
-            <div style={{ 
-              position: 'absolute', 
-              top: '50%', 
-              left: '50%', 
-              transform: 'translate(-50%, -50%)',
-              width: '80px',
-              height: '80px',
-              backgroundColor: 'rgba(255,255,255,0.2)',
-              backdropFilter: 'blur(10px)',
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              border: '1px solid rgba(255,255,255,0.3)'
-            }}>
-              <Play fill="#fff" color="#fff" size={32} />
-            </div>
+
           </div>
 
           {/* List Right */}

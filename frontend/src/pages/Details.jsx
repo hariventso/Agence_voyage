@@ -75,7 +75,7 @@ const Details = ({ destinationId }) => {
       return;
     }
     
-    const whatsappNumber = '261340000000'; // Numéro à adapter
+    const whatsappNumber = '261341776169'; // Numéro à adapter
     const text = `Bonjour, je souhaite réserver le circuit : ${destination.name}. %0A%0A` +
                  `Détails : %0A` +
                  `- Nom : ${formData.nom} %0A` +

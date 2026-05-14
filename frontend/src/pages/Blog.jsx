@@ -40,11 +40,28 @@ function Blog() {
         paddingTop: isMobile ? '80px' : '100px'
       }}>
         <img 
-          src="/image/mountain.png" 
+          src="/image/isalo_window_blog.png" 
           alt="Blog Background" 
-          style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: 0 }} 
+          style={{ 
+            position: 'absolute', 
+            top: 0, 
+            left: 0, 
+            width: '100%', 
+            height: '100%', 
+            objectFit: 'cover', 
+            zIndex: 0,
+            filter: 'brightness(1.1) contrast(1.1) saturate(1.1)' 
+          }} 
         />
-        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 1 }}></div>
+        <div style={{ 
+          position: 'absolute', 
+          top: 0, 
+          left: 0, 
+          width: '100%', 
+          height: '100%', 
+          background: 'linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.4))', 
+          zIndex: 1 
+        }}></div>
 
         <div className="container" style={{ position: 'relative', zIndex: 2, padding: '0 20px' }}>
           <h1 style={{ color: '#FF8C00', fontWeight: 700, marginBottom: '24px', fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: isMobile ? '3rem' : '5rem' }}>

@@ -17,7 +17,7 @@ const StatsCounter = ({ isMobile }) => {
     }}>
       {/* Background */}
       <img
-        src="/image/mountain.png"
+        src="/image/isalo_window_blog.png"
         alt="Stats Background"
         style={{
           position: 'absolute', top: 0, left: 0,

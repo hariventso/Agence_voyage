@@ -11,7 +11,7 @@ const HomeAbout = () => {
             <p style={{ textAlign: 'justify' }}>Chaque circuit est soigneusement élaboré et encadré par des professionnels passionnés, pour allier recherches scientifiques, découvertes, distractions et moments de détente.</p>
           </div>
           <div className="about-image">
-            <img src="/image/mountain.png" alt="Paysage Malgache" loading="lazy" style={{ borderRadius: '24px', boxShadow: '0 20px 40px rgba(0,0,0,0.1)' }} />
+            <img src="/image/madagascar_river_boat.png" alt="Pirogue Malgache sur une rivière" loading="lazy" style={{ borderRadius: '24px', boxShadow: '0 20px 40px rgba(0,0,0,0.1)' }} />
           </div>
         </div>
       </div>

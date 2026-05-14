@@ -18,8 +18,8 @@ const HomeTrusted = ({ isMobile }) => {
         boxShadow: '0 20px 40px rgba(0,0,0,0.1)'
       }}>
         <img 
-          src="/image/luxury_resort_pool_banner.png" 
-          alt="Luxury Resort" 
+          src="/image/engagements_sunset.png" 
+          alt="Voyageurs au coucher du soleil" 
           style={{ 
             position: 'absolute', 
             top: 0, 

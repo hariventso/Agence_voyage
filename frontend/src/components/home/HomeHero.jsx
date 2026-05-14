@@ -4,8 +4,17 @@ import { ArrowRight } from 'lucide-react';
 const HomeHero = () => {
   return (
     <section className="hero" style={{ alignItems: 'center', display: 'flex' }}>
-      <img src="/image/hero_new.png" alt="Hero" className="hero-bg" style={{ objectPosition: 'center 20%' }} />
-      <div className="hero-overlay" style={{ background: 'linear-gradient(90deg, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0.4) 40%, rgba(255,255,255,0) 100%)' }}></div>
+      <img 
+        src="/image/beach_sunset_hero.png" 
+        alt="Hero" 
+        className="hero-bg" 
+        style={{ 
+          objectPosition: 'center',
+          filter: 'brightness(1.15) contrast(1.15) saturate(1.1)',
+          imageRendering: 'auto'
+        }} 
+      />
+      <div className="hero-overlay" style={{ background: 'linear-gradient(90deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.2) 40%, rgba(255,255,255,0) 100%)' }}></div>
       <div className="container">
         <div className="hero-content">
           <h1 style={{ color: '#1B5E20', fontFamily: "'Plus Jakarta Sans', sans-serif", letterSpacing: '-1px' }}>
