@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import DestinationGrid from '../components/destinations/DestinationGrid';
+import { apiService } from '../services/api';
 
 const DestinationOverview = ({ destinationId }) => {
   const [destination, setDestination] = useState(null);
@@ -10,18 +11,16 @@ const DestinationOverview = ({ destinationId }) => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [destRes, allRes] = await Promise.all([
-          fetch(`http://localhost:5000/api/destinations/${destinationId}`),
-          fetch(`http://localhost:5000/api/destinations`)
+        const [destData, allData] = await Promise.all([
+          apiService.getDestination(destinationId),
+          apiService.getDestinations()
         ]);
-        
-        if (destRes.ok) {
-          const destData = await destRes.json();
+
+        if (destData) {
           setDestination(destData);
         }
-        
-        if (allRes.ok) {
-          const allData = await allRes.json();
+
+        if (Array.isArray(allData)) {
           setAllDestinations(allData.filter(d => d.status === 'Actif'));
         }
       } catch (err) {

@@ -103,11 +103,14 @@ const BookingForm = ({
               <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
                 <InputGroup label="Nom complet" name="nom" value={formData.nom} onChange={handleFormChange} icon={<User size={14} />} placeholder="Votre nom et prénom" required />
                 <InputGroup label="Email" name="email" value={formData.email} onChange={handleFormChange} icon={<Mail size={14} />} type="email" placeholder="votre@email.com" required />
-                <InputGroup label="Téléphone" name="telephone" value={formData.telephone} onChange={handleFormChange} icon={<Phone size={14} />} type="tel" placeholder="+33 6 00 00 00 00" />
+                <InputGroup label="Téléphone (whatsApp)" name="telephone" value={formData.telephone} onChange={handleFormChange} icon={<Phone size={14} />} type="tel" placeholder="+33 6 00 00 00 00" />
                 <InputGroup label="Participants" name="participants" value={formData.participants} onChange={handleFormChange} icon={<Users size={14} />} type="number" min="1" />
                 <InputGroup label="Date de départ" name="dateDepart" value={formData.dateDepart} onChange={handleFormChange} icon={<Calendar size={14} />} type="date" required />
-                <InputGroup label="Durée (jours)" name="duree" value={formData.duree} onChange={handleFormChange} icon={<Calendar size={14} />} type="number" placeholder="Ex: 14" />
+                {formData.typeVoyage === 'devis' && (
+                  <InputGroup label="Durée (jours)" name="duree" value={formData.duree} onChange={handleFormChange} icon={<Calendar size={14} />} type="number" placeholder="Ex: 14" />
+                )}
               </div>
+
 
               <div style={{ marginBottom: '32px' }}>
                 <label style={labelStyle}><MessageSquare size={14} /> Message ou précisions</label>
@@ -138,7 +141,7 @@ const BookingForm = ({
                   gap: '10px'
                 }}
               >
-                <Send size={18} /> Contacter sur WhatsApp
+                <Send size={18} /> {formData.typeVoyage === 'devis' ? 'Contacter sur WhatsApp' : 'Envoyer'}
               </button>
             </form>
           )}

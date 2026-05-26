@@ -38,7 +38,18 @@ const DestinationPopular = ({ isMobile, destinations = [] }) => {
           {/* List Right */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
             {destinations.length > 0 ? destinations.map((c, i) => (
-              <div key={i} style={{ borderBottom: i !== destinations.length - 1 ? '1px solid #333' : 'none', paddingBottom: '30px' }}>
+              <div 
+                key={i} 
+                onClick={() => window.location.hash = `#detail-${c.id}`}
+                style={{ 
+                  borderBottom: i !== destinations.length - 1 ? '1px solid #333' : 'none', 
+                  paddingBottom: '30px',
+                  cursor: 'pointer',
+                  transition: 'opacity 0.3s ease'
+                }}
+                onMouseOver={e => e.currentTarget.style.opacity = '0.8'}
+                onMouseOut={e => e.currentTarget.style.opacity = '1'}
+              >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
                   <h3 style={{ fontSize: '24px', fontWeight: 600, color: '#fff' }}>{c.name}</h3>
                   <span style={{ fontSize: '24px', fontWeight: 800, color: '#FF8C00' }}>{c.price}</span>

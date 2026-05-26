@@ -103,11 +103,29 @@ const PostDetail = ({ postId }) => {
     return () => window.removeEventListener('resize', handleResize);
   }, [postId]);
 
+  useEffect(() => {
+    if (!post) return;
+    const pageTitle = `${post.title} | Blog Explor'Île`;
+    const pageDescription = post.content ? post.content.substring(0, 160).replace(/\s+/g, ' ').trim() + '...' : 'Découvrez cet article du blog Explor\'Île.';
+    document.title = pageTitle;
+    const setMeta = (selector, attr, value) => {
+      const node = document.querySelector(selector);
+      if (node) node.setAttribute(attr, value);
+    };
+    setMeta('meta[name="description"]', 'content', pageDescription);
+    setMeta('meta[property="og:title"]', 'content', pageTitle);
+    setMeta('meta[property="og:description"]', 'content', pageDescription);
+    setMeta('meta[property="og:image"]', 'content', post.image || '/image/hero.png');
+    setMeta('meta[name="twitter:title"]', 'content', pageTitle);
+    setMeta('meta[name="twitter:description"]', 'content', pageDescription);
+    setMeta('meta[name="twitter:image"]', 'content', post.image || '/image/hero.png');
+    const canonical = document.querySelector('link[rel="canonical"]');
+    if (canonical) canonical.setAttribute('href', `${window.location.origin}${window.location.pathname}#post-${postId}`);
+  }, [post, postId]);
+
   const fetchPost = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/posts`);
-      const data = await res.json();
-      // Since our API returns all posts, we find the one matching the ID
+      const data = await apiService.getPosts();
       const currentPost = data.find(p => String(p.id) === String(postId));
       setPost(currentPost);
     } catch (e) {

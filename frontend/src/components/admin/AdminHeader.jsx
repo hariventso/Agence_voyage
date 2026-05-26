@@ -1,7 +1,7 @@
 import React from 'react';
 import { List, Bell } from 'lucide-react';
 
-const AdminHeader = ({ isMobile, setShowSidebar, getTabTitle, messages }) => {
+const AdminHeader = ({ isMobile, setShowSidebar, getTabTitle, messages, onLogout, onForceRelogin }) => {
   return (
     <header className="header" style={{
       height: '70px', backgroundColor: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -15,7 +15,7 @@ const AdminHeader = ({ isMobile, setShowSidebar, getTabTitle, messages }) => {
       <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
         <div style={{ position: 'relative', cursor: 'pointer' }}>
           <Bell size={20} color="#000" />
-          {messages.some(m => m.unread) && (
+          {Array.isArray(messages) && messages.some(m => m.unread) && (
             <div style={{ 
               position: 'absolute', top: '-4px', right: '-4px', width: '14px', height: '14px', 
               backgroundColor: '#ef4444', borderRadius: '50%', color: '#fff', fontSize: '9px', 
@@ -24,6 +24,14 @@ const AdminHeader = ({ isMobile, setShowSidebar, getTabTitle, messages }) => {
               {messages.filter(m => m.unread).length}
             </div>
           )}
+        </div>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <button onClick={onForceRelogin} style={{ color: '#111827', fontWeight: 700, border: 'none', background: 'transparent', cursor: 'pointer' }}>
+            Se reconnecter
+          </button>
+          <button onClick={onLogout} style={{ color: '#111827', fontWeight: 700, border: 'none', background: 'transparent', cursor: 'pointer' }}>
+            Déconnexion
+          </button>
         </div>
       </div>
     </header>

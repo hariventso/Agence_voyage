@@ -1,10 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
-  X, Search, Grid, List, Plus, ImageIcon, User as UserIcon, LogIn, Shield, Clock, Eye
+  BellRing,
+  CalendarDays,
+  Check,
+  Clock3,
+  Grid,
+  Image as ImageIcon,
+  List,
+  Mail,
+  MapPin,
+  Pencil,
+  Plus,
+  Search,
+  Shield,
+  Trash2,
+  User as UserIcon,
+  Users,
+  X,
 } from 'lucide-react';
 import { apiService } from '../services/api';
 
-// Extracted Components
 import AdminSidebar from '../components/admin/AdminSidebar';
 import AdminHeader from '../components/admin/AdminHeader';
 import DashboardView from '../components/admin/DashboardView';
@@ -14,160 +29,355 @@ import MessagesView from '../components/admin/MessagesView';
 import TeamView from '../components/admin/TeamView';
 import TestimonialsView from '../components/admin/TestimonialsView';
 
+const emptyFormData = {
+  name: '',
+  type: '',
+  price: '',
+  status: 'Actif',
+  image_url: '',
+  description: '',
+  itinerary: '',
+  accommodation: '',
+  budget: '',
+  tips: '',
+  highlights: '',
+  title: '',
+  category: '',
+  content: '',
+  role: '',
+  bio: '',
+  facebook_url: '',
+  twitter_url: '',
+  instagram_url: '',
+  pinterest_url: '',
+  rating: 5,
+  email: '',
+  phone: '',
+  event_type: 'reunion',
+  event_date: '',
+  event_time: '09:00',
+  location: '',
+  employee_id: '',
+};
+
+const todayKey = () => new Date().toISOString().slice(0, 10);
+const monthKey = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  return `${year}-${month}`;
+};
+
+const formatDateLabel = (value) =>
+  new Date(`${value}T00:00:00`).toLocaleDateString('fr-FR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+
+const formatEventDateTime = (event) =>
+  new Date(`${event.event_date}T${event.event_time}:00`).toLocaleString('fr-FR', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
+const getReminderLabel = (hours) => `Rappel automatique ${hours}h avant`;
+
+const normalizeSearch = (value) => (value || '').toLowerCase();
+
 const Admin = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [activeTab, setActiveTab] = useState('blog');
+  const [activeTab, setActiveTab] = useState('agenda');
   const [showSidebar, setShowSidebar] = useState(false);
   const [loginData, setLoginData] = useState({ username: '', password: '' });
+  const [loginError, setLoginError] = useState('');
+  const [adminConfig, setAdminConfig] = useState({
+    adminUser: 'Tourisme',
+    reminderLeadHours: 24,
+    smtpConfigured: false,
+  });
+
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [viewMode, setViewMode] = useState('grid');
+  const [visibleMonth, setVisibleMonth] = useState(monthKey(new Date()));
+  const [selectedDate, setSelectedDate] = useState(todayKey());
+
   const [destinations, setDestinations] = useState([]);
+  const [services, setServices] = useState([]);
   const [posts, setPosts] = useState([]);
   const [messages, setMessages] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [team, setTeam] = useState([]);
   const [testimonials, setTestimonials] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [viewMode, setViewMode] = useState('grid');
-  const [dialog, setDialog] = useState({ show: false, message: '', type: 'alert', onConfirm: null });
-  const [loginError, setLoginError] = useState('');
+  const [employees, setEmployees] = useState([]);
+  const [calendarEvents, setCalendarEvents] = useState([]);
 
   const [showModal, setShowModal] = useState(false);
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState(null);
-  const [modalType, setModalType] = useState('post');
+  const [modalType, setModalType] = useState('event');
   const [editingId, setEditingId] = useState(null);
-  const [formData, setFormData] = useState({
-    name: '', type: '', price: '', status: 'Actif', image_url: '', description: '',
-    itinerary: '', accommodation: '', budget: '', tips: '', highlights: '',
-    title: '', category: '', content: '',
-    role: '', bio: '', facebook_url: '', twitter_url: '', instagram_url: '', pinterest_url: '',
-    rating: 5
-  });
+  const [formData, setFormData] = useState(emptyFormData);
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [dialog, setDialog] = useState({ show: false, message: '', type: 'alert', onConfirm: null });
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 1024);
     window.addEventListener('resize', handleResize);
-    if (isLoggedIn) fetchData();
     return () => window.removeEventListener('resize', handleResize);
-  }, [isLoggedIn]);
+  }, []);
+
+  useEffect(() => {
+    apiService.getAdminConfig().then(setAdminConfig).catch(() => null);
+  }, []);
+
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    fetchData();
+  }, [isLoggedIn, visibleMonth]);
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [d, m, p, b, t, te] = await Promise.all([
+      const [d, s, m, p, b, t, te, e, events] = await Promise.all([
         apiService.getDestinations(),
+        apiService.getServices(),
         apiService.getMessages(),
         apiService.getPosts(),
         apiService.getBookings(),
         apiService.getTeam(),
-        apiService.getTestimonials()
+        apiService.getTestimonials(),
+        apiService.getEmployees(),
+        apiService.getCalendarEvents(visibleMonth),
       ]);
+
       setDestinations(d);
+      setServices(s);
       setMessages(m);
       setPosts(p);
       setBookings(b);
       setTeam(t);
       setTestimonials(te);
-    } catch (e) {
-      console.error(e);
+      setEmployees(e);
+      setCalendarEvents(events);
+    } catch (error) {
+      console.error(error);
+      setDialog({ show: true, type: 'alert', message: error.message, onConfirm: null });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleLogin = (e) => {
-    e.preventDefault();
-    if (loginData.username === 'Tourisme' && loginData.password === '2026') {
+  const handleLogin = async (event) => {
+    event.preventDefault();
+
+    try {
+      await apiService.loginAdmin(loginData);
       setIsLoggedIn(true);
       setLoginError('');
-    } else {
-      setLoginError('Nom d\'utilisateur ou mot de passe incorrect');
+    } catch (error) {
+      setLoginError(error.message);
     }
   };
 
-  const openAddModal = (type = 'post') => {
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setLoginData({ username: '', password: '' });
+    setLoginError('');
+  };
+
+  const resetForm = (type = 'event') => {
     setModalType(type);
     setEditingId(null);
-    setFormData({ 
-      name: '', type: '', price: '', status: 'Actif', image_url: '', description: '', 
-      itinerary: '', accommodation: '', budget: '', tips: '', highlights: '',
-      title: '', category: '', content: '', role: '', bio: '', 
-      facebook_url: '', twitter_url: '', instagram_url: '', pinterest_url: '', rating: 5 
-    });
     setSelectedFile(null);
+    setFormData({
+      ...emptyFormData,
+      event_date: selectedDate,
+    });
+  };
+
+  const openAddModal = (type = 'event') => {
+    resetForm(type);
     setShowModal(true);
   };
 
-  const openEditModal = (item, type = 'post') => {
+  const openEditModal = (item, type = 'event') => {
     setModalType(type);
     setEditingId(item.id);
-    setFormData({ ...item });
     setSelectedFile(null);
+
+    if (type === 'event') {
+      setFormData({
+        ...emptyFormData,
+        ...item,
+        employee_id: item.employee?.id || item.employee_id || '',
+      });
+    } else {
+      setFormData({ ...emptyFormData, ...item });
+    }
+
     setShowModal(true);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     setUploading(true);
-    let finalImageUrl = formData.image_url;
-    
-    if (selectedFile) {
-      const uData = await apiService.uploadImage(selectedFile);
-      finalImageUrl = uData.imageUrl;
-    }
 
-    let result;
-    if (modalType === 'destination') {
-      const data = { 
-        name: formData.name, 
-        type: formData.type, 
-        price: formData.price, 
-        status: formData.status, 
-        image_url: finalImageUrl, 
-        description: formData.description,
-        itinerary: formData.itinerary,
-        accommodation: formData.accommodation,
-        budget: formData.budget,
-        tips: formData.tips,
-        highlights: formData.highlights
-      };
-      result = editingId ? await apiService.updateDestination(editingId, data) : await apiService.createDestination(data);
-    } else if (modalType === 'post') {
-      const data = { title: formData.title, category: formData.category, content: formData.content, image_url: finalImageUrl };
-      result = editingId ? await apiService.updatePost(editingId, data) : await apiService.createPost(data);
-    } else if (modalType === 'team') {
-      const data = { name: formData.name, role: formData.role, bio: formData.bio, image_url: finalImageUrl, facebook_url: formData.facebook_url, twitter_url: formData.twitter_url, instagram_url: formData.instagram_url, pinterest_url: formData.pinterest_url };
-      result = editingId ? await apiService.updateTeam(editingId, data) : await apiService.createTeam(data);
-    } else if (modalType === 'testimonial') {
-      const data = { name: formData.name, role: formData.role, content: formData.content, rating: formData.rating, image_url: finalImageUrl };
-      result = editingId ? await apiService.updateTestimonial(editingId, data) : await apiService.createTestimonial(data);
-    }
+    try {
+      let finalImageUrl = formData.image_url;
 
-    if (result.ok) {
+      if (selectedFile) {
+        const uploadResult = await apiService.uploadImage(selectedFile);
+        finalImageUrl = uploadResult.imageUrl;
+      }
+
+      switch (modalType) {
+        case 'destination': {
+          const payload = {
+            name: formData.name,
+            type: formData.type,
+            price: formData.price,
+            status: formData.status,
+            image_url: finalImageUrl,
+            description: formData.description,
+            itinerary: formData.itinerary,
+            accommodation: formData.accommodation,
+            budget: formData.budget,
+            tips: formData.tips,
+            highlights: formData.highlights,
+          };
+          if (editingId) await apiService.updateDestination(editingId, payload);
+          else await apiService.createDestination(payload);
+          break;
+        }
+        case 'service': {
+          const payload = {
+            name: formData.name,
+            description: formData.description,
+            image_url: finalImageUrl,
+            status: formData.status,
+          };
+          if (editingId) await apiService.updateService(editingId, payload);
+          else await apiService.createService(payload);
+          break;
+        }
+        case 'post': {
+          const payload = {
+            title: formData.title,
+            category: formData.category,
+            content: formData.content,
+            image_url: finalImageUrl,
+          };
+          if (editingId) await apiService.updatePost(editingId, payload);
+          else await apiService.createPost(payload);
+          break;
+        }
+        case 'team': {
+          const payload = {
+            name: formData.name,
+            role: formData.role,
+            bio: formData.bio,
+            image_url: finalImageUrl,
+            facebook_url: formData.facebook_url,
+            twitter_url: formData.twitter_url,
+            instagram_url: formData.instagram_url,
+            pinterest_url: formData.pinterest_url,
+          };
+          if (editingId) await apiService.updateTeam(editingId, payload);
+          else await apiService.createTeam(payload);
+          break;
+        }
+        case 'testimonial': {
+          const payload = {
+            name: formData.name,
+            role: formData.role,
+            content: formData.content,
+            rating: formData.rating,
+            image_url: finalImageUrl,
+          };
+          if (editingId) await apiService.updateTestimonial(editingId, payload);
+          else await apiService.createTestimonial(payload);
+          break;
+        }
+        case 'employee': {
+          const payload = {
+            name: formData.name,
+            email: formData.email,
+            role: formData.role,
+            phone: formData.phone,
+            status: formData.status,
+          };
+          if (editingId) await apiService.updateEmployee(editingId, payload);
+          else await apiService.createEmployee(payload);
+          break;
+        }
+        case 'event': {
+          const payload = {
+            title: formData.title,
+            event_type: formData.event_type,
+            event_date: formData.event_date,
+            event_time: formData.event_time,
+            location: formData.location,
+            employee_id: formData.employee_id || null,
+            description: formData.description,
+          };
+          if (editingId) await apiService.updateCalendarEvent(editingId, payload);
+          else await apiService.createCalendarEvent(payload);
+          break;
+        }
+        default:
+          break;
+      }
+
       setShowModal(false);
-      fetchData();
-    } else {
-      setDialog({ show: true, message: 'Erreur lors de la sauvegarde', type: 'alert' });
+      await fetchData();
+    } catch (error) {
+      setDialog({ show: true, type: 'alert', message: error.message, onConfirm: null });
+    } finally {
+      setUploading(false);
     }
-    setUploading(false);
   };
 
-  const handleDelete = (id, type = 'destination') => {
+  const handleDelete = (id, type) => {
+    const labelMap = {
+      destination: 'cette destination',
+      service: 'ce service',
+      post: 'cet article',
+      team: 'ce membre de l equipe',
+      testimonial: 'ce temoignage',
+      employee: 'cet employe',
+      event: 'cet evenement',
+      booking: 'cette reservation',
+      message: 'ce message',
+    };
+
     setDialog({
       show: true,
-      message: 'Voulez-vous vraiment supprimer cet élément ?',
       type: 'confirm',
+      message: `Voulez-vous vraiment supprimer ${labelMap[type] || 'cet element'} ?`,
       onConfirm: async () => {
-        if (type === 'destination') await apiService.deleteDestination(id);
-        else if (type === 'post') await apiService.deletePost(id);
-        else if (type === 'team') await apiService.deleteTeam(id);
-        else if (type === 'testimonial') await apiService.deleteTestimonial(id);
-        fetchData();
-        setDialog({ ...dialog, show: false });
-      }
+        try {
+          if (type === 'destination') await apiService.deleteDestination(id);
+          if (type === 'service') await apiService.deleteService(id);
+          if (type === 'post') await apiService.deletePost(id);
+          if (type === 'team') await apiService.deleteTeam(id);
+          if (type === 'testimonial') await apiService.deleteTestimonial(id);
+          if (type === 'employee') await apiService.deleteEmployee(id);
+          if (type === 'event') await apiService.deleteCalendarEvent(id);
+          if (type === 'booking') await apiService.deleteBooking(id);
+          if (type === 'message') await apiService.deleteMessage(id);
+          setDialog((current) => ({ ...current, show: false }));
+          await fetchData();
+        } catch (error) {
+          setDialog({ show: true, type: 'alert', message: error.message, onConfirm: null });
+        }
+      },
     });
   };
 
@@ -176,142 +386,319 @@ const Admin = () => {
     fetchData();
   };
 
-  const handleDeleteMessage = (id) => {
-    setDialog({
-      show: true,
-      message: 'Supprimer ce message définitivement ?',
-      type: 'confirm',
-      onConfirm: async () => {
-        await apiService.deleteMessage(id);
-        fetchData();
-        setDialog({ ...dialog, show: false });
-      }
-    });
-  };
-
   const handleUpdateBookingStatus = async (id, status) => {
     await apiService.updateBookingStatus(id, status);
     fetchData();
   };
 
-  const handleDeleteBooking = (id) => {
-    setDialog({
-      show: true,
-      message: 'Supprimer cette demande de réservation ?',
-      type: 'confirm',
-      onConfirm: async () => {
-        await apiService.deleteBooking(id);
-        fetchData();
-        setDialog({ ...dialog, show: false });
-      }
-    });
+  const handleSendReminders = async () => {
+    try {
+      const result = await apiService.sendCalendarReminders();
+      const count = result.sentEvents.length;
+      const smtpState = result.smtpConfigured ? 'emails envoyes' : 'simulation sans SMTP';
+      setDialog({
+        show: true,
+        type: 'alert',
+        message: `${count} rappel(s) traites (${smtpState}).`,
+        onConfirm: null,
+      });
+      fetchData();
+    } catch (error) {
+      setDialog({ show: true, type: 'alert', message: error.message, onConfirm: null });
+    }
   };
+
+  const handleSendTestEmail = async () => {
+    try {
+      const result = await apiService.sendCalendarTestEmail();
+      const mode = result.simulated ? 'simulation sans SMTP' : 'email envoye';
+      setDialog({
+        show: true,
+        type: 'alert',
+        message: `Test effectue vers ${result.recipient} (${mode}).`,
+        onConfirm: null,
+      });
+    } catch (error) {
+      setDialog({ show: true, type: 'alert', message: error.message, onConfirm: null });
+    }
+  };
+
+  const visibleEvents = useMemo(
+    () =>
+      calendarEvents.filter((item) => {
+        const search = normalizeSearch(searchTerm);
+        if (!search) return true;
+        return [
+          item.title,
+          item.location,
+          item.description,
+          item.employee?.name,
+          item.event_type,
+        ].some((value) => normalizeSearch(value).includes(search));
+      }),
+    [calendarEvents, searchTerm]
+  );
+
+  const selectedDayEvents = useMemo(
+    () => visibleEvents.filter((item) => item.event_date === selectedDate),
+    [selectedDate, visibleEvents]
+  );
+
+  const filteredEmployees = useMemo(
+    () =>
+      employees.filter((item) =>
+        [item.name, item.email, item.role, item.status].some((value) =>
+          normalizeSearch(value).includes(normalizeSearch(searchTerm))
+        )
+      ),
+    [employees, searchTerm]
+  );
 
   const getTabTitle = () => {
     const titles = {
       dashboard: 'TABLEAU DE BORD',
+      agenda: 'AGENDA PROFESSIONNEL',
+      employees: 'GESTION DES EMPLOYES',
+      services: 'GESTION DES SERVICES',
       destinations: 'DESTINATIONS',
       blog: 'ARTICLES',
-      team: 'ÉQUIPE',
-      testimonials: 'TÉMOIGNAGES',
-      bookings: 'RÉSERVATIONS',
-      messages: 'MESSAGES'
+      team: 'EQUIPE',
+      testimonials: 'TEMOIGNAGES',
+      bookings: 'RESERVATIONS',
+      messages: 'MESSAGES',
     };
     return titles[activeTab] || 'ADMIN';
   };
 
-  if (!isLoggedIn) return (
-    <div className="login-container" style={loginContainerStyle}>
-      <div className="login-card-wrapper" style={{ width: '100%', maxWidth: '380px', animation: 'fadeInUp 0.8s ease' }}>
-        <form onSubmit={handleLogin} style={loginFormStyle}>
-          <div style={accentLineStyle}></div>
-          <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-            <img src="/image/Logo.png" alt="Explor'île" style={{ height: '80px', margin: '0 auto 20px', display: 'block' }} />
-            <h2 style={loginTitleStyle}>Administration</h2>
-            <p style={{ color: '#64748b', fontSize: '14px' }}>Gestion de la plateforme</p>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <InputGroup label="Utilisateur" icon={<UserIcon size={16} />} type="text" placeholder="Nom d'utilisateur" value={loginData.username} onChange={e => setLoginData({ ...loginData, username: e.target.value })} />
-            <InputGroup label="Mot de passe" icon={<Shield size={16} />} type="password" placeholder="••••••••" value={loginData.password} onChange={e => setLoginData({ ...loginData, password: e.target.value })} />
-            {loginError && <div style={errorStyle}>⚠️ {loginError}</div>}
-            <button style={loginButtonStyle}>Se connecter <LogIn size={18} /></button>
-          </div>
-        </form>
+  const addActionType = useMemo(() => {
+    if (activeTab === 'agenda') return 'event';
+    if (activeTab === 'employees') return 'employee';
+    if (activeTab === 'services') return 'service';
+    if (activeTab === 'destinations') return 'destination';
+    if (activeTab === 'team') return 'team';
+    if (activeTab === 'testimonials') return 'testimonial';
+    return 'post';
+  }, [activeTab]);
+
+  if (!isLoggedIn) {
+    return (
+      <div style={loginContainerStyle}>
+        <div style={{ width: '100%', maxWidth: 400 }}>
+          <form onSubmit={handleLogin} style={loginFormStyle}>
+            <div style={accentLineStyle} />
+            <div style={{ textAlign: 'center', marginBottom: 32 }}>
+              <img src="/image/Logo.png" alt="Logo" style={{ height: 82, margin: '0 auto 20px', display: 'block' }} />
+              <h2 style={loginTitleStyle}>Administration</h2>
+              <p style={{ color: '#64748b', fontSize: 14, margin: 0 }}>Agenda professionnel et gestion du site</p>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+              <InputGroup
+                label="Utilisateur"
+                icon={<UserIcon size={16} />}
+                type="text"
+                value={loginData.username}
+                onChange={(e) => setLoginData((current) => ({ ...current, username: e.target.value }))}
+              />
+              <InputGroup
+                label="Mot de passe"
+                icon={<Shield size={16} />}
+                type="password"
+                value={loginData.password}
+                onChange={(e) => setLoginData((current) => ({ ...current, password: e.target.value }))}
+              />
+              {loginError && <div style={errorStyle}>{loginError}</div>}
+              <button style={loginButtonStyle} type="submit">
+                Se connecter
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f8fafc', color: '#000', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-      <AdminSidebar 
-        isMobile={isMobile} 
-        showSidebar={showSidebar} 
-        setShowSidebar={setShowSidebar} 
-        activeTab={activeTab} 
-        setActiveTab={setActiveTab} 
-        bookings={bookings} 
-        messages={messages} 
-        openAddModal={openAddModal} 
-        setIsLoggedIn={setIsLoggedIn} 
+    <div style={appShellStyle}>
+      <AdminSidebar
+        isMobile={isMobile}
+        showSidebar={showSidebar}
+        setShowSidebar={setShowSidebar}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        bookings={bookings}
+        messages={messages}
+        employees={employees}
+        calendarEvents={calendarEvents}
+        openAddModal={openAddModal}
+        setIsLoggedIn={setIsLoggedIn}
       />
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-        <AdminHeader 
-          isMobile={isMobile} 
-          setShowSidebar={setShowSidebar} 
-          getTabTitle={getTabTitle} 
-          messages={messages} 
+        <AdminHeader
+          isMobile={isMobile}
+          setShowSidebar={setShowSidebar}
+          getTabTitle={getTabTitle}
+          messages={messages}
+          onLogout={handleLogout}
+          onForceRelogin={() => {
+            setLoginError('');
+            handleLogout();
+          }}
         />
 
-        <main style={{ flex: 1, padding: '40px', overflowY: 'auto' }}>
-          {!showModal ? (
-            <>
-              <div style={controlsRowStyle}>
-                <div style={{ position: 'relative', flex: 1 }}>
-                  <Search size={18} style={searchIconStyle} />
-                  <input placeholder="Rechercher..." style={searchBarStyle} value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-                </div>
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  <IconButton icon={<Grid size={18} />} active={viewMode === 'grid'} onClick={() => setViewMode('grid')} />
-                  <IconButton icon={<List size={18} />} active={viewMode === 'list'} onClick={() => setViewMode('list')} />
-                  <button onClick={() => openAddModal(activeTab === 'blog' ? 'post' : activeTab === 'destinations' ? 'destination' : activeTab === 'team' ? 'team' : 'testimonial')} style={addButtonStyle}>
-                    <Plus size={18} /> AJOUTER
-                  </button>
-                </div>
+        <main style={mainStyle}>
+          {!showModal && (
+            <div style={controlsRowStyle}>
+              <div style={{ position: 'relative', flex: 1 }}>
+                <Search size={18} style={searchIconStyle} />
+                <input
+                  placeholder="Rechercher..."
+                  style={searchBarStyle}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
               </div>
 
-              {activeTab === 'dashboard' && <DashboardView d={destinations} m={messages} p={posts} b={bookings} />}
-              {activeTab === 'destinations' && <ProductGrid d={destinations.filter(i => i.name.toLowerCase().includes(searchTerm.toLowerCase()))} viewMode={viewMode} openEdit={(item) => openEditModal(item, 'destination')} onDelete={(id) => handleDelete(id, 'destination')} />}
-              {activeTab === 'blog' && <ProductGrid p={posts.filter(i => i.title.toLowerCase().includes(searchTerm.toLowerCase()))} viewMode={viewMode} openEdit={(item) => openEditModal(item, 'post')} onDelete={(id) => handleDelete(id, 'post')} />}
-              {activeTab === 'team' && <TeamView t={team.filter(i => i.name.toLowerCase().includes(searchTerm.toLowerCase()))} viewMode={viewMode} openEdit={(item) => openEditModal(item, 'team')} onDelete={(id) => handleDelete(id, 'team')} />}
-              {activeTab === 'bookings' && <BookingsView b={bookings.filter(i => i.sender.toLowerCase().includes(searchTerm.toLowerCase()) || i.tour_name.toLowerCase().includes(searchTerm.toLowerCase()))} onUpdateStatus={handleUpdateBookingStatus} onDelete={handleDeleteBooking} onView={(item) => { setSelectedBooking(item); setShowBookingModal(true); }} />}
-              {activeTab === 'messages' && <MessagesView m={messages.filter(i => i.sender.toLowerCase().includes(searchTerm.toLowerCase()) || i.content.toLowerCase().includes(searchTerm.toLowerCase()))} onDelete={(id) => handleDeleteMessage(id)} onMarkRead={handleMarkRead} />}
-              {activeTab === 'testimonials' && <TestimonialsView t={testimonials.filter(i => i.name.toLowerCase().includes(searchTerm.toLowerCase()))} viewMode={viewMode} openEdit={(item) => openEditModal(item, 'testimonial')} onDelete={(id) => handleDelete(id, 'testimonial')} />}
-            </>
-          ) : (
-            <AdminForm 
-              editingId={editingId} 
-              modalType={modalType} 
-              formData={formData} 
-              setFormData={setFormData} 
-              selectedFile={selectedFile} 
-              setSelectedFile={setSelectedFile} 
-              handleSubmit={handleSubmit} 
-              setShowModal={setShowModal} 
-              uploading={uploading} 
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                <IconButton icon={<Grid size={18} />} active={viewMode === 'grid'} onClick={() => setViewMode('grid')} />
+                <IconButton icon={<List size={18} />} active={viewMode === 'list'} onClick={() => setViewMode('list')} />
+                {activeTab === 'agenda' && (
+                  <button onClick={handleSendTestEmail} style={secondaryButtonStyle}>
+                    <Mail size={16} />
+                    Tester l email
+                  </button>
+                )}
+                {activeTab === 'agenda' && (
+                  <button onClick={handleSendReminders} style={secondaryButtonStyle}>
+                    <BellRing size={16} />
+                    Envoyer les rappels
+                  </button>
+                )}
+                <button onClick={() => openAddModal(addActionType)} style={addButtonStyle}>
+                  <Plus size={18} />
+                  AJOUTER
+                </button>
+              </div>
+            </div>
+          )}
+
+          {showModal ? (
+            <AdminForm
+              modalType={modalType}
+              editingId={editingId}
+              formData={formData}
+              setFormData={setFormData}
+              selectedFile={selectedFile}
+              setSelectedFile={setSelectedFile}
+              handleSubmit={handleSubmit}
+              setShowModal={setShowModal}
+              uploading={uploading}
+              employees={employees}
+              reminderLeadHours={adminConfig.reminderLeadHours}
             />
+          ) : loading ? (
+            <div style={emptyStateStyle}>Chargement des donnees...</div>
+          ) : (
+            <>
+              {activeTab === 'dashboard' && <DashboardView d={destinations} b={bookings} m={messages} />}
+              {activeTab === 'agenda' && (
+                <AgendaView
+                  visibleMonth={visibleMonth}
+                  setVisibleMonth={setVisibleMonth}
+                  selectedDate={selectedDate}
+                  setSelectedDate={setSelectedDate}
+                  events={visibleEvents}
+                  selectedDayEvents={selectedDayEvents}
+                  openAddModal={openAddModal}
+                  openEditModal={openEditModal}
+                  onDelete={(id) => handleDelete(id, 'event')}
+                  reminderLeadHours={adminConfig.reminderLeadHours}
+                  smtpConfigured={adminConfig.smtpConfigured}
+                />
+              )}
+              {activeTab === 'employees' && (
+                <EmployeeView employees={filteredEmployees} openEditModal={openEditModal} onDelete={handleDelete} />
+              )}
+              {activeTab === 'services' && (
+                <ProductGrid
+                  d={services.filter((item) => normalizeSearch(item.name).includes(normalizeSearch(searchTerm)))}
+                  viewMode={viewMode}
+                  openEdit={(item) => openEditModal(item, 'service')}
+                  onDelete={(id) => handleDelete(id, 'service')}
+                />
+              )}
+              {activeTab === 'destinations' && (
+                <ProductGrid
+                  d={destinations.filter((item) => normalizeSearch(item.name).includes(normalizeSearch(searchTerm)))}
+                  viewMode={viewMode}
+                  openEdit={(item) => openEditModal(item, 'destination')}
+                  onDelete={(id) => handleDelete(id, 'destination')}
+                />
+              )}
+              {activeTab === 'blog' && (
+                <ProductGrid
+                  p={posts.filter((item) => normalizeSearch(item.title).includes(normalizeSearch(searchTerm)))}
+                  viewMode={viewMode}
+                  openEdit={(item) => openEditModal(item, 'post')}
+                  onDelete={(id) => handleDelete(id, 'post')}
+                />
+              )}
+              {activeTab === 'team' && (
+                <TeamView
+                  t={team.filter((item) => normalizeSearch(item.name).includes(normalizeSearch(searchTerm)))}
+                  viewMode={viewMode}
+                  openEdit={(item) => openEditModal(item, 'team')}
+                  onDelete={(id) => handleDelete(id, 'team')}
+                />
+              )}
+              {activeTab === 'bookings' && (
+                <BookingsView
+                  b={bookings.filter(
+                    (item) =>
+                      normalizeSearch(item.sender).includes(normalizeSearch(searchTerm)) ||
+                      normalizeSearch(item.tour_name).includes(normalizeSearch(searchTerm))
+                  )}
+                  onUpdateStatus={handleUpdateBookingStatus}
+                  onDelete={(id) => handleDelete(id, 'booking')}
+                  onView={(item) => {
+                    setSelectedBooking(item);
+                    setShowBookingModal(true);
+                  }}
+                />
+              )}
+              {activeTab === 'messages' && (
+                <MessagesView
+                  m={messages.filter(
+                    (item) =>
+                      normalizeSearch(item.sender).includes(normalizeSearch(searchTerm)) ||
+                      normalizeSearch(item.content).includes(normalizeSearch(searchTerm))
+                  )}
+                  onDelete={(id) => handleDelete(id, 'message')}
+                  onMarkRead={handleMarkRead}
+                />
+              )}
+              {activeTab === 'testimonials' && (
+                <TestimonialsView
+                  t={testimonials.filter((item) => normalizeSearch(item.name).includes(normalizeSearch(searchTerm)))}
+                  viewMode={viewMode}
+                  openEdit={(item) => openEditModal(item, 'testimonial')}
+                  onDelete={(id) => handleDelete(id, 'testimonial')}
+                />
+              )}
+            </>
           )}
         </main>
       </div>
 
-      {/* Dialog & Booking Detail Modals */}
       {dialog.show && <Dialog dialog={dialog} setDialog={setDialog} />}
-      {showBookingModal && <BookingDetailModal selectedBooking={selectedBooking} setShowBookingModal={setShowBookingModal} />}
+      {showBookingModal && (
+        <BookingDetailModal selectedBooking={selectedBooking} setShowBookingModal={setShowBookingModal} />
+      )}
     </div>
   );
 };
 
-// Sub-components for Admin
 const InputGroup = ({ label, icon, ...props }) => (
   <div>
     <label style={inputLabelStyle}>{label}</label>
@@ -323,119 +710,517 @@ const InputGroup = ({ label, icon, ...props }) => (
 );
 
 const IconButton = ({ icon, active, onClick }) => (
-  <button onClick={onClick} style={{ ...iconButtonStyle, backgroundColor: active ? '#fff' : 'transparent', color: active ? '#000' : '#94a3b8', boxShadow: active ? '0 4px 12px rgba(0,0,0,0.05)' : 'none' }}>{icon}</button>
+  <button
+    onClick={onClick}
+    style={{
+      ...iconButtonStyle,
+      backgroundColor: active ? '#fff' : 'transparent',
+      color: active ? '#000' : '#94a3b8',
+      boxShadow: active ? '0 4px 12px rgba(0,0,0,0.05)' : 'none',
+    }}
+  >
+    {icon}
+  </button>
 );
 
-const AdminForm = ({ editingId, modalType, formData, setFormData, selectedFile, setSelectedFile, handleSubmit, setShowModal, uploading }) => (
+const AgendaView = ({
+  visibleMonth,
+  setVisibleMonth,
+  selectedDate,
+  setSelectedDate,
+  events,
+  selectedDayEvents,
+  openAddModal,
+  openEditModal,
+  onDelete,
+  reminderLeadHours,
+  smtpConfigured,
+}) => {
+  const [year, month] = visibleMonth.split('-').map(Number);
+  const firstDay = new Date(year, month - 1, 1);
+  const totalDays = new Date(year, month, 0).getDate();
+  const startOffset = (firstDay.getDay() + 6) % 7;
+
+  const days = [];
+  for (let index = 0; index < startOffset; index += 1) {
+    days.push(null);
+  }
+  for (let day = 1; day <= totalDays; day += 1) {
+    days.push(`${visibleMonth}-${String(day).padStart(2, '0')}`);
+  }
+
+  const groupedEvents = events.reduce((accumulator, event) => {
+    accumulator[event.event_date] = accumulator[event.event_date] || [];
+    accumulator[event.event_date].push(event);
+    return accumulator;
+  }, {});
+
+  const currentMonthLabel = firstDay.toLocaleDateString('fr-FR', {
+    month: 'long',
+    year: 'numeric',
+  });
+
+  const moveMonth = (offset) => {
+    const nextDate = new Date(year, month - 1 + offset, 1);
+    const nextMonth = monthKey(nextDate);
+    setVisibleMonth(nextMonth);
+    if (!selectedDate.startsWith(nextMonth)) {
+      setSelectedDate(`${nextMonth}-01`);
+    }
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      <div style={heroCardStyle}>
+        <div>
+          <div style={eyebrowStyle}>Agenda telephone like</div>
+          <h2 style={{ margin: '8px 0 10px', fontSize: 30, color: '#082f49' }}>Planifiez reunions, programmes et rappels</h2>
+          <p style={{ margin: 0, color: '#475569', maxWidth: 620 }}>
+            Chaque evenement peut etre rattache a un employe et declenche un rappel e-mail automatique la veille.
+          </p>
+        </div>
+        <div style={heroStatsStyle}>
+          <MiniStat label="Evenements du mois" value={events.length} />
+          <MiniStat label="Rappel" value={getReminderLabel(reminderLeadHours)} />
+          <MiniStat label="SMTP" value={smtpConfigured ? 'Actif' : 'A configurer'} />
+        </div>
+      </div>
+
+      <div style={agendaGridStyle}>
+        <section style={panelStyle}>
+          <div style={calendarHeaderStyle}>
+            <button onClick={() => moveMonth(-1)} style={monthNavButtonStyle}>
+              <X size={14} style={{ transform: 'rotate(45deg)' }} />
+            </button>
+            <div>
+              <div style={eyebrowStyle}>Vue calendrier</div>
+              <h3 style={{ margin: '6px 0 0', fontSize: 22, textTransform: 'capitalize' }}>{currentMonthLabel}</h3>
+            </div>
+            <button onClick={() => moveMonth(1)} style={monthNavButtonStyle}>
+              <X size={14} style={{ transform: 'rotate(-45deg)' }} />
+            </button>
+          </div>
+
+          <div style={weekdayGridStyle}>
+            {['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'].map((day) => (
+              <div key={day} style={weekdayCellStyle}>
+                {day}
+              </div>
+            ))}
+          </div>
+
+          <div style={monthGridStyle}>
+            {days.map((day, index) => {
+              if (!day) {
+                return <div key={`empty-${index}`} style={{ ...dayCellStyle, background: 'transparent', border: 'none' }} />;
+              }
+
+              const items = groupedEvents[day] || [];
+              const isSelected = day === selectedDate;
+              const isToday = day === todayKey();
+
+              return (
+                <button
+                  key={day}
+                  onClick={() => setSelectedDate(day)}
+                  style={{
+                    ...dayCellStyle,
+                    border: isSelected ? '1px solid #0f766e' : '1px solid #e2e8f0',
+                    background: isSelected
+                      ? 'linear-gradient(180deg, rgba(15,118,110,0.08), rgba(255,255,255,0.95))'
+                      : '#fff',
+                    boxShadow: isSelected ? '0 10px 24px rgba(15, 118, 110, 0.12)' : 'none',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontWeight: 800, color: isToday ? '#0f766e' : '#0f172a' }}>{Number(day.slice(-2))}</span>
+                    {items.length > 0 && <span style={badgeStyle}>{items.length}</span>}
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    {items.slice(0, 2).map((item) => (
+                      <div key={item.id} style={eventPillStyle}>
+                        {item.event_time.slice(0, 5)} {item.title}
+                      </div>
+                    ))}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
+        <section style={panelStyle}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', marginBottom: 18 }}>
+            <div>
+              <div style={eyebrowStyle}>Jour selectionne</div>
+              <h3 style={{ margin: '6px 0 0', fontSize: 22, textTransform: 'capitalize' }}>{formatDateLabel(selectedDate)}</h3>
+            </div>
+            <button onClick={() => openAddModal('event')} style={secondaryButtonStyle}>
+              <Plus size={16} />
+              Ajouter
+            </button>
+          </div>
+
+          {selectedDayEvents.length === 0 ? (
+            <div style={emptyStateStyle}>Aucun evenement programme pour cette date.</div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {selectedDayEvents.map((item) => (
+                <article key={item.id} style={timelineCardStyle}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' }}>
+                    <div>
+                      <div style={eventTypeChipStyle}>{item.event_type}</div>
+                      <h4 style={{ margin: '10px 0 8px', fontSize: 18 }}>{item.title}</h4>
+                    </div>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button onClick={() => openEditModal(item, 'event')} style={miniActionStyle}>
+                        <Pencil size={16} />
+                      </button>
+                      <button onClick={() => onDelete(item.id)} style={miniDangerStyle}>
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
+                  <div style={metaRowStyle}>
+                    <span style={metaItemStyle}><Clock3 size={14} /> {item.event_time.slice(0, 5)}</span>
+                    <span style={metaItemStyle}><MapPin size={14} /> {item.location || 'Lieu a definir'}</span>
+                    <span style={metaItemStyle}><Users size={14} /> {item.employee?.name || 'Sans employe'}</span>
+                  </div>
+                  {item.description && <p style={{ margin: '12px 0 0', color: '#475569', lineHeight: 1.6 }}>{item.description}</p>}
+                  <div style={{ ...metaRowStyle, marginTop: 14 }}>
+                    <span style={metaItemStyle}><Mail size={14} /> {getReminderLabel(reminderLeadHours)}</span>
+                    <span style={metaItemStyle}>
+                      <Check size={14} />
+                      {item.reminder_sent_at ? 'Rappel deja envoye' : 'Rappel en attente'}
+                    </span>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+      </div>
+    </div>
+  );
+};
+
+const EmployeeView = ({ employees, openEditModal, onDelete }) => (
+  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 20 }}>
+    {employees.length === 0 ? (
+      <div style={emptyStateStyle}>Aucun employe enregistre.</div>
+    ) : (
+      employees.map((employee) => (
+        <article key={employee.id} style={employeeCardStyle}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+            <div>
+              <div style={employeeStatusStyle}>{employee.status}</div>
+              <h3 style={{ margin: '10px 0 4px', fontSize: 20 }}>{employee.name}</h3>
+              <p style={{ margin: 0, color: '#475569' }}>{employee.role || 'Fonction non definie'}</p>
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={() => openEditModal(employee, 'employee')} style={miniActionStyle}>
+                <Pencil size={16} />
+              </button>
+              <button onClick={() => onDelete(employee.id, 'employee')} style={miniDangerStyle}>
+                <Trash2 size={16} />
+              </button>
+            </div>
+          </div>
+          <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <span style={metaItemStyle}><Mail size={14} /> {employee.email}</span>
+            <span style={metaItemStyle}><UserIcon size={14} /> {employee.phone || 'Telephone non renseigne'}</span>
+          </div>
+        </article>
+      ))
+    )}
+  </div>
+);
+
+const AdminForm = ({
+  modalType,
+  editingId,
+  formData,
+  setFormData,
+  selectedFile,
+  setSelectedFile,
+  handleSubmit,
+  setShowModal,
+  uploading,
+  employees,
+  reminderLeadHours,
+}) => (
   <div style={{ animation: 'fadeIn 0.3s ease-out' }}>
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
-      <h2 style={{ fontSize: '28px', fontWeight: 900, textTransform: 'uppercase' }}>{editingId ? 'Modifier' : 'Ajouter'}</h2>
-      <button onClick={() => setShowModal(false)} style={closeButtonStyle}><X size={24} /></button>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
+      <div>
+        <div style={eyebrowStyle}>Administration</div>
+        <h2 style={{ fontSize: 28, fontWeight: 900, margin: '8px 0 0' }}>
+          {editingId ? 'Modifier' : 'Ajouter'} {modalType === 'event' ? 'un evenement' : modalType === 'employee' ? 'un employe' : 'un contenu'}
+        </h2>
+      </div>
+      <button onClick={() => setShowModal(false)} style={closeButtonStyle}>
+        <X size={24} />
+      </button>
     </div>
 
     <form onSubmit={handleSubmit} style={formGridStyle}>
-      <div style={imageUploadAreaStyle}>
-        {(selectedFile || formData.image_url) ? (
-          <img src={selectedFile ? URL.createObjectURL(selectedFile) : formData.image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-        ) : (
-          <div style={{ textAlign: 'center', color: '#94a3b8' }}>
-            <ImageIcon size={64} style={{ marginBottom: '16px', opacity: 0.3 }} />
-            <p>Choisir une image</p>
-          </div>
-        )}
-        <input type="file" onChange={e => setSelectedFile(e.target.files[0])} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }} />
-      </div>
+      {['destination', 'post', 'team', 'testimonial'].includes(modalType) ? (
+        <div style={imageUploadAreaStyle}>
+          {selectedFile || formData.image_url ? (
+            <img
+              src={selectedFile ? URL.createObjectURL(selectedFile) : formData.image_url}
+              alt=""
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            />
+          ) : (
+            <div style={{ textAlign: 'center', color: '#94a3b8' }}>
+              <ImageIcon size={64} style={{ marginBottom: 16, opacity: 0.3 }} />
+              <p>Choisir une image</p>
+            </div>
+          )}
+          <input
+            type="file"
+            onChange={(e) => setSelectedFile(e.target.files[0])}
+            style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }}
+          />
+        </div>
+      ) : (
+        <div style={spotlightCardStyle}>
+          <div style={eyebrowStyle}>{modalType === 'event' ? 'Rappel automatique' : 'Employe concerne'}</div>
+          {modalType === 'event' ? (
+            <>
+              <h3 style={{ fontSize: 26, margin: '10px 0' }}>{getReminderLabel(reminderLeadHours)}</h3>
+              <p style={{ color: '#475569', lineHeight: 1.7 }}>
+                L employe recevra un e-mail automatique avant l evenement, si la configuration SMTP est active dans le backend.
+              </p>
+            </>
+          ) : (
+            <>
+              <h3 style={{ fontSize: 26, margin: '10px 0' }}>Fiche employee</h3>
+              <p style={{ color: '#475569', lineHeight: 1.7 }}>
+                Renseignez le nom, l e-mail et le role pour pouvoir rattacher cette personne aux rendez-vous du calendrier.
+              </p>
+            </>
+          )}
+        </div>
+      )}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+        {modalType === 'event' && (
+          <>
+            <FormField label="Titre">
+              <input style={inputStyle} value={formData.title} onChange={(e) => setFormData((current) => ({ ...current, title: e.target.value }))} required />
+            </FormField>
+            <div style={dualFieldGridStyle}>
+              <FormField label="Type">
+                <select style={inputStyle} value={formData.event_type} onChange={(e) => setFormData((current) => ({ ...current, event_type: e.target.value }))}>
+                  <option value="reunion">Reunion</option>
+                  <option value="programme">Programme</option>
+                  <option value="evenement">Evenement</option>
+                  <option value="mission">Mission</option>
+                </select>
+              </FormField>
+              <FormField label="Employe">
+                <select style={inputStyle} value={formData.employee_id} onChange={(e) => setFormData((current) => ({ ...current, employee_id: e.target.value }))} required>
+                  <option value="">Selectionner</option>
+                  {employees.map((employee) => (
+                    <option key={employee.id} value={employee.id}>
+                      {employee.name} - {employee.email}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+            </div>
+            <div style={tripleFieldGridStyle}>
+              <FormField label="Date">
+                <input type="date" style={inputStyle} value={formData.event_date} onChange={(e) => setFormData((current) => ({ ...current, event_date: e.target.value }))} required />
+              </FormField>
+              <FormField label="Heure">
+                <input type="time" style={inputStyle} value={formData.event_time} onChange={(e) => setFormData((current) => ({ ...current, event_time: e.target.value }))} required />
+              </FormField>
+              <FormField label="Lieu">
+                <input style={inputStyle} value={formData.location} onChange={(e) => setFormData((current) => ({ ...current, location: e.target.value }))} required />
+              </FormField>
+            </div>
+            <FormField label="Description">
+              <textarea style={{ ...inputStyle, height: 180 }} value={formData.description} onChange={(e) => setFormData((current) => ({ ...current, description: e.target.value }))} />
+            </FormField>
+          </>
+        )}
+
+        {modalType === 'employee' && (
+          <>
+            <FormField label="Nom complet">
+              <input style={inputStyle} value={formData.name} onChange={(e) => setFormData((current) => ({ ...current, name: e.target.value }))} required />
+            </FormField>
+            <div style={dualFieldGridStyle}>
+              <FormField label="E-mail">
+                <input type="email" style={inputStyle} value={formData.email} onChange={(e) => setFormData((current) => ({ ...current, email: e.target.value }))} required />
+              </FormField>
+              <FormField label="Telephone">
+                <input style={inputStyle} value={formData.phone} onChange={(e) => setFormData((current) => ({ ...current, phone: e.target.value }))} />
+              </FormField>
+            </div>
+            <div style={dualFieldGridStyle}>
+              <FormField label="Role">
+                <input style={inputStyle} value={formData.role} onChange={(e) => setFormData((current) => ({ ...current, role: e.target.value }))} />
+              </FormField>
+              <FormField label="Statut">
+                <select style={inputStyle} value={formData.status} onChange={(e) => setFormData((current) => ({ ...current, status: e.target.value }))}>
+                  <option value="Actif">Actif</option>
+                  <option value="Conge">Conge</option>
+                  <option value="Indisponible">Indisponible</option>
+                </select>
+              </FormField>
+            </div>
+          </>
+        )}
+
         {modalType === 'post' && (
           <>
-            <label style={fieldLabelStyle}>TITRE</label>
-            <input style={inputStyle} value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} />
-            <label style={fieldLabelStyle}>CONTENU</label>
-            <textarea style={{ ...inputStyle, height: '300px' }} value={formData.content} onChange={e => setFormData({ ...formData, content: e.target.value })} />
+            <FormField label="Titre">
+              <input style={inputStyle} value={formData.title} onChange={(e) => setFormData((current) => ({ ...current, title: e.target.value }))} required />
+            </FormField>
+            <FormField label="Categorie">
+              <input style={inputStyle} value={formData.category} onChange={(e) => setFormData((current) => ({ ...current, category: e.target.value }))} />
+            </FormField>
+            <FormField label="Contenu">
+              <textarea style={{ ...inputStyle, height: 260 }} value={formData.content} onChange={(e) => setFormData((current) => ({ ...current, content: e.target.value }))} required />
+            </FormField>
           </>
         )}
+
+        {modalType === 'service' && (
+          <>
+            <FormField label="Nom du service">
+              <input style={inputStyle} value={formData.name} onChange={(e) => setFormData((current) => ({ ...current, name: e.target.value }))} required />
+            </FormField>
+            <FormField label="Description">
+              <textarea style={{ ...inputStyle, height: 220 }} value={formData.description} onChange={(e) => setFormData((current) => ({ ...current, description: e.target.value }))} />
+            </FormField>
+            <FormField label="Statut">
+              <select style={inputStyle} value={formData.status} onChange={(e) => setFormData((current) => ({ ...current, status: e.target.value }))}>
+                <option value="Actif">Actif</option>
+                <option value="Draft">Draft</option>
+                <option value="Archive">Archive</option>
+              </select>
+            </FormField>
+          </>
+        )}
+
         {modalType === 'team' && (
           <>
-            <label style={fieldLabelStyle}>NOM</label>
-            <input style={inputStyle} value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
-            <label style={fieldLabelStyle}>POSTE</label>
-            <input style={inputStyle} value={formData.role} onChange={e => setFormData({ ...formData, role: e.target.value })} />
-            <label style={fieldLabelStyle}>BIO</label>
-            <textarea style={{ ...inputStyle, height: '200px' }} value={formData.bio} onChange={e => setFormData({ ...formData, bio: e.target.value })} />
+            <FormField label="Nom">
+              <input style={inputStyle} value={formData.name} onChange={(e) => setFormData((current) => ({ ...current, name: e.target.value }))} required />
+            </FormField>
+            <FormField label="Poste">
+              <input style={inputStyle} value={formData.role} onChange={(e) => setFormData((current) => ({ ...current, role: e.target.value }))} required />
+            </FormField>
+            <FormField label="Bio">
+              <textarea style={{ ...inputStyle, height: 220 }} value={formData.bio} onChange={(e) => setFormData((current) => ({ ...current, bio: e.target.value }))} />
+            </FormField>
           </>
         )}
+
         {modalType === 'testimonial' && (
           <>
-            <label style={fieldLabelStyle}>NOM</label>
-            <input style={inputStyle} value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
-            <label style={fieldLabelStyle}>RÔLE / TYPE</label>
-            <input style={inputStyle} value={formData.role} onChange={e => setFormData({ ...formData, role: e.target.value })} />
-            <label style={fieldLabelStyle}>NOTE (1-5)</label>
-            <input type="number" min="1" max="5" style={inputStyle} value={formData.rating} onChange={e => setFormData({ ...formData, rating: e.target.value })} />
-            <label style={fieldLabelStyle}>MESSAGE</label>
-            <textarea style={{ ...inputStyle, height: '200px' }} value={formData.content} onChange={e => setFormData({ ...formData, content: e.target.value })} />
+            <FormField label="Nom">
+              <input style={inputStyle} value={formData.name} onChange={(e) => setFormData((current) => ({ ...current, name: e.target.value }))} required />
+            </FormField>
+            <div style={dualFieldGridStyle}>
+              <FormField label="Role">
+                <input style={inputStyle} value={formData.role} onChange={(e) => setFormData((current) => ({ ...current, role: e.target.value }))} />
+              </FormField>
+              <FormField label="Note">
+                <input type="number" min="1" max="5" style={inputStyle} value={formData.rating} onChange={(e) => setFormData((current) => ({ ...current, rating: e.target.value }))} />
+              </FormField>
+            </div>
+            <FormField label="Message">
+              <textarea style={{ ...inputStyle, height: 220 }} value={formData.content} onChange={(e) => setFormData((current) => ({ ...current, content: e.target.value }))} required />
+            </FormField>
           </>
         )}
+
         {modalType === 'destination' && (
           <>
-            <label style={fieldLabelStyle}>NOM</label>
-            <input style={inputStyle} value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
-            <label style={fieldLabelStyle}>PRIX</label>
-            <input style={inputStyle} value={formData.price} onChange={e => setFormData({ ...formData, price: e.target.value })} />
-            <label style={fieldLabelStyle}>DESCRIPTION GÉNÉRALE</label>
-            <textarea style={{ ...inputStyle, height: '100px' }} value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} />
-            
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-              <div>
-                <label style={fieldLabelStyle}>ITINÉRAIRE</label>
-                <textarea style={{ ...inputStyle, height: '120px' }} value={formData.itinerary} onChange={e => setFormData({ ...formData, itinerary: e.target.value })} />
-              </div>
-              <div>
-                <label style={fieldLabelStyle}>HÉBERGEMENT</label>
-                <textarea style={{ ...inputStyle, height: '120px' }} value={formData.accommodation} onChange={e => setFormData({ ...formData, accommodation: e.target.value })} />
-              </div>
+            <FormField label="Nom">
+              <input style={inputStyle} value={formData.name} onChange={(e) => setFormData((current) => ({ ...current, name: e.target.value }))} required />
+            </FormField>
+            <div style={dualFieldGridStyle}>
+              <FormField label="Type">
+                <input style={inputStyle} value={formData.type} onChange={(e) => setFormData((current) => ({ ...current, type: e.target.value }))} />
+              </FormField>
+              <FormField label="Prix">
+                <input style={inputStyle} value={formData.price} onChange={(e) => setFormData((current) => ({ ...current, price: e.target.value }))} />
+              </FormField>
             </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-              <div>
-                <label style={fieldLabelStyle}>BUDGET</label>
-                <textarea style={{ ...inputStyle, height: '120px' }} value={formData.budget} onChange={e => setFormData({ ...formData, budget: e.target.value })} />
-              </div>
-              <div>
-                <label style={fieldLabelStyle}>NOS CONSEILS</label>
-                <textarea style={{ ...inputStyle, height: '120px' }} value={formData.tips} onChange={e => setFormData({ ...formData, tips: e.target.value })} />
-              </div>
+            <FormField label="Description">
+              <textarea style={{ ...inputStyle, height: 130 }} value={formData.description} onChange={(e) => setFormData((current) => ({ ...current, description: e.target.value }))} />
+            </FormField>
+            <div style={dualFieldGridStyle}>
+              <FormField label="Itineraire">
+                <textarea style={{ ...inputStyle, height: 110 }} value={formData.itinerary} onChange={(e) => setFormData((current) => ({ ...current, itinerary: e.target.value }))} />
+              </FormField>
+              <FormField label="Hebergement">
+                <textarea style={{ ...inputStyle, height: 110 }} value={formData.accommodation} onChange={(e) => setFormData((current) => ({ ...current, accommodation: e.target.value }))} />
+              </FormField>
             </div>
-
-            <label style={fieldLabelStyle}>POINTS FORTS (Un par ligne)</label>
-            <textarea style={{ ...inputStyle, height: '100px' }} value={formData.highlights} onChange={e => setFormData({ ...formData, highlights: e.target.value })} />
+            <div style={dualFieldGridStyle}>
+              <FormField label="Budget">
+                <textarea style={{ ...inputStyle, height: 110 }} value={formData.budget} onChange={(e) => setFormData((current) => ({ ...current, budget: e.target.value }))} />
+              </FormField>
+              <FormField label="Conseils">
+                <textarea style={{ ...inputStyle, height: 110 }} value={formData.tips} onChange={(e) => setFormData((current) => ({ ...current, tips: e.target.value }))} />
+              </FormField>
+            </div>
+            <FormField label="Points forts">
+              <textarea style={{ ...inputStyle, height: 100 }} value={formData.highlights} onChange={(e) => setFormData((current) => ({ ...current, highlights: e.target.value }))} />
+            </FormField>
           </>
         )}
+
         <button type="submit" disabled={uploading} style={submitButtonStyle}>
-          {uploading ? 'PATIENTEZ...' : 'ENREGISTRER'}
+          {uploading ? 'Sauvegarde en cours...' : 'Enregistrer'}
         </button>
       </div>
     </form>
   </div>
 );
 
+const FormField = ({ label, children }) => (
+  <div>
+    <label style={fieldLabelStyle}>{label}</label>
+    {children}
+  </div>
+);
+
 const Dialog = ({ dialog, setDialog }) => (
   <div style={modalOverlayStyle}>
     <div style={dialogContentStyle}>
-      <div style={{ ...dialogIconWrapper, backgroundColor: dialog.type === 'confirm' ? '#fff7ed' : '#fee2e2', color: dialog.type === 'confirm' ? '#f97316' : '#ef4444' }}>
-        {dialog.type === 'confirm' ? <Clock size={28} /> : <X size={28} />}
+      <div
+        style={{
+          ...dialogIconWrapper,
+          backgroundColor: dialog.type === 'confirm' ? '#fff7ed' : '#dcfce7',
+          color: dialog.type === 'confirm' ? '#f97316' : '#15803d',
+        }}
+      >
+        {dialog.type === 'confirm' ? <Clock3 size={28} /> : <Check size={28} />}
       </div>
-      <h3 style={dialogTitleStyle}>{dialog.type === 'confirm' ? 'Confirmation' : 'Attention'}</h3>
+      <h3 style={dialogTitleStyle}>{dialog.type === 'confirm' ? 'Confirmation' : 'Information'}</h3>
       <p style={dialogMessageStyle}>{dialog.message}</p>
-      <div style={{ display: 'flex', gap: '12px' }}>
+      <div style={{ display: 'flex', gap: 12 }}>
         {dialog.type === 'confirm' ? (
           <>
-            <button onClick={() => setDialog({ ...dialog, show: false })} style={cancelButtonStyle}>Annuler</button>
-            <button onClick={dialog.onConfirm} style={confirmButtonStyle}>Confirmer</button>
+            <button onClick={() => setDialog((current) => ({ ...current, show: false }))} style={cancelButtonStyle}>
+              Annuler
+            </button>
+            <button onClick={dialog.onConfirm} style={confirmButtonStyle}>
+              Confirmer
+            </button>
           </>
         ) : (
-          <button onClick={() => setDialog({ ...dialog, show: false })} style={okButtonStyle}>D'accord</button>
+          <button onClick={() => setDialog((current) => ({ ...current, show: false }))} style={okButtonStyle}>
+            D accord
+          </button>
         )}
       </div>
     </div>
@@ -446,75 +1231,636 @@ const BookingDetailModal = ({ selectedBooking, setShowBookingModal }) => (
   <div style={modalOverlayStyle}>
     <div style={bookingModalContentStyle}>
       <div style={modalHeaderStyle}>
-        <h2 style={{ fontSize: '20px', fontWeight: 900 }}>DÉTAILS DE LA RÉSERVATION</h2>
-        <button onClick={() => setShowBookingModal(false)} style={closeButtonStyleSmall}><X size={20} /></button>
+        <h2 style={{ fontSize: 20, fontWeight: 900, margin: 0 }}>Details de la reservation</h2>
+        <button onClick={() => setShowBookingModal(false)} style={closeButtonStyleSmall}>
+          <X size={20} />
+        </button>
       </div>
-      <div style={{ padding: '32px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }}>
+      <div style={{ padding: 32, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 24 }}>
         <div>
-          <label style={fieldLabelStyle}>CLIENT</label>
+          <label style={fieldLabelStyle}>Client</label>
           <p style={{ fontWeight: 800, margin: '4px 0' }}>{selectedBooking.sender}</p>
-          <p style={{ color: '#64748b', fontSize: '14px' }}>{selectedBooking.email}</p>
-          <p style={{ color: '#64748b', fontSize: '14px' }}>{selectedBooking.phone}</p>
+          <p style={{ color: '#64748b', fontSize: 14, margin: 0 }}>{selectedBooking.email}</p>
+          <p style={{ color: '#64748b', fontSize: 14, margin: '6px 0 0' }}>{selectedBooking.phone}</p>
         </div>
         <div>
-          <label style={fieldLabelStyle}>CIRCUIT</label>
+          <label style={fieldLabelStyle}>Circuit</label>
           <p style={{ fontWeight: 800, margin: '4px 0' }}>{selectedBooking.tour_name}</p>
-          <p style={{ color: '#22c55e', fontSize: '12px', fontWeight: 800 }}>TYPE: {selectedBooking.type?.toUpperCase()}</p>
+          <p style={{ color: '#0f766e', fontSize: 12, fontWeight: 800, margin: 0 }}>{selectedBooking.type?.toUpperCase()}</p>
         </div>
-        <div style={{ gridColumn: 'span 2' }}>
-          <label style={fieldLabelStyle}>LOGISTIQUE</label>
-          <div style={{ display: 'flex', gap: '24px', marginTop: '8px' }}>
-            <div><div style={statLabelMini}>PERS.</div><div style={{ fontWeight: 800 }}>{selectedBooking.participants}</div></div>
-            <div><div style={statLabelMini}>DÉPART</div><div style={{ fontWeight: 800 }}>{new Date(selectedBooking.departure_date).toLocaleDateString()}</div></div>
-            <div><div style={statLabelMini}>DURÉE</div><div style={{ fontWeight: 800 }}>{selectedBooking.duration || 'N/A'} j</div></div>
-          </div>
+        <div>
+          <label style={fieldLabelStyle}>Participants</label>
+          <p style={{ fontWeight: 800, margin: '4px 0' }}>{selectedBooking.participants}</p>
         </div>
-        <div style={{ gridColumn: 'span 2' }}>
-          <label style={fieldLabelStyle}>MESSAGE</label>
-          <div style={messageBoxStyle}>{selectedBooking.message || "Aucun message particulier."}</div>
+        <div>
+          <label style={fieldLabelStyle}>Depart</label>
+          <p style={{ fontWeight: 800, margin: '4px 0' }}>
+            {selectedBooking.departure_date ? new Date(selectedBooking.departure_date).toLocaleDateString('fr-FR') : 'N/A'}
+          </p>
+        </div>
+        <div style={{ gridColumn: '1 / -1' }}>
+          <label style={fieldLabelStyle}>Message</label>
+          <div style={messageBoxStyle}>{selectedBooking.message || 'Aucun message particulier.'}</div>
         </div>
       </div>
       <div style={modalFooterStyle}>
-        <button onClick={() => setShowBookingModal(false)} style={okButtonStyle}>FERMER</button>
+        <button onClick={() => setShowBookingModal(false)} style={okButtonStyle}>
+          Fermer
+        </button>
       </div>
     </div>
   </div>
 );
 
-// Styles
-const loginContainerStyle = { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f8fafc', backgroundImage: 'radial-gradient(at 0% 0%, rgba(10, 46, 54, 0.05) 0, transparent 50%), radial-gradient(at 50% 0%, rgba(210, 157, 82, 0.05) 0, transparent 50%)', fontFamily: "'Plus Jakarta Sans', sans-serif", padding: '20px' };
-const loginFormStyle = { backgroundColor: '#fff', padding: '40px', borderRadius: '32px', boxShadow: '0 40px 100px -20px rgba(10, 46, 54, 0.1)', border: '1px solid rgba(241, 245, 249, 0.8)', position: 'relative', overflow: 'hidden' };
-const accentLineStyle = { position: 'absolute', top: 0, left: 0, width: '100%', height: '4px', background: 'linear-gradient(90deg, #0A2E36, #D29D52)' };
-const loginTitleStyle = { fontSize: '24px', fontWeight: 800, color: '#0A2E36', marginBottom: '6px', letterSpacing: '-0.02em', fontFamily: "'Playfair Display', serif" };
-const inputLabelStyle = { display: 'block', fontSize: '10px', fontWeight: 800, color: '#94a3b8', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.1em' };
-const inputIconStyle = { position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#cbd5e1' };
-const loginInputStyle = { width: '100%', padding: '12px 12px 12px 44px', fontSize: '13px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', outline: 'none' };
-const loginButtonStyle = { width: '100%', padding: '14px', marginTop: '10px', backgroundColor: '#0A2E36', color: '#fff', border: 'none', borderRadius: '16px', cursor: 'pointer', fontWeight: 800, fontSize: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', boxShadow: '0 10px 20px -5px rgba(10, 46, 54, 0.2)' };
-const errorStyle = { color: '#ef4444', fontSize: '12px', fontWeight: 700, textAlign: 'center' };
-const searchBarStyle = { width: '100%', padding: '14px 20px 14px 50px', borderRadius: '50px', height: '54px', border: '1px solid #f1f5f9', outline: 'none', fontSize: '13px' };
-const searchIconStyle = { position: 'absolute', left: '24px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' };
-const controlsRowStyle = { display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '40px' };
-const iconButtonStyle = { width: '44px', height: '44px', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', border: '1px solid #f1f5f9' };
-const addButtonStyle = { backgroundColor: '#000', color: '#fff', padding: '0 24px', borderRadius: '14px', border: 'none', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', height: '44px' };
-const closeButtonStyle = { background: '#f1f5f9', border: 'none', borderRadius: '50%', width: '50px', height: '50px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' };
-const closeButtonStyleSmall = { background: '#f1f5f9', border: 'none', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' };
-const formGridStyle = { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '60px' };
-const imageUploadAreaStyle = { position: 'relative', height: 'auto', minHeight: '400px', backgroundColor: '#f8fafc', borderRadius: '40px', overflow: 'hidden', border: '2px dashed #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center' };
-const fieldLabelStyle = { fontSize: '11px', fontWeight: 900, color: '#94a3b8', marginBottom: '12px', display: 'block', letterSpacing: '0.1em' };
-const inputStyle = { width: '100%', padding: '14px 18px', borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '14px', outline: 'none' };
-const submitButtonStyle = { backgroundColor: '#000', color: '#fff', padding: '20px', borderRadius: '18px', border: 'none', fontWeight: 900, cursor: 'pointer', marginTop: '20px' };
-const modalOverlayStyle = { position: 'fixed', inset: 0, backgroundColor: 'rgba(10, 46, 54, 0.4)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: '20px' };
-const dialogContentStyle = { backgroundColor: '#fff', width: '100%', maxWidth: '400px', borderRadius: '24px', padding: '32px', textAlign: 'center', boxShadow: '0 20px 50px rgba(0,0,0,0.1)' };
-const dialogIconWrapper = { width: '56px', height: '56px', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' };
-const dialogTitleStyle = { fontSize: '18px', fontWeight: 800, color: '#0A2E36', marginBottom: '12px' };
-const dialogMessageStyle = { color: '#64748b', fontSize: '14px', lineHeight: 1.6, marginBottom: '32px' };
-const cancelButtonStyle = { flex: 1, padding: '12px', borderRadius: '14px', border: '1px solid #e2e8f0', backgroundColor: '#fff', color: '#64748b', fontWeight: 700, fontSize: '14px', cursor: 'pointer' };
-const confirmButtonStyle = { flex: 1, padding: '12px', borderRadius: '14px', border: 'none', backgroundColor: '#ef4444', color: '#fff', fontWeight: 700, fontSize: '14px', cursor: 'pointer' };
-const okButtonStyle = { flex: 1, padding: '12px', borderRadius: '14px', border: 'none', backgroundColor: '#0A2E36', color: '#fff', fontWeight: 700, fontSize: '14px', cursor: 'pointer' };
-const bookingModalContentStyle = { backgroundColor: '#fff', width: '100%', maxWidth: '600px', borderRadius: '32px', overflow: 'hidden', boxShadow: '0 40px 100px rgba(0,0,0,0.2)' };
-const modalHeaderStyle = { padding: '32px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' };
-const modalFooterStyle = { padding: '24px 32px', backgroundColor: '#f8fafc', display: 'flex', justifyContent: 'flex-end' };
-const messageBoxStyle = { backgroundColor: '#f8fafc', padding: '20px', borderRadius: '16px', fontSize: '14px', color: '#444', lineHeight: 1.6, border: '1px solid #f1f5f9' };
-const statLabelMini = { fontSize: '10px', color: '#94a3b8', fontWeight: 800 };
+const MiniStat = ({ label, value }) => (
+  <div style={miniStatCardStyle}>
+    <div style={fieldLabelStyle}>{label}</div>
+    <div style={{ fontSize: 18, fontWeight: 800, color: '#082f49' }}>{value}</div>
+  </div>
+);
+
+const appShellStyle = {
+  display: 'flex',
+  minHeight: '100vh',
+  background:
+    'radial-gradient(circle at top left, rgba(45,212,191,0.08), transparent 24%), linear-gradient(180deg, #f8fafc 0%, #eef6ff 100%)',
+  color: '#000',
+  fontFamily: "'Plus Jakarta Sans', sans-serif",
+};
+
+const mainStyle = {
+  flex: 1,
+  padding: '32px',
+  overflowY: 'auto',
+};
+
+const loginContainerStyle = {
+  minHeight: '100vh',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  background:
+    'radial-gradient(circle at top left, rgba(6,182,212,0.12), transparent 28%), linear-gradient(180deg, #f8fafc 0%, #ecfeff 100%)',
+  padding: 20,
+  fontFamily: "'Plus Jakarta Sans', sans-serif",
+};
+
+const loginFormStyle = {
+  backgroundColor: '#fff',
+  padding: 40,
+  borderRadius: 32,
+  boxShadow: '0 40px 100px -20px rgba(8, 47, 73, 0.18)',
+  border: '1px solid rgba(226, 232, 240, 0.8)',
+  position: 'relative',
+  overflow: 'hidden',
+};
+
+const accentLineStyle = {
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  width: '100%',
+  height: 4,
+  background: 'linear-gradient(90deg, #0f766e, #38bdf8)',
+};
+
+const loginTitleStyle = {
+  fontSize: 24,
+  fontWeight: 800,
+  color: '#082f49',
+  margin: '0 0 6px',
+};
+
+const inputLabelStyle = {
+  display: 'block',
+  fontSize: 10,
+  fontWeight: 800,
+  color: '#94a3b8',
+  marginBottom: 8,
+  textTransform: 'uppercase',
+  letterSpacing: '0.1em',
+};
+
+const inputIconStyle = {
+  position: 'absolute',
+  left: 16,
+  top: '50%',
+  transform: 'translateY(-50%)',
+  color: '#cbd5e1',
+};
+
+const loginInputStyle = {
+  width: '100%',
+  padding: '12px 12px 12px 44px',
+  fontSize: 13,
+  backgroundColor: '#f8fafc',
+  border: '1px solid #e2e8f0',
+  borderRadius: 12,
+  outline: 'none',
+};
+
+const loginButtonStyle = {
+  width: '100%',
+  padding: 14,
+  marginTop: 8,
+  backgroundColor: '#082f49',
+  color: '#fff',
+  border: 'none',
+  borderRadius: 16,
+  cursor: 'pointer',
+  fontWeight: 800,
+  fontSize: 15,
+};
+
+const errorStyle = {
+  color: '#dc2626',
+  fontSize: 12,
+  fontWeight: 700,
+  textAlign: 'center',
+};
+
+const controlsRowStyle = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 20,
+  marginBottom: 28,
+  flexWrap: 'wrap',
+};
+
+const searchBarStyle = {
+  width: '100%',
+  padding: '14px 20px 14px 50px',
+  borderRadius: 18,
+  height: 54,
+  border: '1px solid #e2e8f0',
+  outline: 'none',
+  fontSize: 13,
+  backgroundColor: 'rgba(255,255,255,0.9)',
+};
+
+const searchIconStyle = {
+  position: 'absolute',
+  left: 24,
+  top: '50%',
+  transform: 'translateY(-50%)',
+  color: '#94a3b8',
+};
+
+const iconButtonStyle = {
+  width: 44,
+  height: 44,
+  borderRadius: 14,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  cursor: 'pointer',
+  border: '1px solid #e2e8f0',
+};
+
+const addButtonStyle = {
+  backgroundColor: '#082f49',
+  color: '#fff',
+  padding: '0 24px',
+  borderRadius: 14,
+  border: 'none',
+  fontWeight: 800,
+  cursor: 'pointer',
+  display: 'flex',
+  alignItems: 'center',
+  gap: 8,
+  fontSize: 12,
+  height: 44,
+};
+
+const secondaryButtonStyle = {
+  backgroundColor: '#ecfeff',
+  color: '#155e75',
+  padding: '0 18px',
+  borderRadius: 14,
+  border: '1px solid #a5f3fc',
+  fontWeight: 700,
+  cursor: 'pointer',
+  display: 'flex',
+  alignItems: 'center',
+  gap: 8,
+  fontSize: 12,
+  height: 44,
+};
+
+const heroCardStyle = {
+  background: 'linear-gradient(135deg, rgba(240,253,250,0.95), rgba(224,242,254,0.95))',
+  border: '1px solid rgba(125,211,252,0.5)',
+  borderRadius: 28,
+  padding: 28,
+  display: 'flex',
+  justifyContent: 'space-between',
+  gap: 24,
+  flexWrap: 'wrap',
+};
+
+const heroStatsStyle = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+  gap: 12,
+  minWidth: 320,
+  flex: 1,
+};
+
+const miniStatCardStyle = {
+  backgroundColor: 'rgba(255,255,255,0.78)',
+  borderRadius: 20,
+  padding: 16,
+  border: '1px solid rgba(255,255,255,0.8)',
+};
+
+const eyebrowStyle = {
+  fontSize: 11,
+  fontWeight: 900,
+  letterSpacing: '0.14em',
+  color: '#0f766e',
+  textTransform: 'uppercase',
+};
+
+const agendaGridStyle = {
+  display: 'grid',
+  gridTemplateColumns: 'minmax(0, 1.4fr) minmax(320px, 0.9fr)',
+  gap: 24,
+};
+
+const panelStyle = {
+  backgroundColor: 'rgba(255,255,255,0.92)',
+  borderRadius: 28,
+  padding: 24,
+  border: '1px solid #e2e8f0',
+  boxShadow: '0 20px 60px rgba(15, 23, 42, 0.06)',
+};
+
+const calendarHeaderStyle = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  gap: 16,
+  marginBottom: 20,
+};
+
+const monthNavButtonStyle = {
+  width: 42,
+  height: 42,
+  borderRadius: 14,
+  border: '1px solid #dbeafe',
+  backgroundColor: '#f8fafc',
+  cursor: 'pointer',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+};
+
+const weekdayGridStyle = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(7, 1fr)',
+  gap: 10,
+  marginBottom: 10,
+};
+
+const weekdayCellStyle = {
+  textAlign: 'center',
+  fontSize: 12,
+  fontWeight: 800,
+  color: '#64748b',
+  padding: '8px 0',
+};
+
+const monthGridStyle = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(7, 1fr)',
+  gap: 10,
+};
+
+const dayCellStyle = {
+  minHeight: 108,
+  borderRadius: 20,
+  padding: 12,
+  textAlign: 'left',
+  cursor: 'pointer',
+  display: 'flex',
+  flexDirection: 'column',
+  justifyContent: 'space-between',
+};
+
+const badgeStyle = {
+  minWidth: 22,
+  height: 22,
+  borderRadius: 999,
+  backgroundColor: '#082f49',
+  color: '#fff',
+  fontSize: 11,
+  fontWeight: 800,
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+};
+
+const eventPillStyle = {
+  fontSize: 11,
+  color: '#0f766e',
+  backgroundColor: '#f0fdfa',
+  borderRadius: 999,
+  padding: '4px 8px',
+  whiteSpace: 'nowrap',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+};
+
+const timelineCardStyle = {
+  border: '1px solid #e2e8f0',
+  borderRadius: 22,
+  padding: 18,
+  backgroundColor: '#fff',
+};
+
+const eventTypeChipStyle = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  padding: '6px 10px',
+  borderRadius: 999,
+  backgroundColor: '#e0f2fe',
+  color: '#075985',
+  fontSize: 11,
+  fontWeight: 800,
+  textTransform: 'uppercase',
+  letterSpacing: '0.08em',
+};
+
+const metaRowStyle = {
+  display: 'flex',
+  gap: 12,
+  flexWrap: 'wrap',
+  marginTop: 8,
+};
+
+const metaItemStyle = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 6,
+  color: '#475569',
+  fontSize: 13,
+};
+
+const employeeCardStyle = {
+  backgroundColor: '#fff',
+  borderRadius: 24,
+  padding: 22,
+  border: '1px solid #e2e8f0',
+  boxShadow: '0 18px 40px rgba(15, 23, 42, 0.05)',
+};
+
+const employeeStatusStyle = {
+  display: 'inline-flex',
+  padding: '6px 10px',
+  borderRadius: 999,
+  backgroundColor: '#f1f5f9',
+  color: '#334155',
+  fontSize: 11,
+  fontWeight: 800,
+};
+
+const miniActionStyle = {
+  width: 38,
+  height: 38,
+  borderRadius: 12,
+  border: '1px solid #dbeafe',
+  backgroundColor: '#eff6ff',
+  color: '#1d4ed8',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  cursor: 'pointer',
+};
+
+const miniDangerStyle = {
+  ...miniActionStyle,
+  border: '1px solid #fecaca',
+  backgroundColor: '#fef2f2',
+  color: '#dc2626',
+};
+
+const emptyStateStyle = {
+  backgroundColor: 'rgba(255,255,255,0.92)',
+  borderRadius: 20,
+  border: '1px dashed #cbd5e1',
+  padding: 28,
+  color: '#64748b',
+  textAlign: 'center',
+};
+
+const closeButtonStyle = {
+  background: '#f1f5f9',
+  border: 'none',
+  borderRadius: '50%',
+  width: 50,
+  height: 50,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  cursor: 'pointer',
+};
+
+const closeButtonStyleSmall = {
+  background: '#f1f5f9',
+  border: 'none',
+  borderRadius: '50%',
+  width: 40,
+  height: 40,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  cursor: 'pointer',
+};
+
+const formGridStyle = {
+  display: 'grid',
+  gridTemplateColumns: 'minmax(260px, 0.85fr) minmax(0, 1.15fr)',
+  gap: 32,
+};
+
+const imageUploadAreaStyle = {
+  position: 'relative',
+  minHeight: 420,
+  backgroundColor: '#f8fafc',
+  borderRadius: 32,
+  overflow: 'hidden',
+  border: '2px dashed #e2e8f0',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+};
+
+const spotlightCardStyle = {
+  minHeight: 300,
+  borderRadius: 32,
+  padding: 28,
+  border: '1px solid #bfdbfe',
+  background: 'linear-gradient(135deg, rgba(219,234,254,0.8), rgba(240,249,255,0.95))',
+};
+
+const fieldLabelStyle = {
+  fontSize: 11,
+  fontWeight: 900,
+  color: '#94a3b8',
+  marginBottom: 10,
+  display: 'block',
+  letterSpacing: '0.1em',
+  textTransform: 'uppercase',
+};
+
+const inputStyle = {
+  width: '100%',
+  padding: '14px 18px',
+  borderRadius: 14,
+  border: '1px solid #e2e8f0',
+  fontSize: 14,
+  outline: 'none',
+  backgroundColor: '#fff',
+};
+
+const dualFieldGridStyle = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+  gap: 16,
+};
+
+const tripleFieldGridStyle = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+  gap: 16,
+};
+
+const submitButtonStyle = {
+  backgroundColor: '#082f49',
+  color: '#fff',
+  padding: 18,
+  borderRadius: 18,
+  border: 'none',
+  fontWeight: 900,
+  cursor: 'pointer',
+  marginTop: 8,
+};
+
+const modalOverlayStyle = {
+  position: 'fixed',
+  inset: 0,
+  backgroundColor: 'rgba(8, 47, 73, 0.35)',
+  backdropFilter: 'blur(8px)',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  zIndex: 2000,
+  padding: 20,
+};
+
+const dialogContentStyle = {
+  backgroundColor: '#fff',
+  width: '100%',
+  maxWidth: 420,
+  borderRadius: 24,
+  padding: 32,
+  textAlign: 'center',
+  boxShadow: '0 20px 50px rgba(0,0,0,0.1)',
+};
+
+const dialogIconWrapper = {
+  width: 56,
+  height: 56,
+  borderRadius: 18,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  margin: '0 auto 20px',
+};
+
+const dialogTitleStyle = {
+  fontSize: 18,
+  fontWeight: 800,
+  color: '#082f49',
+  marginBottom: 12,
+};
+
+const dialogMessageStyle = {
+  color: '#64748b',
+  fontSize: 14,
+  lineHeight: 1.6,
+  marginBottom: 28,
+};
+
+const cancelButtonStyle = {
+  flex: 1,
+  padding: 12,
+  borderRadius: 14,
+  border: '1px solid #e2e8f0',
+  backgroundColor: '#fff',
+  color: '#64748b',
+  fontWeight: 700,
+  fontSize: 14,
+  cursor: 'pointer',
+};
+
+const confirmButtonStyle = {
+  flex: 1,
+  padding: 12,
+  borderRadius: 14,
+  border: 'none',
+  backgroundColor: '#dc2626',
+  color: '#fff',
+  fontWeight: 700,
+  fontSize: 14,
+  cursor: 'pointer',
+};
+
+const okButtonStyle = {
+  flex: 1,
+  padding: 12,
+  borderRadius: 14,
+  border: 'none',
+  backgroundColor: '#082f49',
+  color: '#fff',
+  fontWeight: 700,
+  fontSize: 14,
+  cursor: 'pointer',
+};
+
+const bookingModalContentStyle = {
+  backgroundColor: '#fff',
+  width: '100%',
+  maxWidth: 720,
+  borderRadius: 32,
+  overflow: 'hidden',
+  boxShadow: '0 40px 100px rgba(0,0,0,0.2)',
+};
+
+const modalHeaderStyle = {
+  padding: 32,
+  borderBottom: '1px solid #f1f5f9',
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+};
+
+const modalFooterStyle = {
+  padding: '24px 32px',
+  backgroundColor: '#f8fafc',
+  display: 'flex',
+  justifyContent: 'flex-end',
+};
+
+const messageBoxStyle = {
+  backgroundColor: '#f8fafc',
+  padding: 20,
+  borderRadius: 16,
+  fontSize: 14,
+  color: '#444',
+  lineHeight: 1.6,
+  border: '1px solid #f1f5f9',
+};
 
 export default Admin;

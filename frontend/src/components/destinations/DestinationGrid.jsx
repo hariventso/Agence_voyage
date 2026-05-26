@@ -29,13 +29,13 @@ const DestinationGrid = ({ loading, destinations }) => {
                 <div style={{ position: 'relative', height: '220px' }}>
                   <img src={dest.image_url || '/image/mountain.png'} alt={dest.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#FF8C00', color: '#fff', padding: '10px 20px', fontWeight: 600 }}>
-                    {dest.name}
+                    {dest.service_name}
                   </div>
                 </div>
                 <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', flex: 1 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', color: '#000' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700 }}>
-                      <MapPin size={18} color="#FF8C00" /> {dest.type}
+                      <MapPin size={18} color="#FF8C00" /> {dest.name}
                     </div>
                     <div style={{ fontWeight: 800, fontSize: '1.2rem', color: '#000' }}>{dest.price}</div>
                   </div>

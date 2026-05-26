@@ -53,7 +53,9 @@ const FloatingInfoCard = ({ isMobile, destination }) => {
             <Clock size={16} strokeWidth={2.5} />
             <span style={{ fontSize: '10px', fontWeight: 800, textTransform: 'uppercase' }}>Durée</span>
           </div>
-          <div style={{ fontSize: isMobile ? '16px' : '18px', fontWeight: 800, color: '#333' }}>Sur demande</div>
+          <div style={{ fontSize: isMobile ? '16px' : '18px', fontWeight: 800, color: '#333' }}>
+            {destination.duration ? `${destination.duration} j` : 'Sur demande'}
+          </div>
         </div>
       </div>
 

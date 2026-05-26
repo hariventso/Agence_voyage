@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Phone, Mail, CheckCircle, AlertCircle, Send, Loader } from 'lucide-react';
+import { apiService } from '../services/api';
 
 // Adresse email de destination
 const CONTACT_EMAIL = 'contact@domain.com';
@@ -78,20 +79,14 @@ function Contact() {
 
     setNewsletterStatus('loading');
     try {
-      const res = await fetch('http://localhost:5000/api/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sender: newsletter.name,
-          email: newsletter.email,
-          subject: 'Inscription Newsletter',
-          content: `${newsletter.name} souhaite s'inscrire à la newsletter.`
-        })
+      await apiService.createMessage({
+        sender: newsletter.name,
+        email: newsletter.email,
+        subject: 'Inscription Newsletter',
+        content: `${newsletter.name} souhaite s'inscrire à la newsletter.`
       });
-      if (res.ok) {
-        setNewsletterStatus('success');
-        setNewsletter({ name: '', email: '' });
-      }
+      setNewsletterStatus('success');
+      setNewsletter({ name: '', email: '' });
     } catch (err) {
       console.error(err);
       setNewsletterStatus('error');
@@ -300,7 +295,7 @@ function Contact() {
       <section style={{ width: '100%', height: isMobile ? '300px' : '450px', backgroundColor: '#111' }}>
         <iframe
           title="Madagascar Map"
-          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d120757.26084055273!2d47.44773822167969!3d-18.887820699999998!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x21f0809700000001%3A0x67988344e11f0578!2sAntananarivo!5e0!3m2!1sen!2smg!4v1714809000000!5m2!1sen!2smg"
+          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3774.6723102920582!2d47.52613187433565!3d-18.901613107109032!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x21f0876571a858ff%3A0xc5428e561c74dc92!2sExplor'%20%C3%AEle!5e0!3m2!1sfr!2smg!4v1778829112683!5m2!1sfr!2smg"
           width="100%"
           height="100%"
           style={{ border: 0 }}

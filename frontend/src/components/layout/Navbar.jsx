@@ -40,7 +40,7 @@ const Navbar = ({
         {/* Desktop Nav Links */}
         <div className="nav-links nav-links-desktop">
           <a href="#" style={{ color: linkColor(currentHash === '' || currentHash === '#'), fontWeight: 600, fontSize: '15px', textDecoration: 'none' }}>Accueil</a>
-          <a href="#destinations" style={{ color: linkColor(isDestinationPage), fontWeight: 600, fontSize: '15px', textDecoration: 'none' }}>Destinations</a>
+          <a href="#destinations" style={{ color: linkColor(isDestinationPage), fontWeight: 600, fontSize: '15px', textDecoration: 'none' }}>Circuits</a>
           <a href="#blog" style={{ color: linkColor(isBlogPage || isPostPage), fontWeight: 600, fontSize: '15px', textDecoration: 'none' }}>Blog</a>
           <a href="#about" style={{ color: linkColor(isAboutPage), fontWeight: 600, fontSize: '15px', textDecoration: 'none' }}>À propos</a>
           <a href="#contact" style={{ color: linkColor(isContactPage), fontWeight: 600, fontSize: '15px', textDecoration: 'none' }}>Contact</a>

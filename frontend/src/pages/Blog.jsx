@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { apiService } from '../services/api';
 
 function Blog() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -14,8 +15,7 @@ function Blog() {
 
   const fetchPosts = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/posts');
-      const data = await res.json();
+      const data = await apiService.getPosts();
       setPosts(data);
     } catch (e) {
       console.error("Error fetching posts:", e);

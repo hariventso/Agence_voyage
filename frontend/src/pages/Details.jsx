@@ -5,6 +5,7 @@ import DetailsTabs from '../components/details/DetailsTabs';
 import DetailsSidebar from '../components/details/DetailsSidebar';
 import BookingForm from '../components/details/BookingForm';
 import DestinationGrid from '../components/destinations/DestinationGrid';
+import { apiService } from '../services/api';
 
 const Details = ({ destinationId }) => {
   const [destination, setDestination] = useState(null);
@@ -26,19 +27,16 @@ const Details = ({ destinationId }) => {
       if (!destinationId) return;
       setLoading(true);
       try {
-        const [destRes, allRes] = await Promise.all([
-          fetch(`http://localhost:5000/api/destinations/${destinationId}`),
-          fetch(`http://localhost:5000/api/destinations`)
+        const [destData, allData] = await Promise.all([
+          apiService.getDestination(destinationId),
+          apiService.getDestinations()
         ]);
 
-        if (!destRes.ok) throw new Error('Destination non trouvée');
-        const destData = await destRes.json();
+        if (!destData) throw new Error('Destination non trouvée');
         setDestination(destData);
 
-        if (allRes.ok) {
-          const allData = await allRes.json();
-          // Exclure la destination actuelle de la liste suggérée
-          setDestinations(allData.filter(d => d.id !== parseInt(destinationId)));
+        if (Array.isArray(allData)) {
+          setDestinations(allData.filter(d => d.id !== parseInt(destinationId, 10)));
         }
 
         setError(null);
@@ -51,6 +49,26 @@ const Details = ({ destinationId }) => {
 
     fetchData();
   }, [destinationId]);
+
+  useEffect(() => {
+    if (!destination) return;
+    const pageTitle = `${destination.name} | Explor'Île`;
+    const pageDescription = destination.description ? destination.description.substring(0, 160).replace(/\s+/g, ' ').trim() + '...' : `Découvrez les détails du circuit ${destination.name} à Madagascar avec Explor'Île.`;
+    document.title = pageTitle;
+    const setMeta = (selector, attr, value) => {
+      const node = document.querySelector(selector);
+      if (node) node.setAttribute(attr, value);
+    };
+    setMeta('meta[name="description"]', 'content', pageDescription);
+    setMeta('meta[property="og:title"]', 'content', pageTitle);
+    setMeta('meta[property="og:description"]', 'content', pageDescription);
+    setMeta('meta[property="og:image"]', 'content', destination.image_url || '/image/hero.png');
+    setMeta('meta[name="twitter:title"]', 'content', pageTitle);
+    setMeta('meta[name="twitter:description"]', 'content', pageDescription);
+    setMeta('meta[name="twitter:image"]', 'content', destination.image_url || '/image/hero.png');
+    const canonical = document.querySelector('link[rel="canonical"]');
+    if (canonical) canonical.setAttribute('href', `${window.location.origin}${window.location.pathname}#detail-${destinationId}`);
+  }, [destination, destinationId]);
 
   useEffect(() => {
     const handleScroll = () => setShowStickyBar(window.scrollY > 400);
@@ -68,29 +86,57 @@ const Details = ({ destinationId }) => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleFormSubmit = (e) => {
+  const handleFormSubmit = async (e) => {
     e.preventDefault();
     if (!formData.nom || !formData.email || !formData.dateDepart) {
       setDialog({ show: true, message: 'Veuillez remplir les champs obligatoires : Nom, Email et Date de départ.' });
       return;
     }
-    
-    const whatsappNumber = '261341776169'; // Numéro à adapter
-    const text = `Bonjour, je souhaite réserver le circuit : ${destination.name}. %0A%0A` +
-                 `Détails : %0A` +
-                 `- Nom : ${formData.nom} %0A` +
-                 `- Email : ${formData.email} %0A` +
-                 `- Téléphone : ${formData.telephone} %0A` +
-                 `- Participants : ${formData.participants} %0A` +
-                 `- Date de départ : ${formData.dateDepart} %0A` +
-                 `- Type : ${formData.typeVoyage} %0A` +
-                 `- Message : ${formData.message}`;
-    
-    const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${text}`;
-    window.open(whatsappUrl, '_blank');
-    
-    setFormStatus('success');
-    setFormData({ nom: '', email: '', telephone: '', participants: '2', dateDepart: '', duree: '', typeVoyage: 'devis', message: '' });
+
+    // Si c'est une réservation : envoi à la base de données
+    if (formData.typeVoyage === 'reservation') {
+      setFormStatus('submitting');
+      try {
+        const bookingData = {
+          type: 'reservation',
+          sender: formData.nom,
+          email: formData.email,
+          phone: formData.telephone,
+          participants: parseInt(formData.participants),
+          departure_date: formData.dateDepart,
+          duration: formData.duree,
+          message: formData.message,
+          tour_name: destination.name
+        };
+        const response = await apiService.createBooking(bookingData);
+        if (response) {
+          setFormStatus('success');
+          setDialog({ show: true, message: 'Votre réservation a été reçue. Nous vous contacterons bientôt !' });
+          setFormData({ nom: '', email: '', telephone: '', participants: '2', dateDepart: '', duree: '', typeVoyage: 'devis', message: '' });
+        }
+      } catch (err) {
+        console.error('Erreur lors de la soumission:', err);
+        setFormStatus('error');
+        setDialog({ show: true, message: 'Erreur lors de l\'envoi de la réservation. Veuillez réessayer.' });
+      }
+    } else {
+      // Si c'est un devis : envoi via WhatsApp
+      const whatsappNumber = '261341776169'; // Numéro à adapter
+      const text = `Bonjour, je souhaite un devis pour le circuit : ${destination.name}. %0A%0A` +
+                   `Détails : %0A` +
+                   `- Nom : ${formData.nom} %0A` +
+                   `- Email : ${formData.email} %0A` +
+                   `- Téléphone : ${formData.telephone} %0A` +
+                   `- Participants : ${formData.participants} %0A` +
+                   `- Date de départ : ${formData.dateDepart} %0A` +
+                   `- Message : ${formData.message}`;
+      
+      const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${text}`;
+      window.open(whatsappUrl, '_blank');
+      
+      setFormStatus('success');
+      setFormData({ nom: '', email: '', telephone: '', participants: '2', dateDepart: '', duree: '', typeVoyage: 'devis', message: '' });
+    }
   };
 
   if (loading) return null;

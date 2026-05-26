@@ -37,7 +37,7 @@ function App() {
   }, []);
 
   // Routing Logic
-  const isDestinationPage = currentHash === '#destinations';
+  const isDestinationPage = currentHash.startsWith('#destinations');
   const isContactPage = currentHash === '#contact';
   const isBlogPage = currentHash === '#blog';
   const isDetailPage = currentHash.startsWith('#detail-');
@@ -45,6 +45,7 @@ function App() {
   
   const isViewPage = currentHash.startsWith('#view-');
   const destinationIdView = isViewPage ? currentHash.split('-')[1] : null;
+  const destinationServiceFilter = isDestinationPage && currentHash.includes('?service=') ? decodeURIComponent(currentHash.split('?service=')[1]) : null;
 
   const isAboutPage = currentHash === '#about';
   const isAdminPage = currentHash === '#admin';
@@ -52,6 +53,79 @@ function App() {
   const postId = isPostPage ? currentHash.split('-')[1] : null;
 
   const isScrolledOrInnerPage = scrolled || isDestinationPage || isDetailPage || isViewPage || isAboutPage || isContactPage || isBlogPage || isPostPage;
+
+  useEffect(() => {
+    const updateMeta = (selector, attr, value) => {
+      let element = document.querySelector(selector);
+      if (!element) {
+        element = document.createElement('meta');
+        if (selector.startsWith('meta[')) {
+          const attrMatch = selector.match(/\[(.*?)\]/);
+          if (attrMatch) {
+            const [name, val] = attrMatch[1].split('=');
+            element.setAttribute(name.trim(), val.replace(/"/g, '').trim());
+          }
+        }
+        document.head.appendChild(element);
+      }
+      element.setAttribute(attr, value);
+    };
+
+    const setMetaTag = (name, content) => updateMeta(`meta[name="${name}"]`, 'content', content);
+    const setMetaProperty = (property, content) => updateMeta(`meta[property="${property}"]`, 'content', content);
+    const setLink = (rel, href) => {
+      let link = document.querySelector(`link[rel="${rel}"]`);
+      if (!link) {
+        link = document.createElement('link');
+        link.setAttribute('rel', rel);
+        document.head.appendChild(link);
+      }
+      link.setAttribute('href', href);
+    };
+
+    const baseUrl = window.location.origin;
+    let title = "Explor'Île - Agence de voyages à Madagascar";
+    let description = "Explor'Île propose des voyages authentiques à Madagascar : circuits culturels, séjours balnéaires et aventures responsables.";
+
+    if (isAboutPage) {
+      title = "À propos - Explor'Île | Voyage culturel à Madagascar";
+      description = "Découvrez l'histoire, l'équipe et la mission d'Explor'Île, spécialiste du voyage authentique à Madagascar.";
+    } else if (isContactPage) {
+      title = "Contact - Explor'Île | Demande de voyage et devis";
+      description = "Contactez Explor'Île pour un devis personnalisé ou une demande de voyage à Madagascar.";
+    } else if (isBlogPage) {
+      title = "Blog Voyage Madagascar - Explor'Île";
+      description = "Récits, conseils et idées de voyages à Madagascar pour préparer votre séjour responsable.";
+    } else if (isDestinationPage) {
+      title = destinationServiceFilter
+        ? `Destinations ${destinationServiceFilter} - Explor'Île`
+        : "Destinations Madagascar - Explor'Île";
+      description = destinationServiceFilter
+        ? `Découvrez nos circuits ${destinationServiceFilter} à Madagascar, sélectionnés pour répondre à votre voyage sur mesure.`
+        : "Explorez nos meilleures destinations à Madagascar : circuits, séjours balnéaires et aventures sur mesure.";
+    } else if (isDetailPage) {
+      title = "Détails de destination - Explor'Île";
+      description = "Découvrez le détail du circuit et réservez votre voyage authentique à Madagascar.";
+    } else if (isViewPage) {
+      title = "Destination en détail - Explor'Île";
+      description = "Informations détaillées sur la destination et les offres de voyage à Madagascar.";
+    } else if (isPostPage) {
+      title = "Article Blog - Explor'Île Madagascar";
+      description = "Lisez des articles de blog sur Madagascar, la culture locale et les meilleures expériences de voyage.";
+    }
+
+    document.title = title;
+    setMetaTag('description', description);
+    setMetaTag('keywords', 'voyage Madagascar, tourisme durable, circuit culturel, séjour balnéaire, explor ile, agence de voyage');
+    setMetaProperty('og:title', title);
+    setMetaProperty('og:description', description);
+    setMetaProperty('og:url', `${baseUrl}${window.location.pathname}${window.location.hash}`);
+    setMetaProperty('og:image', '/image/hero.png');
+    setMetaTag('twitter:title', title);
+    setMetaTag('twitter:description', description);
+    setMetaTag('twitter:image', '/image/hero.png');
+    setLink('canonical', `${baseUrl}${window.location.pathname}${window.location.hash}`);
+  }, [currentHash]);
 
   if (isAdminPage) {
     return (
@@ -83,7 +157,7 @@ function App() {
         ) : isContactPage ? (
           <Contact />
         ) : isDestinationPage ? (
-          <Destination />
+          <Destination serviceFilter={destinationServiceFilter} />
         ) : isDetailPage ? (
           <Details destinationId={destinationIdDetail} />
         ) : isViewPage ? (
