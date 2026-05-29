@@ -1,8 +1,10 @@
-import React from 'react';
 import { Info } from 'lucide-react';
 import { getImageUrl } from '../../services/images';
+import { useTranslate } from '../../i18n/useTranslate';
 
 const DetailsHero = ({ isMobile, destination }) => {
+  const { t } = useTranslate();
+
   return (
     <section className="details-hero" style={{
       backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.3)), url("${getImageUrl(destination.image_url, '/image/details_hero.png')}")`,
@@ -34,11 +36,11 @@ const DetailsHero = ({ isMobile, destination }) => {
             color: '#fff',
             fontWeight: 500
           }}>
-            <span>Voyage Madagascar</span>
+            <span>{t("Voyage Madagascar")}</span>
             <span style={{ fontSize: '8px' }}>•</span>
-            <span>Circuit {destination.type}</span>
+            <span>{t("Circuit")} {t(destination.type)}</span>
             <span style={{ fontSize: '8px' }}>•</span>
-            <span>{destination.name}</span>
+            <span>{t(destination.name)}</span>
           </div>
         )}
 
@@ -54,7 +56,7 @@ const DetailsHero = ({ isMobile, destination }) => {
             marginBottom: '20px',
             textTransform: 'uppercase'
           }}>
-            {destination.type}
+            {t(destination.type)}
           </div>
           
           <h1 style={{
@@ -65,7 +67,7 @@ const DetailsHero = ({ isMobile, destination }) => {
             fontWeight: 700,
             color: '#fff'
           }}>
-            {destination.name}
+            {t(destination.name)}
           </h1>
           
           {!isMobile && (
@@ -78,7 +80,7 @@ const DetailsHero = ({ isMobile, destination }) => {
               fontWeight: 500,
               textAlign: 'justify'
             }}>
-              {destination.description || 'Découvrez des paysages époustouflants et vivez une expérience unique à travers ce circuit exceptionnel.'}
+              {t(destination.description) || t('Découvrez des paysages époustouflants et vivez une expérience unique à travers ce circuit exceptionnel.')}
             </p>
           )}
         </div>

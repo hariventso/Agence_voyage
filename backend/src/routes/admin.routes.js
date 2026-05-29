@@ -7,6 +7,7 @@ const router = express.Router();
 router.get('/config', (req, res) => {
   res.json({
     adminUser: config.admin.username,
+    reminderLeadDays: config.calendar.reminderLeadDays,
     reminderLeadHours: config.calendar.reminderLeadHours,
     smtpConfigured: config.smtp.configured,
   });

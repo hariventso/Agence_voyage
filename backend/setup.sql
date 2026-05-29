@@ -103,7 +103,10 @@ CREATE TABLE IF NOT EXISTS calendar_events (
     event_time TIME NOT NULL,
     location VARCHAR(255),
     employee_id INTEGER REFERENCES employees(id) ON DELETE CASCADE,
+    status VARCHAR(50) DEFAULT 'todo',
+    color VARCHAR(30) DEFAULT '#2563eb',
     description TEXT,
+    reminder_sent BOOLEAN DEFAULT FALSE,
     reminder_sent_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

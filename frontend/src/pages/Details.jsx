@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react';
+/* eslint-disable react-hooks/set-state-in-effect */
+import { useState, useEffect } from 'react';
 import { Mail, Calendar, Clock, CreditCard, Leaf } from 'lucide-react';
 import DetailsHero from '../components/details/DetailsHero';
-import FloatingInfoCard from '../components/details/FloatingInfoCard';
 import DetailsTabs from '../components/details/DetailsTabs';
 import DetailsSidebar from '../components/details/DetailsSidebar';
 import BookingForm from '../components/details/BookingForm';
-import DestinationGrid from '../components/destinations/DestinationGrid';
 import { apiService } from '../services/api';
 import { getImageUrl } from '../services/images';
+import { useTranslate } from '../i18n/useTranslate';
 
 const InstagramIcon = ({ size = 18 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block' }}>
@@ -26,8 +26,8 @@ const LinkedinIcon = ({ size = 18 }) => (
 );
 
 const Details = ({ destinationId }) => {
+  const { t } = useTranslate();
   const [destination, setDestination] = useState(null);
-  const [destinations, setDestinations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showStickyBar, setShowStickyBar] = useState(false);
@@ -47,17 +47,10 @@ const Details = ({ destinationId }) => {
       if (!destinationId) return;
       setLoading(true);
       try {
-        const [destData, allData] = await Promise.all([
-          apiService.getDestination(destinationId),
-          apiService.getDestinations()
-        ]);
+        const destData = await apiService.getDestination(destinationId);
 
-        if (!destData) throw new Error('Destination non trouvée');
+        if (!destData) throw new Error(t('Destination non trouvée'));
         setDestination(destData);
-
-        if (Array.isArray(allData)) {
-          setDestinations(allData.filter(d => d.id !== parseInt(destinationId, 10)));
-        }
 
         setError(null);
       } catch (err) {
@@ -68,12 +61,12 @@ const Details = ({ destinationId }) => {
     };
 
     fetchData();
-  }, [destinationId]);
+  }, [destinationId, t]);
 
   useEffect(() => {
     if (!destination) return;
-    const pageTitle = `${destination.name} | Explor'Île`;
-    const pageDescription = destination.description ? destination.description.substring(0, 160).replace(/\s+/g, ' ').trim() + '...' : `Découvrez les détails du circuit ${destination.name} à Madagascar avec Explor'Île.`;
+    const pageTitle = `${t(destination.name)} | Explor'Île`;
+    const pageDescription = destination.description ? t(destination.description.substring(0, 160)).replace(/\s+/g, ' ').trim() + '...' : `Découvrez les détails du circuit ${t(destination.name)} à Madagascar avec Explor'Île.`;
     document.title = pageTitle;
     const setMeta = (selector, attr, value) => {
       const node = document.querySelector(selector);
@@ -88,7 +81,7 @@ const Details = ({ destinationId }) => {
     setMeta('meta[name="twitter:image"]', 'content', getImageUrl(destination.image_url, '/image/hero.png'));
     const canonical = document.querySelector('link[rel="canonical"]');
     if (canonical) canonical.setAttribute('href', `${window.location.origin}${window.location.pathname}#detail-${destinationId}`);
-  }, [destination, destinationId]);
+  }, [destination, destinationId, t]);
 
   useEffect(() => {
     const handleScroll = () => setShowStickyBar(window.scrollY > 400);
@@ -109,7 +102,7 @@ const Details = ({ destinationId }) => {
   const handleFormSubmit = async (e) => {
     e.preventDefault();
     if (!formData.nom || !formData.email || !formData.dateDepart) {
-      setDialog({ show: true, message: 'Veuillez remplir les champs obligatoires : Nom, Email et Date de départ.' });
+      setDialog({ show: true, message: t('Veuillez remplir les champs obligatoires : Nom, Email et Date de départ.') });
       return;
     }
 
@@ -131,25 +124,25 @@ const Details = ({ destinationId }) => {
         const response = await apiService.createBooking(bookingData);
         if (response) {
           setFormStatus('success');
-          setDialog({ show: true, message: 'Votre réservation a été reçue. Nous vous contacterons bientôt !' });
+          setDialog({ show: true, message: t('Votre réservation a été reçue. Nous vous contacterons bientôt !') });
           setFormData({ nom: '', email: '', telephone: '', participants: '2', dateDepart: '', duree: '', typeVoyage: 'devis', message: '' });
         }
       } catch (err) {
         console.error('Erreur lors de la soumission:', err);
         setFormStatus('error');
-        setDialog({ show: true, message: 'Erreur lors de l\'envoi de la réservation. Veuillez réessayer.' });
+        setDialog({ show: true, message: t('Erreur lors de l\'envoi de la réservation. Veuillez réessayer.') });
       }
     } else {
       // Si c'est un devis : envoi via WhatsApp
       const whatsappNumber = '261341776169'; // Numéro à adapter
-      const text = `Bonjour, je souhaite un devis pour le circuit : ${destination.name}. %0A%0A` +
-                   `Détails : %0A` +
-                   `- Nom : ${formData.nom} %0A` +
-                   `- Email : ${formData.email} %0A` +
-                   `- Téléphone : ${formData.telephone} %0A` +
-                   `- Participants : ${formData.participants} %0A` +
-                   `- Date de départ : ${formData.dateDepart} %0A` +
-                   `- Message : ${formData.message}`;
+      const text = `${t("Bonjour, je souhaite un devis pour le circuit :")} ${t(destination.name)}. %0A%0A` +
+                   `${t("Détails :")} %0A` +
+                   `- ${t("Nom")} : ${formData.nom} %0A` +
+                   `- ${t("Email")} : ${formData.email} %0A` +
+                   `- ${t("Téléphone")} : ${formData.telephone} %0A` +
+                   `- ${t("Participants")} : ${formData.participants} %0A` +
+                   `- ${t("Date de départ")} : ${formData.dateDepart} %0A` +
+                   `- ${t("Message")} : ${formData.message}`;
       
       const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${text}`;
       window.open(whatsappUrl, '_blank');
@@ -160,8 +153,8 @@ const Details = ({ destinationId }) => {
   };
 
   if (loading) return null;
-  if (error) return <div style={{ padding: '100px', textAlign: 'center', backgroundColor: '#000', color: '#ff4d4d', height: '100vh' }}>Erreur: {error}</div>;
-  if (!destination) return <div style={{ padding: '100px', textAlign: 'center', backgroundColor: '#000', color: '#fff', height: '100vh' }}>Destination non trouvée</div>;
+  if (error) return <div style={{ padding: '100px', textAlign: 'center', backgroundColor: '#000', color: '#ff4d4d', height: '100vh' }}>{t("Erreur")}: {error}</div>;
+  if (!destination) return <div style={{ padding: '100px', textAlign: 'center', backgroundColor: '#000', color: '#fff', height: '100vh' }}>{t("Destination non trouvée")}</div>;
 
   return (
     <div className="details-page" style={{ position: 'relative', fontFamily: '"Outfit", sans-serif' }}>
@@ -195,7 +188,7 @@ const Details = ({ destinationId }) => {
                   whiteSpace: 'nowrap'
                 }}
               >
-                {city}
+                {t(city)}
               </button>
             ))}
           </div>
@@ -218,7 +211,7 @@ const Details = ({ destinationId }) => {
                   transition: 'all 0.25s'
                 }}
               >
-                {opt}
+                {t(opt)}
               </button>
             ))}
           </div>
@@ -242,34 +235,34 @@ const Details = ({ destinationId }) => {
               flexDirection: 'column',
               justifyContent: 'center'
             }}>
-              <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#1B3D34', marginBottom: '20px', textAlign: 'center', fontFamily: '"Outfit", sans-serif', letterSpacing: '0.5px' }}>En bref</h3>
+              <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#1B3D34', marginBottom: '20px', textAlign: 'center', fontFamily: '"Outfit", sans-serif', letterSpacing: '0.5px' }}>{t("En bref")}</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
                   <div style={{ color: '#C21A4B', marginTop: '2px', backgroundColor: '#FFF5F7', padding: '6px', borderRadius: '8px' }}><Calendar size={18} /></div>
                   <div>
-                    <div style={{ fontSize: '11px', fontWeight: 800, color: '#718096', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Durées conseillées :</div>
-                    <div style={{ fontSize: '13px', fontWeight: 600, color: '#2d3748', marginTop: '2px' }}>{destination.duration ? `${destination.duration}j, ${Math.ceil(destination.duration/2)}j, ${destination.duration*2}j` : '2 semaines, 1 semaine, 3 semaines'}</div>
+                    <div style={{ fontSize: '11px', fontWeight: 800, color: '#718096', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{t("Durées conseillées :")}</div>
+                    <div style={{ fontSize: '13px', fontWeight: 600, color: '#2d3748', marginTop: '2px' }}>{destination.duration ? `${destination.duration}${t("j")}, ${Math.ceil(destination.duration/2)}${t("j")}, ${destination.duration*2}${t("j")}` : t('2 semaines, 1 semaine, 3 semaines')}</div>
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
                   <div style={{ color: '#C21A4B', marginTop: '2px', backgroundColor: '#FFF5F7', padding: '6px', borderRadius: '8px' }}><Clock size={18} /></div>
                   <div>
-                    <div style={{ fontSize: '11px', fontWeight: 800, color: '#718096', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Heures de transport :</div>
-                    <div style={{ fontSize: '13px', fontWeight: 600, color: '#2d3748', marginTop: '2px' }}>~ {destination.duration ? Math.round(destination.duration * 1.5) : 21}h</div>
+                    <div style={{ fontSize: '11px', fontWeight: 800, color: '#718096', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{t("Heures de transport :")}</div>
+                    <div style={{ fontSize: '13px', fontWeight: 600, color: '#2d3748', marginTop: '2px' }}>~ {destination.duration ? Math.round(destination.duration * 1.5) : 21}{t("h")}</div>
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
                   <div style={{ color: '#C21A4B', marginTop: '2px', backgroundColor: '#FFF5F7', padding: '6px', borderRadius: '8px' }}><CreditCard size={18} /></div>
                   <div>
-                    <div style={{ fontSize: '11px', fontWeight: 800, color: '#718096', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Prix estimé :</div>
-                    <div style={{ fontSize: '13px', fontWeight: 800, color: '#2d3748', marginTop: '2px' }}>~ {destination.price || '157 €'}</div>
+                    <div style={{ fontSize: '11px', fontWeight: 800, color: '#718096', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{t("Prix estimé :")}</div>
+                    <div style={{ fontSize: '13px', fontWeight: 800, color: '#2d3748', marginTop: '2px' }}>~ {t(destination.price) || '157 €'}</div>
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
                   <div style={{ color: '#2F855A', marginTop: '2px', backgroundColor: '#F0FDF4', padding: '6px', borderRadius: '8px' }}><Leaf size={18} /></div>
                   <div>
-                    <div style={{ fontSize: '11px', fontWeight: 800, color: '#718096', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Impact CO2 :</div>
-                    <div style={{ fontSize: '13px', fontWeight: 700, color: '#2F855A', marginTop: '2px' }}>10x moins polluant qu'en avion</div>
+                    <div style={{ fontSize: '11px', fontWeight: 800, color: '#718096', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{t("Impact CO2 :")}</div>
+                    <div style={{ fontSize: '13px', fontWeight: 700, color: '#2F855A', marginTop: '2px' }}>{t("10x moins polluant qu'en avion")}</div>
                   </div>
                 </div>
               </div>
@@ -286,7 +279,7 @@ const Details = ({ destinationId }) => {
               position: 'relative'
             }}>
               <iframe
-                title={`Carte de ${destination.name}`}
+                title={t(`Carte de ${destination.name}`)}
                 src={`https://maps.google.com/maps?q=${encodeURIComponent(destination.name + ' Madagascar')}&t=&z=13&ie=UTF8&iwloc=&output=embed`}
                 width="100%"
                 height="100%"
@@ -402,14 +395,14 @@ const Details = ({ destinationId }) => {
         <div style={stickyBarStyle}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <span style={{ fontSize: '10px', color: '#999', display: 'block' }}>À partir de</span>
-              <span style={{ fontSize: '16px', fontWeight: 800 }}>{destination.price}</span>
+              <span style={{ fontSize: '10px', color: '#999', display: 'block' }}>{t("À partir de")}</span>
+              <span style={{ fontSize: '16px', fontWeight: 800 }}>{t(destination.price)}</span>
             </div>
             <button
               onClick={() => document.getElementById('formulaire-devis')?.scrollIntoView({ behavior: 'smooth' })}
               style={stickyButtonStyle}
             >
-              Devis
+              {t("Devis")}
             </button>
           </div>
         </div>

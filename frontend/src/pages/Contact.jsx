@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Phone, Mail, CheckCircle, AlertCircle, Send, Loader } from 'lucide-react';
 import { apiService } from '../services/api';
+import { useTranslate } from '../i18n/useTranslate';
 
 // Adresse email de destination
 const CONTACT_EMAIL = 'contact@domain.com';
 
 function Contact() {
+  const { t } = useTranslate();
   // --- Contact Form State ---
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
   const [formErrors, setFormErrors] = useState({});
@@ -25,25 +27,25 @@ function Contact() {
   // --- Validation ---
   const validateContact = () => {
     const errors = {};
-    if (!formData.name.trim()) errors.name = 'Le nom est requis.';
+    if (!formData.name.trim()) errors.name = t('Le nom est requis.');
     if (!formData.email.trim()) {
-      errors.email = "L'email est requis.";
+      errors.email = t("L'email est requis.");
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      errors.email = "L'adresse email n'est pas valide.";
+      errors.email = t("L'adresse email n'est pas valide.");
     }
     if (!formData.message.trim() || formData.message.trim().length < 10) {
-      errors.message = 'Le message doit contenir au moins 10 caractères.';
+      errors.message = t('Le message doit contenir au moins 10 caractères.');
     }
     return errors;
   };
 
   const validateNewsletter = () => {
     const errors = {};
-    if (!newsletter.name.trim()) errors.name = 'Requis';
+    if (!newsletter.name.trim()) errors.name = t('Requis');
     if (!newsletter.email.trim()) {
-      errors.email = 'Requis';
+      errors.email = t('Requis');
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newsletter.email)) {
-      errors.email = 'Email invalide';
+      errors.email = t('Email invalide');
     }
     return errors;
   };
@@ -82,8 +84,8 @@ function Contact() {
       await apiService.createMessage({
         sender: newsletter.name,
         email: newsletter.email,
-        subject: 'Inscription Newsletter',
-        content: `${newsletter.name} souhaite s'inscrire à la newsletter.`
+        subject: t('Inscription Newsletter'),
+        content: `${newsletter.name} ${t("souhaite s'inscrire à la newsletter.")}`
       });
       setNewsletterStatus('success');
       setNewsletter({ name: '', email: '' });
@@ -145,10 +147,10 @@ function Contact() {
             marginTop: isMobile ? '20px' : '0',
             fontFamily: "'Plus Jakarta Sans', sans-serif"
           }}>
-            Contact
+            {t("Contact")}
           </h1>
           <p style={{ color: '#FFFFFF', fontSize: isMobile ? '0.95rem' : '1.1rem', lineHeight: 1.6, maxWidth: '800px', margin: '0 auto', fontWeight: 400, textAlign: 'justify' }}>
-            Découvrez Madagascar au-delà des sentiers battus. Explor’île vous invite à vivre des expériences uniques, au croisement du tourisme culturel et de l’aventure.
+            {t("Découvrez Madagascar au-delà des sentiers battus. Explor’île vous invite à vivre des expériences uniques, au croisement du tourisme culturel et de l’aventure.")}
           </p>
         </div>
       </section>
@@ -166,13 +168,13 @@ function Contact() {
           {/* Left Side: Info */}
           <div style={{ textAlign: 'left', padding: isMobile ? '0 16px' : '0' }}>
             <h2 className="page-hero-h2" style={{ color: '#FF8C00', fontWeight: 600, fontFamily: "'Plus Jakarta Sans', sans-serif", marginBottom: '16px', letterSpacing: '-1px', fontSize: isMobile ? '1.8rem' : '3rem' }}>
-              Nous aimerions vous entendre
+              {t("Nous aimerions vous entendre")}
             </h2>
             <h3 style={{ color: '#fff', fontSize: isMobile ? '1.1rem' : '1.25rem', fontWeight: 500, marginBottom: '24px' }}>
-              Contactez-nous directement sur WhatsApp pour une réponse rapide
+              {t("Contactez-nous directement sur WhatsApp pour une réponse rapide")}
             </h3>
             <p style={{ color: '#ccc', fontSize: '1rem', lineHeight: 1.6, marginBottom: '40px', maxWidth: '500px', textAlign: 'justify' }}>
-              Remplissez les informations ci-dessous et cliquez sur le bouton pour démarrer la discussion. Nous sommes disponibles pour répondre à toutes vos questions.
+              {t("Remplissez les informations ci-dessous et cliquez sur le bouton pour démarrer la discussion. Nous sommes disponibles pour répondre à toutes vos questions.")}
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
@@ -194,8 +196,8 @@ function Contact() {
               <div style={{ backgroundColor: 'rgba(34, 197, 94, 0.1)', border: '1px solid #22c55e', borderRadius: '12px', padding: '20px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <CheckCircle size={22} color="#22c55e" />
                 <div>
-                  <p style={{ color: '#22c55e', fontWeight: 700, margin: 0 }}>Message envoyé !</p>
-                  <p style={{ color: '#86efac', fontSize: '0.9rem', margin: '4px 0 0' }}>Nous avons bien reçu votre demande.</p>
+                  <p style={{ color: '#22c55e', fontWeight: 700, margin: 0 }}>{t("Message envoyé !")}</p>
+                  <p style={{ color: '#86efac', fontSize: '0.9rem', margin: '4px 0 0' }}>{t("Nous avons bien reçu votre demande.")}</p>
                 </div>
               </div>
             )}
@@ -205,13 +207,11 @@ function Contact() {
               <div style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', borderRadius: '12px', padding: '20px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <AlertCircle size={22} color="#ef4444" />
                 <div>
-                  <p style={{ color: '#ef4444', fontWeight: 700, margin: 0 }}>Erreur d'envoi</p>
-                  <p style={{ color: '#fca5a5', fontSize: '0.9rem', margin: '4px 0 0' }}>Impossible de contacter le serveur. Vérifiez que le backend est lancé.</p>
+                  <p style={{ color: '#ef4444', fontWeight: 700, margin: 0 }}>{t("Erreur d'envoi")}</p>
+                  <p style={{ color: '#fca5a5', fontSize: '0.9rem', margin: '4px 0 0' }}>{t("Impossible de contacter le serveur. Vérifiez que le backend est lancé.")}</p>
                 </div>
               </div>
             )}
-
-
 
             <form onSubmit={handleContactSubmit} noValidate style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               {/* Name */}
@@ -220,7 +220,7 @@ function Contact() {
                   id="contact-name"
                   type="text"
                   name="name"
-                  placeholder="Nom *"
+                  placeholder={t("Nom *")}
                   value={formData.name}
                   onChange={handleChange}
                   style={inputStyle(!!formErrors.name)}
@@ -236,7 +236,7 @@ function Contact() {
                   id="contact-email"
                   type="email"
                   name="email"
-                  placeholder="Email *"
+                  placeholder={t("Email *")}
                   value={formData.email}
                   onChange={handleChange}
                   style={inputStyle(!!formErrors.email)}
@@ -251,7 +251,7 @@ function Contact() {
                 <textarea
                   id="contact-message"
                   name="message"
-                  placeholder="Votre message *"
+                  placeholder={t("Votre message *")}
                   rows="5"
                   value={formData.message}
                   onChange={handleChange}
@@ -284,7 +284,7 @@ function Contact() {
                   gap: '10px'
                 }}
               >
-                <Send size={18} /> Discuter sur WhatsApp
+                <Send size={18} /> {t("Discuter sur WhatsApp")}
               </button>
             </form>
           </div>
@@ -331,17 +331,17 @@ function Contact() {
             </svg>
           </div>
           <h2 className="page-section-h2" style={{ color: '#FF8C00', fontWeight: 600, fontFamily: "'Plus Jakarta Sans', sans-serif", marginBottom: '12px', fontSize: isMobile ? '1.8rem' : '2.5rem' }}>
-            Restons en Contact
+            {t("Restons en Contact")}
           </h2>
           <p style={{ color: '#fff', fontSize: isMobile ? '1rem' : '1.2rem', fontWeight: 500, marginBottom: '40px' }}>
-            Offres Exclusives. Actualités. Directement dans votre Boîte Mail.
+            {t("Offres Exclusives. Actualités. Directement dans votre Boîte Mail.")}
           </p>
 
           {/* Newsletter success */}
           {newsletterStatus === 'success' && (
             <div style={{ backgroundColor: 'rgba(5,46,22,0.9)', border: '1px solid #16a34a', borderRadius: '10px', padding: '16px 24px', marginBottom: '24px', display: 'inline-flex', alignItems: 'center', gap: '10px' }}>
               <CheckCircle size={20} color="#22c55e" />
-              <span style={{ color: '#22c55e', fontWeight: 700 }}>Inscription confirmée ! Merci.</span>
+              <span style={{ color: '#22c55e', fontWeight: 700 }}>{t("Inscription confirmée ! Merci.")}</span>
             </div>
           )}
 
@@ -352,7 +352,7 @@ function Contact() {
                   <input
                     id="newsletter-name"
                     type="text"
-                    placeholder="Nom"
+                    placeholder={t("Nom")}
                     value={newsletter.name}
                     onChange={(e) => setNewsletter(p => ({ ...p, name: e.target.value }))}
                     style={{
@@ -374,7 +374,7 @@ function Contact() {
                   <input
                     id="newsletter-email"
                     type="email"
-                    placeholder="Email"
+                    placeholder={t("Email")}
                     value={newsletter.email}
                     onChange={(e) => setNewsletter(p => ({ ...p, email: e.target.value }))}
                     style={{
@@ -418,9 +418,9 @@ function Contact() {
                 }}
               >
                 {newsletterStatus === 'loading' ? (
-                  <><Loader size={16} style={{ animation: 'spin 1s linear infinite' }} />Envoi...</>
+                  <><Loader size={16} style={{ animation: 'spin 1s linear infinite' }} />{t("Envoi...")}</>
                 ) : (
-                  <>S'ABONNER
+                  <>{t("S'ABONNER")}
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="#FF8C00" stroke="#FF8C00" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
                       <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>

@@ -1,14 +1,16 @@
-import React from 'react';
 import { MapPin } from 'lucide-react';
 import { getImageUrl } from '../../services/images';
+import { useTranslate } from '../../i18n/useTranslate';
 
 const DestinationGrid = ({ loading, destinations }) => {
+  const { t } = useTranslate();
+
   return (
     <section style={{ backgroundColor: '#000', padding: '80px 20px', textAlign: 'center' }}>
       <div className="container" style={{ maxWidth: '1200px' }}>
-        <h2 style={{ color: '#FF8C00', marginBottom: '40px' }}>Nos Offres</h2>
+        <h2 style={{ color: '#FF8C00', marginBottom: '40px' }}>{t("Nos Offres")}</h2>
         {loading ? (
-          <p>Chargement des merveilles de Madagascar...</p>
+          <p>{t("Chargement des merveilles de Madagascar...")}</p>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '32px', textAlign: 'left' }}>
             {destinations.map(dest => (
@@ -28,17 +30,17 @@ const DestinationGrid = ({ loading, destinations }) => {
                 onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}
               >
                 <div style={{ position: 'relative', height: '220px' }}>
-                  <img src={getImageUrl(dest.image_url, '/image/mountain.png')} alt={dest.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <img src={getImageUrl(dest.image_url, '/image/mountain.png')} alt={t(dest.name)} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#FF8C00', color: '#fff', padding: '10px 20px', fontWeight: 600 }}>
-                    {dest.service_name}
+                    {t(dest.service_name)}
                   </div>
                 </div>
                 <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', flex: 1 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', color: '#000' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700 }}>
-                      <MapPin size={18} color="#FF8C00" /> {dest.name}
+                      <MapPin size={18} color="#FF8C00" /> {t(dest.name)}
                     </div>
-                    <div style={{ fontWeight: 800, fontSize: '1.2rem', color: '#000' }}>{dest.price}</div>
+                    <div style={{ fontWeight: 800, fontSize: '1.2rem', color: '#000' }}>{t(dest.price)}</div>
                   </div>
                   <p style={{ 
                     color: '#666', 
@@ -52,7 +54,7 @@ const DestinationGrid = ({ loading, destinations }) => {
                     overflow: 'hidden',
                     textOverflow: 'ellipsis'
                   }}>
-                    {dest.description || 'Plongez dans l\'aventure et découvrez des paysages époustouflants...'}
+                    {t(dest.description) || t('Plongez dans l\'aventure et découvrez des paysages époustouflants...')}
                   </p>
                   <button 
                     onClick={(e) => {
@@ -73,7 +75,7 @@ const DestinationGrid = ({ loading, destinations }) => {
                     onMouseOver={e => e.currentTarget.style.backgroundColor = '#2E7D32'}
                     onMouseOut={e => e.currentTarget.style.backgroundColor = '#1B5E20'}
                   >
-                    Voir le circuit →
+                    {t("Voir le circuit →")}
                   </button>
                 </div>
               </div>

@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { Bookmark, Clock, Tag } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Bookmark } from 'lucide-react';
 import { getImageUrl } from '../../services/images';
+import { useTranslate } from '../../i18n/useTranslate';
 
 const defaultDestinations = [
   {
@@ -41,13 +42,15 @@ const defaultDestinations = [
   }
 ];
 
-const DestinationPopular = ({ isMobile, destinations = [], loading = false }) => {
+const DestinationPopular = ({ destinations = [], loading = false }) => {
+  const { t } = useTranslate();
   const [mobileView, setMobileView] = useState(window.innerWidth < 768);
   const isDatabaseDestination = (id) => /^\d+$/.test(String(id));
   const openDestination = (destination) => {
-    window.location.hash = isDatabaseDestination(destination.id)
+    const targetHash = isDatabaseDestination(destination.id)
       ? `#detail-${destination.id}`
       : '#destinations';
+    window.location.assign(targetHash);
   };
 
   useEffect(() => {
@@ -58,19 +61,19 @@ const DestinationPopular = ({ isMobile, destinations = [], loading = false }) =>
 
   // Fonction pour déterminer de manière élégante et robuste la durée
   const getDurationLabel = (dest) => {
-    if (dest.duration) return `${dest.duration} JOURS`;
+    if (dest.duration) return `${dest.duration} ${t("JOURS")}`;
     
     // Essayer d'extraire la durée depuis la description (ex: "5 jours")
     const match = dest.description?.match(/(\d+)\s*(jours|jours|d|j)/i);
-    if (match) return `${match[1]} JOURS`;
+    if (match) return `${match[1]} ${t("JOURS")}`;
     
     // Fallback standard selon le nom du circuit
     const nameLower = dest.name.toLowerCase();
-    if (nameLower.includes('isalo')) return '5 JOURS';
-    if (nameLower.includes('nosy') || nameLower.includes('marie')) return '7 JOURS';
-    if (nameLower.includes('culturel') || nameLower.includes('immersion')) return '8 JOURS';
+    if (nameLower.includes('isalo')) return `5 ${t("JOURS")}`;
+    if (nameLower.includes('nosy') || nameLower.includes('marie')) return `7 ${t("JOURS")}`;
+    if (nameLower.includes('culturel') || nameLower.includes('immersion')) return `8 ${t("JOURS")}`;
     
-    return '7 JOURS';
+    return `7 ${t("JOURS")}`;
   };
 
   // Simuler des étoiles et du nombre d'avis basés sur l'ID de la destination pour rendre les données réalistes
@@ -116,7 +119,7 @@ const DestinationPopular = ({ isMobile, destinations = [], loading = false }) =>
             margin: '0 0 6px 0',
             fontWeight: 500
           }}>
-            Top Destinations
+            {t("Top Destinations")}
           </p>
           <button
             type="button"
@@ -141,13 +144,13 @@ const DestinationPopular = ({ isMobile, destinations = [], loading = false }) =>
               e.currentTarget.style.color = '#0a2e24';
             }}
           >
-            Circuits Populaires
+            {t("Circuits Populaires")}
           </button>
         </div>
 
         {/* Grille de cartes */}
         {loading ? (
-          <p style={{ textAlign: 'center', color: '#666' }}>Chargement des circuits populaires...</p>
+          <p style={{ textAlign: 'center', color: '#666' }}>{t("Chargement des circuits populaires...")}</p>
         ) : displayDestinations.length > 0 ? (
           <div style={{ 
             display: 'grid', 
@@ -183,7 +186,7 @@ const DestinationPopular = ({ isMobile, destinations = [], loading = false }) =>
                   {/* Image de fond */}
                   <img 
                     src={getImageUrl(c.image_url)} 
-                    alt={c.name} 
+                    alt={t(c.name)} 
                     style={{ 
                       width: '100%', 
                       height: '100%', 
@@ -235,7 +238,7 @@ const DestinationPopular = ({ isMobile, destinations = [], loading = false }) =>
                           backgroundColor: '#FF8C00',
                           display: 'inline-block'
                         }}></span>
-                        {c.type || 'Circuit'}
+                        {t(c.type || 'Circuit')}
                       </span>
                       
                       {/* Icône Bookmark */}
@@ -269,7 +272,7 @@ const DestinationPopular = ({ isMobile, destinations = [], loading = false }) =>
                           letterSpacing: '-0.3px',
                           textTransform: 'uppercase'
                         }}>
-                          {c.name}
+                          {t(c.name)}
                         </h3>
                         <span style={{ 
                           fontSize: '13px', 
@@ -277,7 +280,7 @@ const DestinationPopular = ({ isMobile, destinations = [], loading = false }) =>
                           textDecoration: 'underline',
                           letterSpacing: '0.5px'
                         }}>
-                          {c.price} | {duration}
+                          {t(c.price)} | {duration}
                         </span>
                       </div>
 
@@ -293,7 +296,7 @@ const DestinationPopular = ({ isMobile, destinations = [], loading = false }) =>
                           {"★".repeat(rating)}
                         </span>
                         <span style={{ color: '#fff', opacity: 0.9 }}>
-                          {count} AVIS
+                          {count} {t("AVIS")}
                         </span>
                       </div>
                     </div>
@@ -304,7 +307,7 @@ const DestinationPopular = ({ isMobile, destinations = [], loading = false }) =>
             })}
           </div>
         ) : (
-          <p style={{ textAlign: 'center', color: '#666' }}>Aucun circuit populaire disponible pour le moment.</p>
+          <p style={{ textAlign: 'center', color: '#666' }}>{t("Aucun circuit populaire disponible pour le moment.")}</p>
         )}
       </div>
     </section>

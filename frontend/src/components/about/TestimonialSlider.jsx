@@ -1,7 +1,9 @@
-import React from 'react';
 import { getImageUrl } from '../../services/images';
+import { useTranslate } from '../../i18n/useTranslate';
 
 const TestimonialSlider = ({ testimonials, activeReview, setActiveReview, isMobile }) => {
+  const { t } = useTranslate();
+
   if (testimonials.length === 0) return null;
 
   return (
@@ -17,13 +19,13 @@ const TestimonialSlider = ({ testimonials, activeReview, setActiveReview, isMobi
             color: '#fff',
             fontSize: '1.2rem',
             marginBottom: '12px'
-          }}>Read The Top</p>
+          }}>{t("Read The Top")}</p>
           <h2 style={{
             fontSize: isMobile ? '2.5rem' : '3.5rem',
             fontFamily: "'Playfair Display', serif",
             color: '#FF8C00',
             fontWeight: 600
-          }}>Avis Voyageurs</h2>
+          }}>{t("Avis Voyageurs")}</h2>
           <p style={{
             color: '#888',
             fontSize: '0.9rem',
@@ -31,7 +33,7 @@ const TestimonialSlider = ({ testimonials, activeReview, setActiveReview, isMobi
             margin: '24px auto 0',
             lineHeight: 1.6
           }}>
-            Ce que disent nos voyageurs. Leurs sourires et leurs souvenirs sont notre plus belle récompense. Découvrez leurs retours d'expérience sur nos différents circuits à travers l'île.
+            {t("Ce que disent nos voyageurs. Leurs sourires et leurs souvenirs sont notre plus belle récompense. Découvrez leurs retours d'expérience sur nos différents circuits à travers l'île.")}
           </p>
         </div>
 
@@ -55,7 +57,7 @@ const TestimonialSlider = ({ testimonials, activeReview, setActiveReview, isMobi
             />
             <div>
               <h4 style={{ fontSize: '1.2rem', fontWeight: 700, margin: 0 }}>{testimonials[activeReview]?.name}</h4>
-              <div style={{ fontSize: '0.85rem', color: '#1B5E20', fontWeight: 600 }}>{testimonials[activeReview]?.role}</div>
+              <div style={{ fontSize: '0.85rem', color: '#1B5E20', fontWeight: 600 }}>{t(testimonials[activeReview]?.role)}</div>
               <div style={{ display: 'flex', gap: '4px', marginTop: '4px' }}>
                 {Array.from({ length: testimonials[activeReview]?.rating || 5 }).map((_, s) => (
                   <span key={s} style={{ color: '#FF8C00' }}>★</span>
@@ -70,7 +72,7 @@ const TestimonialSlider = ({ testimonials, activeReview, setActiveReview, isMobi
               lineHeight: 1.6,
               margin: 0
             }}>
-              "{testimonials[activeReview]?.content || testimonials[activeReview]?.quote}"
+              "{t(testimonials[activeReview]?.content || testimonials[activeReview]?.quote)}"
             </p>
           </div>
         </div>

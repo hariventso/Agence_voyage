@@ -1,4 +1,3 @@
-import React from 'react';
 import { List, Bell } from 'lucide-react';
 
 const AdminHeader = ({ isMobile, setShowSidebar, getTabTitle, messages, onLogout, onForceRelogin }) => {

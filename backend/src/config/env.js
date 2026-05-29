@@ -20,10 +20,18 @@ const allowedOrigins = (
   .map((origin) => origin.trim())
   .filter(Boolean);
 
+for (let port = 5173; port <= 5179; port += 1) {
+  const localOrigin = `http://localhost:${port}`;
+  if (!allowedOrigins.includes(localOrigin)) {
+    allowedOrigins.push(localOrigin);
+  }
+}
+
 const config = {
   app: {
     port,
     baseUrl: process.env.PUBLIC_BACKEND_URL || `http://localhost:${port}`,
+    frontendUrl: process.env.FRONTEND_URL || allowedOrigins[0] || "http://localhost:5173",
     uploadDir: path.resolve(__dirname, "../../uploads"),
     allowedOrigins,
   },
@@ -40,7 +48,8 @@ const config = {
     password: process.env.ADMIN_PASSWORD,
   },
   calendar: {
-    reminderLeadHours: numberFromEnv("CALENDAR_REMINDER_HOURS", 24),
+    reminderLeadDays: numberFromEnv("CALENDAR_REMINDER_DAYS", 5),
+    reminderLeadHours: numberFromEnv("CALENDAR_REMINDER_DAYS", 5) * 24,
     reminderCheckIntervalMs: numberFromEnv(
       "CALENDAR_REMINDER_INTERVAL_MS",
       60 * 60 * 1000,

@@ -1,7 +1,8 @@
-import React, { useState, useEffect, Suspense, lazy } from 'react';
+import { useState, useEffect, Suspense, lazy } from 'react';
 import './index.css';
 import Layout from './components/layout/Layout';
 import PageLoader from './components/ui/PageLoader';
+import { useTranslate } from './i18n/useTranslate';
 
 // Lazy loading pages
 const Home = lazy(() => import('./pages/Home'));
@@ -15,6 +16,7 @@ const About = lazy(() => import('./pages/About'));
 const Admin = lazy(() => import('./pages/Admin'));
 
 function App() {
+  const { t } = useTranslate();
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const getCurrentRoute = () =>
@@ -116,7 +118,7 @@ function App() {
         : "Explorez nos meilleures destinations à Madagascar : circuits, séjours balnéaires et aventures sur mesure.";
     } else if (isDetailPage) {
       title = "Détails de destination - Explor'Île";
-      description = "Découvrez le détail du circuit et réservez votre voyage authentique à Madagascar.";
+      description = "Découvrez le detail du circuit et réservez votre voyage authentique à Madagascar.";
     } else if (isViewPage) {
       title = "Destination en détail - Explor'Île";
       description = "Informations détaillées sur la destination et les offres de voyage à Madagascar.";
@@ -125,18 +127,18 @@ function App() {
       description = "Lisez des articles de blog sur Madagascar, la culture locale et les meilleures expériences de voyage.";
     }
 
-    document.title = title;
-    setMetaTag('description', description);
-    setMetaTag('keywords', 'voyage Madagascar, tourisme durable, circuit culturel, séjour balnéaire, explor ile, agence de voyage');
-    setMetaProperty('og:title', title);
-    setMetaProperty('og:description', description);
+    document.title = t(title);
+    setMetaTag('description', t(description));
+    setMetaTag('keywords', t('voyage Madagascar, tourisme durable, circuit culturel, séjour balnéaire, explor ile, agence de voyage'));
+    setMetaProperty('og:title', t(title));
+    setMetaProperty('og:description', t(description));
     setMetaProperty('og:url', `${baseUrl}${window.location.pathname}${window.location.hash}`);
     setMetaProperty('og:image', '/image/hero.png');
-    setMetaTag('twitter:title', title);
-    setMetaTag('twitter:description', description);
+    setMetaTag('twitter:title', t(title));
+    setMetaTag('twitter:description', t(description));
     setMetaTag('twitter:image', '/image/hero.png');
     setLink('canonical', `${baseUrl}${window.location.pathname}${window.location.hash}`);
-  }, [currentHash]);
+  }, [currentHash, t]);
 
   if (isAdminPage) {
     return (

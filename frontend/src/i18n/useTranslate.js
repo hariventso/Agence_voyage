@@ -3,7 +3,7 @@
  * @description Hook custom pour traduire n'importe quel texte instantanément
  */
 import { useContext, useCallback } from 'react';
-import { TranslationContext } from './TranslationContext';
+import { TranslationContext } from './TranslationContextValue';
 
 export const useTranslate = () => {
   const { currentLanguage, translations, requestTranslation } = useContext(TranslationContext);

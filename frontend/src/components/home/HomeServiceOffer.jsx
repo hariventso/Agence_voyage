@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { getImageUrl } from '../../services/images';
+import { useTranslate } from '../../i18n/useTranslate';
 
 const defaultServices = [
   {
@@ -25,6 +26,7 @@ const defaultServices = [
 
 /* ── Carte individuelle ── */
 const ServiceCard = ({ service }) => {
+  const { t } = useTranslate();
   const [isHovered, setIsHovered] = useState(false);
 
   const handleClick = () => {
@@ -53,7 +55,7 @@ const ServiceCard = ({ service }) => {
       {/* Image de fond avec effet de zoom */}
       <img
         src={getImageUrl(service.image_url, '/image/hero_new.png')}
-        alt={service.name}
+        alt={t(service.name)}
         loading="lazy"
         style={{
           width: '100%',
@@ -104,7 +106,7 @@ const ServiceCard = ({ service }) => {
           transform: isHovered ? 'translateY(0)' : 'translateY(8px)',
           transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
         }}>
-          {service.name}
+          {t(service.name)}
         </h3>
 
         {/* Description — visible au hover */}
@@ -118,7 +120,7 @@ const ServiceCard = ({ service }) => {
           overflow: 'hidden',
           transition: 'max-height 0.4s ease, opacity 0.35s ease',
         }}>
-          {service.description}
+          {t(service.description)}
         </p>
 
         {/* Bouton "En savoir plus" */}
@@ -140,7 +142,7 @@ const ServiceCard = ({ service }) => {
           boxShadow: '0 4px 16px rgba(255,140,0,0.4)',
           pointerEvents: isHovered ? 'auto' : 'none',
         }}>
-          En savoir plus
+          {t("En savoir plus")}
           <ArrowRight size={16} />
         </div>
       </div>
@@ -150,6 +152,7 @@ const ServiceCard = ({ service }) => {
 
 /* ── Section principale ── */
 const HomeServiceOffer = ({ loading, services }) => {
+  const { t } = useTranslate();
   const displayServices = (!loading && (!services || services.length === 0))
     ? defaultServices
     : (services || defaultServices);
@@ -184,7 +187,7 @@ const HomeServiceOffer = ({ loading, services }) => {
             textTransform: 'uppercase',
             marginBottom: '10px',
           }}>
-            Ce que nous proposons
+            {t("Ce que nous proposons")}
           </p>
           <h2 style={{
             fontSize: mobileView ? '28px' : '48px',
@@ -194,14 +197,14 @@ const HomeServiceOffer = ({ loading, services }) => {
             margin: 0,
             lineHeight: 1.2,
           }}>
-            Nos offres de services
+            {t("Nos offres de services")}
           </h2>
         </div>
 
         {/* Grille */}
         {loading ? (
           <p style={{ textAlign: 'center', color: '#999', fontSize: '1rem' }}>
-            Chargement des offres...
+            {t("Chargement des offres...")}
           </p>
         ) : (
           <div style={{
@@ -236,7 +239,7 @@ const HomeServiceOffer = ({ loading, services }) => {
               onMouseOver={e => e.currentTarget.style.color = '#FF8C00'}
               onMouseOut={e => e.currentTarget.style.color = '#0a2e24'}
             >
-              Voir toutes nos offres
+              {t("Voir toutes nos offres")}
               <ArrowRight size={16} />
             </a>
           </div>
