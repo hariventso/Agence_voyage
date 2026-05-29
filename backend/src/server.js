@@ -1,5 +1,6 @@
 const config = require('./config/env');
 const pool = require('./db/pool');
+const { checkDatabaseConnection } = require('./db/pool');
 const ensureSchema = require('./db/repair');
 const createApp = require('./app');
 const { runReminderJob } = require('./services/calendar.service');
@@ -23,6 +24,9 @@ const shutdown = async (signal) => {
 };
 
 const startServer = async () => {
+  const db = await checkDatabaseConnection();
+  console.log(`Connexion PostgreSQL OK: ${db.database} (${db.user})`);
+
   await ensureSchema();
   await runReminderJob();
 

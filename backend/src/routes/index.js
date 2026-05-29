@@ -4,6 +4,7 @@ const adminRoutes = require('./admin.routes');
 const bookingsRoutes = require('./bookings.routes');
 const calendarRoutes = require('./calendar.routes');
 const createCrudRouter = require('./crud-router');
+const healthRoutes = require('./health.routes');
 const messagesRoutes = require('./messages.routes');
 const uploadRoutes = require('./upload.routes');
 
@@ -27,6 +28,7 @@ router.get('/', (req, res) => {
     message: 'API backend Agence Voyage',
     endpoints: [
       '/api/admin/config',
+      '/api/health/db',
       '/api/services',
       '/api/destinations',
       '/api/posts',
@@ -42,6 +44,7 @@ router.get('/', (req, res) => {
 });
 
 router.use('/admin', adminRoutes);
+router.use('/health', healthRoutes);
 router.use('/upload', uploadRoutes);
 
 router.use(
