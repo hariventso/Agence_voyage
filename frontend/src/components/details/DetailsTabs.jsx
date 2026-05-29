@@ -848,9 +848,7 @@ const BudgetTab = ({ destination }) => {
     </div>
   );
 };
-    </div>
-  );
-};
+
 
 const TipsTab = ({ destination }) => {
   const { t } = useTranslate();
