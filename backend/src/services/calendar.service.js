@@ -1,6 +1,9 @@
+const fs = require('fs');
+const path = require('path');
+const handlebars = require('handlebars');
 const config = require('../config/env');
 const pool = require('../db/pool');
-const { buildEventDateTime, formatEventDate } = require('../utils/date');
+const { formatEventDate, normalizeEventTime, toLocalDatePart } = require('../utils/date');
 const { sendMail, smtpConfigured } = require('./mail.service');
 
 const calendarEventsQuery = `
@@ -17,6 +20,9 @@ const calendarEventsQuery = `
 
 const mapCalendarEvent = (row) => ({
   ...row,
+  event_date: toLocalDatePart(row.event_date),
+  event_time: normalizeEventTime(row.event_time).slice(0, 5),
+  reminder_sent: Boolean(row.reminder_sent || row.reminder_sent_at),
   employee: row.employee_id
     ? {
         id: row.employee_id,
@@ -29,43 +35,65 @@ const mapCalendarEvent = (row) => ({
     : null,
 });
 
-const getReminderDateTime = (event) =>
-  new Date(buildEventDateTime(event).getTime() - config.calendar.reminderLeadHours * 60 * 60 * 1000);
+const loadTemplate = (name) => {
+  const filePath = path.join(__dirname, 'templates', `${name}.hbs`);
+  const source = fs.readFileSync(filePath, 'utf-8');
+  return handlebars.compile(source);
+};
+
+const reminderTemplate = loadTemplate('reminder');
+
+const getTargetReminderDate = () => {
+  const target = new Date();
+  target.setDate(target.getDate() + config.calendar.reminderLeadDays);
+  return toLocalDatePart(target);
+};
 
 const sendReminderEmail = async (event) => {
-  const eventMoment = formatEventDate(event.event_date, event.event_time);
   const subject = `Rappel agenda: ${event.title}`;
-  const text = [
-    `Bonjour ${event.employee_name},`,
-    '',
-    `Ceci est un rappel pour votre événement "${event.title}".`,
-    `Date et heure: ${eventMoment}`,
-    `Lieu: ${event.location || 'Non précisé'}`,
-    `Type: ${event.event_type || 'Événement'}`,
-    `Description: ${event.description || 'Aucune description'}`,
-    '',
-    'Merci de bien prendre vos dispositions.',
-  ].join('\n');
+  const agendaUrl = `${config.app.frontendUrl.replace(/\/$/, '')}/admin`;
+
+  const html = reminderTemplate({
+    title: event.title,
+    employeeName: event.employee_name,
+    reminderLeadDays: config.calendar.reminderLeadDays,
+    eventDate: toLocalDatePart(event.event_date),
+    eventTime: normalizeEventTime(event.event_time).slice(0, 5),
+    location: event.location || 'Non précisé',
+    description: event.description || 'Aucune description',
+    agendaUrl: agendaUrl
+  });
 
   return sendMail({
     to: event.employee_email,
     subject,
-    text,
-    html: `
-      <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #0f172a;">
-        <h2 style="margin-bottom: 8px;">Rappel agenda</h2>
-        <p>Bonjour ${event.employee_name},</p>
-        <p>Ceci est un rappel pour votre événement <strong>${event.title}</strong>.</p>
-        <ul>
-          <li><strong>Date et heure:</strong> ${eventMoment}</li>
-          <li><strong>Lieu:</strong> ${event.location || 'Non précisé'}</li>
-          <li><strong>Type:</strong> ${event.event_type || 'Événement'}</li>
-          <li><strong>Description:</strong> ${event.description || 'Aucune description'}</li>
-        </ul>
-        <p>Merci de bien prendre vos dispositions.</p>
-      </div>
-    `,
+    text: `Rappel pour ${event.title}. Échéance dans ${config.calendar.reminderLeadDays} jours.`,
+    html,
   });
+};
+
+const sendReminderForEventIfDue = async (id) => {
+  const result = await pool.query(
+    `${calendarEventsQuery}
+     WHERE ce.id = $1
+       AND COALESCE(ce.reminder_sent, false) = false
+       AND ce.employee_id IS NOT NULL
+       AND ce.event_date = $2::date`,
+    [id, getTargetReminderDate()]
+  );
+
+  const row = result.rows[0];
+  if (!row?.employee_email) {
+    return { sent: false, reason: 'not_due_or_missing_employee_email' };
+  }
+
+  await sendReminderEmail(row);
+  await pool.query(
+    'UPDATE calendar_events SET reminder_sent = TRUE, reminder_sent_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = $1',
+    [id]
+  );
+
+  return { sent: true, eventId: Number(id), recipient: row.employee_email };
 };
 
 const findCalendarEventById = async (id) => {
@@ -75,32 +103,35 @@ const findCalendarEventById = async (id) => {
 
 const runReminderJob = async () => {
   try {
+    const targetDate = getTargetReminderDate();
+
     const result = await pool.query(`
       ${calendarEventsQuery}
-      WHERE ce.reminder_sent_at IS NULL
+      WHERE COALESCE(ce.reminder_sent, false) = false
         AND ce.employee_id IS NOT NULL
         AND ce.event_date IS NOT NULL
         AND ce.event_time IS NOT NULL
+        AND ce.event_date = $1::date
       ORDER BY ce.event_date ASC, ce.event_time ASC
-    `);
+    `, [targetDate]);
 
-    const now = new Date();
     const sentEvents = [];
+    const failedEvents = [];
 
     for (const row of result.rows) {
       const event = mapCalendarEvent(row);
       if (!event.employee?.email) continue;
 
-      const eventDateTime = buildEventDateTime(event);
-      const reminderDateTime = getReminderDateTime(event);
-
-      if (now >= reminderDateTime && now < eventDateTime) {
-        await sendReminderEmail(event);
+      try {
+        await sendReminderEmail(row);
         await pool.query(
-          'UPDATE calendar_events SET reminder_sent_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = $1',
+          'UPDATE calendar_events SET reminder_sent = TRUE, reminder_sent_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = $1',
           [event.id]
         );
         sentEvents.push(event.id);
+      } catch (err) {
+        console.error(`[Agenda] Échec envoi email pour l'événement ${event.id}:`, err.message);
+        failedEvents.push({ id: event.id, recipient: event.employee?.email, error: err.message });
       }
     }
 
@@ -108,10 +139,10 @@ const runReminderJob = async () => {
       console.log(`[Agenda] ${sentEvents.length} rappel(s) envoyé(s): ${sentEvents.join(', ')}`);
     }
 
-    return sentEvents;
+    return { sentEvents, failedEvents, targetDate };
   } catch (error) {
     console.error('[Agenda] Erreur durant la vérification des rappels:', error.message);
-    return [];
+    return { sentEvents: [], failedEvents: [{ error: error.message }], targetDate: null };
   }
 };
 
@@ -120,5 +151,6 @@ module.exports = {
   findCalendarEventById,
   mapCalendarEvent,
   runReminderJob,
+  sendReminderForEventIfDue,
   smtpConfigured,
 };

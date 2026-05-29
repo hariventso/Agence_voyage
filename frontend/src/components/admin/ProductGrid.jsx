@@ -1,5 +1,5 @@
-import React from 'react';
 import { Edit, Trash2 } from 'lucide-react';
+import { getImageUrl } from '../../services/images';
 
 const thStyle = {
   padding: '20px 24px',
@@ -42,7 +42,7 @@ const ProductGrid = ({ p, d, viewMode, openEdit, onDelete }) => {
             {items.map(item => (
               <tr key={item.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                 <td style={tdStyle}>
-                  <img src={item.image_url || '/image/placeholder.png'} alt="" style={{ width: '44px', height: '44px', borderRadius: '10px', objectFit: 'cover' }} />
+                  <img src={getImageUrl(item.image_url)} alt="" style={{ width: '44px', height: '44px', borderRadius: '10px', objectFit: 'cover' }} />
                 </td>
                 <td style={tdStyle}><b>{item.title || item.name}</b></td>
                 <td style={tdStyle}><span style={{ fontSize: '12px', color: '#64748b' }}>{item.price || item.category || 'Article'}</span></td>
@@ -65,7 +65,7 @@ const ProductGrid = ({ p, d, viewMode, openEdit, onDelete }) => {
       {items.map(item => (
         <div key={item.id} style={cardStyle}>
           <div style={{ position: 'relative', height: '240px', borderRadius: '24px', overflow: 'hidden', marginBottom: '24px' }}>
-            <img src={item.image_url || '/image/placeholder.png'} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <img src={getImageUrl(item.image_url)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             <div style={{ position: 'absolute', top: '20px', left: '20px', backgroundColor: '#22c55e', color: '#fff', padding: '4px 12px', borderRadius: '8px', fontSize: '10px', fontWeight: 900 }}>PUBLIÉ</div>
           </div>
           <h3 style={{ fontSize: '18px', fontWeight: 900, marginBottom: '8px', textTransform: 'uppercase' }}>{item.title || item.name}</h3>

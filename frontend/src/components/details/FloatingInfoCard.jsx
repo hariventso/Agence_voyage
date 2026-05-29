@@ -1,7 +1,9 @@
-import React from 'react';
 import { Tag, Clock } from 'lucide-react';
+import { useTranslate } from '../../i18n/useTranslate';
 
 const FloatingInfoCard = ({ isMobile, destination }) => {
+  const { t } = useTranslate();
+
   return (
     <div className="floating-info-card" style={{
       position: isMobile ? 'relative' : 'absolute',
@@ -24,7 +26,7 @@ const FloatingInfoCard = ({ isMobile, destination }) => {
         marginBottom: '0',
         fontWeight: 600
       }}>
-        {destination.name}
+        {t(destination.name)}
       </h3>
       
       <div style={{
@@ -41,9 +43,9 @@ const FloatingInfoCard = ({ isMobile, destination }) => {
         <div style={{ textAlign: 'left' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#2e7d32', marginBottom: '4px' }}>
             <Tag size={16} strokeWidth={2.5} />
-            <span style={{ fontSize: '10px', fontWeight: 800, textTransform: 'uppercase' }}>À partir de</span>
+            <span style={{ fontSize: '10px', fontWeight: 800, textTransform: 'uppercase' }}>{t("À partir de")}</span>
           </div>
-          <div style={{ fontSize: isMobile ? '16px' : '18px', fontWeight: 800, color: '#333' }}>{destination.price}</div>
+          <div style={{ fontSize: isMobile ? '16px' : '18px', fontWeight: 800, color: '#333' }}>{t(destination.price)}</div>
         </div>
         
         <div style={{ width: '1px', backgroundColor: '#eee' }}></div>
@@ -51,10 +53,10 @@ const FloatingInfoCard = ({ isMobile, destination }) => {
         <div style={{ textAlign: 'left' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#2e7d32', marginBottom: '4px' }}>
             <Clock size={16} strokeWidth={2.5} />
-            <span style={{ fontSize: '10px', fontWeight: 800, textTransform: 'uppercase' }}>Durée</span>
+            <span style={{ fontSize: '10px', fontWeight: 800, textTransform: 'uppercase' }}>{t("Durée")}</span>
           </div>
           <div style={{ fontSize: isMobile ? '16px' : '18px', fontWeight: 800, color: '#333' }}>
-            {destination.duration ? `${destination.duration} j` : 'Sur demande'}
+            {destination.duration ? `${destination.duration} ${t("j")}` : t('Sur demande')}
           </div>
         </div>
       </div>
@@ -79,7 +81,7 @@ const FloatingInfoCard = ({ isMobile, destination }) => {
         document.getElementById('formulaire-devis')?.scrollIntoView({ behavior: 'smooth' });
       }}
       >
-        Demander un devis
+        {t("Demander un devis")}
       </button>
     </div>
   );

@@ -32,4 +32,4 @@ pnpm-debug.log*
 
 # Gemini / Agents
 .agents/
-skills-lock.json
+# skills-lock.json  <-- We now track this for consistency

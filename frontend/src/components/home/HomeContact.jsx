@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Phone, Mail, CheckCircle, AlertCircle, Send, Loader } from 'lucide-react';
 import { apiService } from '../../services/api';
+import { useTranslate } from '../../i18n/useTranslate';
 
 const CONTACT_EMAIL = 'contact@domain.com';
 
 const HomeContact = () => {
+  const { t } = useTranslate();
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
   const [formErrors, setFormErrors] = useState({});
   const [formStatus, setFormStatus] = useState('idle'); // idle | loading | success | error
@@ -24,14 +26,14 @@ const HomeContact = () => {
 
   const validate = () => {
     const errors = {};
-    if (!formData.name.trim()) errors.name = 'Le nom est requis.';
+    if (!formData.name.trim()) errors.name = t('Le nom est requis.');
     if (!formData.email.trim()) {
-      errors.email = "L'email est requis.";
+      errors.email = t("L'email est requis.");
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      errors.email = "L'adresse email n'est pas valide.";
+      errors.email = t("L'adresse email n'est pas valide.");
     }
     if (!formData.message.trim() || formData.message.trim().length < 10) {
-      errors.message = 'Le message doit contenir au moins 10 caractères.';
+      errors.message = t('Le message doit contenir au moins 10 caractères.');
     }
     return errors;
   };
@@ -50,7 +52,7 @@ const HomeContact = () => {
       await apiService.createMessage({
         sender: formData.name,
         email: formData.email,
-        subject: 'Contact depuis la page d\'accueil',
+        subject: t("Contact depuis la page d'accueil"),
         content: formData.message
       });
 
@@ -117,7 +119,7 @@ const HomeContact = () => {
               display: 'block',
               marginBottom: '16px'
             }}>
-              Nous Contacter
+              {t("Nous Contacter")}
             </span>
             <h2 style={{
               fontSize: isMobile ? '28px' : '42px',
@@ -127,7 +129,7 @@ const HomeContact = () => {
               lineHeight: 1.2,
               fontWeight: 700
             }}>
-              Discutons de votre projet de voyage
+              {t("Discutons de votre projet de voyage")}
             </h2>
             <p style={{
               color: '#bbb',
@@ -136,7 +138,7 @@ const HomeContact = () => {
               marginBottom: '40px',
               textAlign: 'justify'
             }}>
-              Vous avez des questions sur un circuit, des envies de personnalisation ou besoin d'assistance pour préparer votre voyage à Madagascar ? Remplissez ce formulaire et démarrez instantanément la discussion avec notre équipe sur WhatsApp.
+              {t("Vous avez des questions sur un circuit, des envies de personnalisation ou besoin d'assistance pour préparer votre voyage à Madagascar ? Remplissez ce formulaire et démarrez instantanément la discussion avec notre équipe sur WhatsApp.")}
             </p>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -152,7 +154,7 @@ const HomeContact = () => {
                   <Phone size={20} color="#FF8C00" />
                 </div>
                 <div>
-                  <p style={{ color: '#888', fontSize: '12px', margin: 0, textTransform: 'uppercase' }}>Téléphone / WhatsApp</p>
+                  <p style={{ color: '#888', fontSize: '12px', margin: 0, textTransform: 'uppercase' }}>{t("Téléphone / WhatsApp")}</p>
                   <p style={{ fontSize: '1rem', fontWeight: 600, margin: '2px 0 0' }}>034 17 761 69</p>
                 </div>
               </div>
@@ -169,7 +171,7 @@ const HomeContact = () => {
                   <Mail size={20} color="#FF8C00" />
                 </div>
                 <div>
-                  <p style={{ color: '#888', fontSize: '12px', margin: 0, textTransform: 'uppercase' }}>Email</p>
+                  <p style={{ color: '#888', fontSize: '12px', margin: 0, textTransform: 'uppercase' }}>{t("Email")}</p>
                   <p style={{ fontSize: '1rem', fontWeight: 600, margin: '2px 0 0' }}>{CONTACT_EMAIL}</p>
                 </div>
               </div>
@@ -199,8 +201,8 @@ const HomeContact = () => {
               }}>
                 <CheckCircle size={22} color="#22c55e" />
                 <div style={{ textAlign: 'left' }}>
-                  <p style={{ color: '#22c55e', fontWeight: 700, margin: 0 }}>Message enregistré !</p>
-                  <p style={{ color: '#86efac', fontSize: '0.9rem', margin: '4px 0 0' }}>WhatsApp va s'ouvrir pour initier la discussion en ligne.</p>
+                  <p style={{ color: '#22c55e', fontWeight: 700, margin: 0 }}>{t("Message enregistré !")}</p>
+                  <p style={{ color: '#86efac', fontSize: '0.9rem', margin: '4px 0 0' }}>{t("WhatsApp va s'ouvrir pour initier la discussion en ligne.")}</p>
                 </div>
               </div>
             )}
@@ -218,8 +220,8 @@ const HomeContact = () => {
               }}>
                 <AlertCircle size={22} color="#ef4444" />
                 <div style={{ textAlign: 'left' }}>
-                  <p style={{ color: '#ef4444', fontWeight: 700, margin: 0 }}>Erreur temporaire</p>
-                  <p style={{ color: '#fca5a5', fontSize: '0.9rem', margin: '4px 0 0' }}>Le message n'a pas pu être enregistré dans le dashboard. Réessayez ou contactez-nous par WhatsApp.</p>
+                  <p style={{ color: '#ef4444', fontWeight: 700, margin: 0 }}>{t("Erreur temporaire")}</p>
+                  <p style={{ color: '#fca5a5', fontSize: '0.9rem', margin: '4px 0 0' }}>{t("Le message n'a pas pu être enregistré dans le dashboard. Réessayez ou contactez-nous par WhatsApp.")}</p>
                 </div>
               </div>
             )}
@@ -230,7 +232,7 @@ const HomeContact = () => {
                   id="home-contact-name"
                   type="text"
                   name="name"
-                  placeholder="Votre nom *"
+                  placeholder={t("Votre nom *")}
                   value={formData.name}
                   onChange={handleChange}
                   style={inputStyle(!!formErrors.name)}
@@ -245,7 +247,7 @@ const HomeContact = () => {
                   id="home-contact-email"
                   type="email"
                   name="email"
-                  placeholder="Votre email *"
+                  placeholder={t("Votre email *")}
                   value={formData.email}
                   onChange={handleChange}
                   style={inputStyle(!!formErrors.email)}
@@ -259,7 +261,7 @@ const HomeContact = () => {
                 <textarea
                   id="home-contact-message"
                   name="message"
-                  placeholder="Votre message (minimum 10 caractères) *"
+                  placeholder={t("Votre message (minimum 10 caractères) *")}
                   rows="5"
                   value={formData.message}
                   onChange={handleChange}
@@ -294,9 +296,9 @@ const HomeContact = () => {
                 }}
               >
                 {formStatus === 'loading' ? (
-                  <><Loader size={18} style={{ animation: 'spin 1s linear infinite' }} />Envoi en cours...</>
+                  <><Loader size={18} style={{ animation: 'spin 1s linear infinite' }} />{t("Envoi en cours...")}</>
                 ) : (
-                  <><Send size={18} />Discuter sur WhatsApp</>
+                  <><Send size={18} />{t("Discuter sur WhatsApp")}</>
                 )}
               </button>
             </form>

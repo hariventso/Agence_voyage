@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { getImageUrl } from '../../services/images';
+import { useTranslate } from '../../i18n/useTranslate';
 
 const StarRating = ({ rating = 5 }) => (
   <div style={{ display: 'flex', gap: '4px', marginTop: '10px' }}>
@@ -22,13 +24,14 @@ const formatDate = (dateStr) => {
 };
 
 const TestimonialCard = ({ testimonial, isVisible }) => {
+  const { t } = useTranslate();
   const [hovered, setHovered] = useState(false);
 
   const name = testimonial?.name || 'Anonyme';
   const date = formatDate(testimonial?.created_at || testimonial?.date);
   const rating = testimonial?.rating || 5;
   const text = testimonial?.content || testimonial?.quote || '';
-  const avatar = testimonial?.image_url || testimonial?.image || '/image/placeholder.png';
+  const avatar = getImageUrl(testimonial?.image_url || testimonial?.image, '/image/placeholder.png');
 
   return (
     <div
@@ -72,7 +75,7 @@ const TestimonialCard = ({ testimonial, isVisible }) => {
         margin: '0 0 28px 0',
         flex: 1
       }}>
-        {text}
+        {t(text)}
       </p>
 
       {/* Avatar + Name + Date + Stars */}
@@ -111,6 +114,7 @@ const TestimonialCard = ({ testimonial, isVisible }) => {
 };
 
 const TestimonialSlider = ({ testimonials, isMobile }) => {
+  const { t } = useTranslate();
   const [activeIndex, setActiveIndex] = useState(0);
   const perPage = isMobile ? 1 : 3;
   const totalItems = testimonials.length;
@@ -156,7 +160,7 @@ const TestimonialSlider = ({ testimonials, isMobile }) => {
             color: '#D4A017',
             marginBottom: '12px'
           }}>
-            Avis Voyageurs
+            {t("Avis Voyageurs")}
           </p>
           <h2 style={{
             fontSize: isMobile ? '2rem' : '2.8rem',
@@ -165,7 +169,7 @@ const TestimonialSlider = ({ testimonials, isMobile }) => {
             margin: '0 0 16px',
             fontFamily: '"Outfit", sans-serif'
           }}>
-            Ce que disent nos voyageurs
+            {t("Ce que disent nos voyageurs")}
           </h2>
           <p style={{
             fontSize: '15px',
@@ -174,7 +178,7 @@ const TestimonialSlider = ({ testimonials, isMobile }) => {
             margin: '0 auto',
             lineHeight: 1.6
           }}>
-            Leurs sourires et leurs souvenirs sont notre plus belle récompense.
+            {t("Leurs sourires et leurs souvenirs sont notre plus belle récompense.")}
           </p>
         </div>
 

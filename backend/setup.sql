@@ -103,7 +103,10 @@ CREATE TABLE IF NOT EXISTS calendar_events (
     event_time TIME NOT NULL,
     location VARCHAR(255),
     employee_id INTEGER REFERENCES employees(id) ON DELETE CASCADE,
+    status VARCHAR(50) DEFAULT 'todo',
+    color VARCHAR(30) DEFAULT '#2563eb',
     description TEXT,
+    reminder_sent BOOLEAN DEFAULT FALSE,
     reminder_sent_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -134,3 +137,15 @@ VALUES
 ('Mialy Rakoto', 'mialy@example.com', 'Guide Senior', '+261 34 00 000 00', 'Actif'),
 ('Andry Ranaivo', 'andry@example.com', 'Coordinateur Logistique', '+261 34 11 111 11', 'Actif')
 ON CONFLICT (email) DO NOTHING;
+
+-- Table pour les utilisateurs (Administration)
+CREATE TABLE IF NOT EXISTS users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO users (username, password)
+VALUES ('Tourisme', '2026')
+ON CONFLICT (username) DO NOTHING;

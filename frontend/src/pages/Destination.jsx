@@ -1,28 +1,20 @@
-import React, { useState, useEffect } from 'react';
+/* eslint-disable react-hooks/set-state-in-effect */
+import { useState, useEffect, useCallback } from 'react';
 import DestinationHero from '../components/destinations/DestinationHero';
 import DestinationGrid from '../components/destinations/DestinationGrid';
 import DestinationPopular from '../components/destinations/DestinationPopular';
 import { apiService } from '../services/api';
+import { useTranslate } from '../i18n/useTranslate';
 
 function Destination({ serviceFilter }) {
+  const { t } = useTranslate();
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [destinations, setDestinations] = useState([]);
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedService, setSelectedService] = useState(serviceFilter || null);
 
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', handleResize);
-    fetchPageData();
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  useEffect(() => {
-    setSelectedService(null);
-  }, [serviceFilter]);
-
-  const fetchPageData = async () => {
+  const fetchPageData = useCallback(async () => {
     try {
       const [destinationData, serviceData] = await Promise.all([
         apiService.getDestinations(),
@@ -35,7 +27,18 @@ function Destination({ serviceFilter }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    fetchPageData();
+    return () => window.removeEventListener('resize', handleResize);
+  }, [fetchPageData]);
+
+  useEffect(() => {
+    setSelectedService(serviceFilter || null);
+  }, [serviceFilter]);
 
   const filteredDestinations = selectedService
     ? destinations.filter(d => d.service_name === selectedService)
@@ -47,7 +50,7 @@ function Destination({ serviceFilter }) {
 
       <section style={{ padding: '60px 20px', backgroundColor: '#050505' }}>
         <div className="container" style={{ maxWidth: '1200px', margin: '0 auto' }}>
-          <h2 style={{ color: '#FF8C00', marginBottom: '24px' }}>Filtrer par service</h2>
+          <h2 style={{ color: '#FF8C00', marginBottom: '24px' }}>{t("Filtrer par service")}</h2>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
             <button
               onClick={() => setSelectedService(null)}
@@ -60,7 +63,7 @@ function Destination({ serviceFilter }) {
                 cursor: 'pointer'
               }}
             >
-              Toutes les offres
+              {t("Toutes les offres")}
             </button>
             {services.map(service => (
               <button
@@ -75,7 +78,7 @@ function Destination({ serviceFilter }) {
                   cursor: 'pointer'
                 }}
               >
-                {service.name}
+                {t(service.name)}
               </button>
             ))}
           </div>
@@ -87,7 +90,7 @@ function Destination({ serviceFilter }) {
       <DestinationPopular isMobile={isMobile} destinations={destinations.filter((d) => d.is_popular)} loading={loading} />
 
       <section style={{ backgroundColor: '#000', padding: '40px 20px', textAlign: 'center', borderTop: '1px solid #111', color: '#666' }}>
-        <p>© 2026 Explor'île Madagascar - Tous droits réservés</p>
+        <p>© 2026 Explor'île Madagascar - {t("Tous droits réservés")}</p>
       </section>
     </div>
   );

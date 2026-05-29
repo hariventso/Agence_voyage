@@ -1,6 +1,8 @@
-import React from 'react';
+import { useTranslate } from '../../i18n/useTranslate';
 
 const HomeTrusted = ({ isMobile }) => {
+  const { t } = useTranslate();
+
   return (
     <section style={{ 
       padding: isMobile ? '40px 16px' : '80px 20px', 
@@ -19,7 +21,7 @@ const HomeTrusted = ({ isMobile }) => {
       }}>
         <img 
           src="/image/engagements_sunset.png" 
-          alt="Voyageurs au coucher du soleil" 
+          alt={t("Voyageurs au coucher du soleil")} 
           style={{ 
             position: 'absolute', 
             top: 0, 
@@ -53,7 +55,7 @@ const HomeTrusted = ({ isMobile }) => {
             fontFamily: '"Plus Jakarta Sans", sans-serif',
             lineHeight: 1.2
           }}>
-            Nos engagements
+            {t("Nos engagements")}
           </h2>
           <div style={{ 
             fontSize: isMobile ? '15px' : '17px', 
@@ -61,11 +63,11 @@ const HomeTrusted = ({ isMobile }) => {
             opacity: 0.9,
             textAlign: 'left'
           }}>
-            <p style={{ marginBottom: '16px' }}>Nous croyons en un tourisme respectueux et porteur de sens. C’est pourquoi nous nous engageons à :</p>
+            <p style={{ marginBottom: '16px' }}>{t("Nous croyons en un tourisme respectueux et porteur de sens. C’est pourquoi nous nous engageons à :")}</p>
             <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <li>• Valoriser la richesse culturelle et historique de Madagascar auprès d’un public local et international</li>
-              <li>• Respecter l’identité et la dignité des populations locales</li>
-              <li>• Contribuer au développement des communautés visitées à travers des actions solidaires</li>
+              <li>• {t("Valoriser la richesse culturelle et historique de Madagascar auprès d’un public local et international")}</li>
+              <li>• {t("Respecter l’identité et la dignité des populations locales")}</li>
+              <li>• {t("Contribuer au développement des communautés visitées à travers des actions solidaires")}</li>
             </ul>
           </div>
         </div>

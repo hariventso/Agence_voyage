@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { MapPin, Sparkles, Home, Shield } from 'lucide-react';
+import { useTranslate } from '../../i18n/useTranslate';
 
 const HomeFeatures = () => {
+  const { t } = useTranslate();
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
 
   useEffect(() => {
@@ -43,10 +45,10 @@ const HomeFeatures = () => {
             fontFamily: '"Playfair Display", serif',
             marginBottom: '16px' 
           }}>
-            Pourquoi choisir Explor’île ?
+            {t("Pourquoi choisir Explor’île ?")}
           </h2>
           <p style={{ color: '#666', fontSize: '16px', maxWidth: '700px', margin: '0 auto', lineHeight: 1.6 }}>
-            Nous mettons tout en œuvre pour faire de votre séjour à Madagascar une expérience inoubliable et sans souci.
+            {t("Nous mettons tout en œuvre pour faire de votre séjour à Madagascar une expérience inoubliable et sans souci.")}
           </p>
         </div>
 
@@ -84,7 +86,7 @@ const HomeFeatures = () => {
                 marginBottom: '15px',
                 fontWeight: 700 
               }}>
-                {f.title}
+                {t(f.title)}
               </h3>
               <p style={{ 
                 fontSize: '15px', 
@@ -92,7 +94,7 @@ const HomeFeatures = () => {
                 lineHeight: 1.6,
                 margin: 0 
               }}>
-                {f.description}
+                {t(f.description)}
               </p>
             </div>
           ))}

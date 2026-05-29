@@ -1,6 +1,8 @@
-import React from 'react';
+import { useTranslate } from '../../i18n/useTranslate';
 
 const AboutTeam = ({ isMobile }) => {
+  const { t } = useTranslate();
+
   return (
     <section style={{
       backgroundColor: '#000',
@@ -23,7 +25,7 @@ const AboutTeam = ({ isMobile }) => {
               fontWeight: 700,
               lineHeight: 1.2,
             }}>
-              Notre Équipe
+              {t("Notre Équipe")}
             </h2>
             <p style={{
               color: '#fff',
@@ -32,8 +34,7 @@ const AboutTeam = ({ isMobile }) => {
               lineHeight: 1.6,
               marginBottom: '20px',
             }}>
-              Notre agence accompagne les voyageurs depuis plus de 10 ans. 
-              Nous mettons tout en œuvre pour vous offrir la meilleure expérience.
+              {t("Notre agence accompagne les voyageurs depuis plus de 10 ans. Nous mettons tout en œuvre pour vous offrir la meilleure expérience.")}
             </p>
             <p style={{
               color: '#bbb',
@@ -42,10 +43,7 @@ const AboutTeam = ({ isMobile }) => {
               marginBottom: '36px',
               textAlign: 'justify',
             }}>
-              Chaque membre de notre équipe est un expert de terrain, formé à la fois aux sciences humaines 
-              et à la logistique du voyage. Ensemble, nous élaborons des circuits qui conjuguent découvertes 
-              culturelles, rencontres authentiques et moments de détente inoubliables. Notre engagement : 
-              respecter l'identité des communautés visitées et valoriser le patrimoine vivant de Madagascar.
+              {t("Chaque membre de notre équipe est un expert de terrain, formé à la fois aux sciences humaines et à la logistique du voyage. Ensemble, nous élaborons des circuits qui conjuguent découvertes culturelles, rencontres authentiques et moments de détente inoubliables. Notre engagement : respecter l'identité des communautés visitées et valoriser le patrimoine vivant de Madagascar.")}
             </p>
             <a
               href="#contact"
@@ -71,7 +69,7 @@ const AboutTeam = ({ isMobile }) => {
                 e.currentTarget.style.borderColor = '#fff';
               }}
             >
-              Nous contacter
+              {t("Nous contacter")}
             </a>
           </div>
 
@@ -84,7 +82,7 @@ const AboutTeam = ({ isMobile }) => {
           }}>
             <img
               src="/image/team_photo.png"
-              alt="Notre équipe Explor'île"
+              alt={t("Notre équipe Explor'île")}
               style={{
                 width: '100%',
                 height: '100%',

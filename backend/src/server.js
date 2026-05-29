@@ -1,3 +1,4 @@
+const cron = require('node-cron');
 const config = require('./config/env');
 const pool = require('./db/pool');
 const { checkDatabaseConnection } = require('./db/pool');
@@ -5,15 +6,32 @@ const ensureSchema = require('./db/repair');
 const createApp = require('./app');
 const { runReminderJob } = require('./services/calendar.service');
 
-let reminderInterval;
 let server;
+
+const startServer = async () => {
+  const db = await checkDatabaseConnection();
+  console.log(`Connexion PostgreSQL OK: ${db.database} (${db.user})`);
+
+  await ensureSchema();
+
+  // Exécuter immédiatement au démarrage (optionnel, mais utile pour tester)
+  await runReminderJob();
+
+  // Planification avec node-cron : tous les jours à 08h00 du matin
+  cron.schedule('0 8 * * *', async () => {
+    console.log('[Cron] Exécution du job de rappels (08h00)...');
+    await runReminderJob();
+  });
+
+  const app = createApp();
+  server = app.listen(config.app.port, () => {
+    console.log(`Backend on ${config.app.baseUrl}`);
+    console.log(`Origines API autorisées: ${config.app.allowedOrigins.join(', ')}`);
+  });
+};
 
 const shutdown = async (signal) => {
   console.log(`${signal} reçu. Arrêt du backend...`);
-
-  if (reminderInterval) {
-    clearInterval(reminderInterval);
-  }
 
   if (server) {
     await new Promise((resolve) => server.close(resolve));
@@ -21,18 +39,6 @@ const shutdown = async (signal) => {
 
   await pool.end();
   process.exit(0);
-};
-
-const startServer = async () => {
-  const db = await checkDatabaseConnection();
-  console.log(`Connexion PostgreSQL OK: ${db.database} (${db.user})`);
-
-  await ensureSchema();
-  await runReminderJob();
-
-  const app = createApp();
-  reminderInterval = setInterval(runReminderJob, config.calendar.reminderCheckIntervalMs);
-  server = app.listen(config.app.port, () => console.log(`Backend on ${config.app.baseUrl}`));
 };
 
 process.on('SIGINT', () => shutdown('SIGINT'));

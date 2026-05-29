@@ -1,5 +1,5 @@
-import React from 'react';
 import { Edit, Trash2 } from 'lucide-react';
+import { getImageUrl } from '../../services/images';
 
 const thStyle = {
   padding: '16px 24px',
@@ -40,7 +40,7 @@ const TestimonialsView = ({ t, viewMode, openEdit, onDelete }) => {
               <tr key={item.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                 <td style={tdStyle}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <img src={item.image_url || '/image/placeholder.png'} alt="" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} />
+                    <img src={getImageUrl(item.image_url)} alt="" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} />
                     <div>
                       <b>{item.name}</b>
                       <div style={{ fontSize: '11px', color: '#64748b' }}>{item.role}</div>
@@ -78,7 +78,7 @@ const TestimonialsView = ({ t, viewMode, openEdit, onDelete }) => {
       {t.map(item => (
         <div key={item.id} style={cardStyle}>
           <div style={{ display: 'flex', gap: '20px', marginBottom: '24px' }}>
-            <img src={item.image_url || '/image/placeholder.png'} alt="" style={{ width: '80px', height: '80px', borderRadius: '20px', objectFit: 'cover' }} />
+            <img src={getImageUrl(item.image_url)} alt="" style={{ width: '80px', height: '80px', borderRadius: '20px', objectFit: 'cover' }} />
             <div>
               <h3 style={{ fontSize: '18px', fontWeight: 900, margin: '0 0 4px', textTransform: 'uppercase' }}>{item.name}</h3>
               <p style={{ fontSize: '12px', color: '#22c55e', fontWeight: 800, margin: '0 0 8px' }}>{item.role}</p>

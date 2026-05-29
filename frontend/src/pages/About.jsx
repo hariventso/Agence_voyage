@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import AboutHero from '../components/about/AboutHero';
 import AboutTeam from '../components/about/AboutTeam';
 import TeamExpertGrid from '../components/about/TeamExpertGrid';

@@ -1,6 +1,8 @@
-import React from 'react';
+import { useTranslate } from '../../i18n/useTranslate';
 
 const AboutHero = ({ isMobile }) => {
+  const { t } = useTranslate();
+
   return (
     <section style={{
       position: 'relative',
@@ -16,7 +18,7 @@ const AboutHero = ({ isMobile }) => {
       {/* Background */}
       <img
         src="/image/about_hero.png"
-        alt="À propos de Explor'île"
+        alt={t("À propos de Explor'île")}
         style={{
           position: 'absolute', top: 0, left: 0,
           width: '100%', height: '100%',
@@ -40,7 +42,7 @@ const AboutHero = ({ isMobile }) => {
           marginBottom: '24px',
           textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
         }}>
-          À propos
+          {t("À propos")}
         </h1>
         <p style={{
           color: '#fff',
@@ -51,9 +53,7 @@ const AboutHero = ({ isMobile }) => {
           fontWeight: 400,
           textShadow: '1px 1px 3px rgba(0,0,0,0.5)',
         }}>
-          Explor'île vous invite à vivre une aventure humaine et sensorielle unique.
-          Spécialistes de la Grande Île, nous concevons des voyages sur mesure qui privilégient
-          l'immersion, le respect des traditions et l'émerveillement face à une biodiversité exceptionnelle.
+          {t("Explor'île vous invite à vivre une aventure humaine et sensorielle unique. Spécialistes de la Grande Île, nous concevons des voyages sur mesure qui privilégient l'immersion, le respect des traditions et l'émerveillement face à une biodiversité exceptionnelle.")}
         </p>
       </div>
     </section>

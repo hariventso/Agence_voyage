@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { apiService } from '../../services/api';
+import { getImageUrl } from "../../services/images";
+import { useTranslate } from "../../i18n/useTranslate";
 
 const fallbackSlides = [
   {
@@ -18,6 +20,7 @@ const fallbackSlides = [
 ];
 
 const HomeHero = () => {
+  const { t } = useTranslate();
   const [slides, setSlides] = useState(fallbackSlides);
   const [currentIndex, setCurrentIndex] = useState(1);
   const [isTransitioning, setIsTransitioning] = useState(true);
@@ -31,10 +34,10 @@ const HomeHero = () => {
   }, []);
 
   useEffect(() => {
-    apiService.getSlides()
+    apiService
+      .getSlides()
       .then((data) => {
         if (data && data.length > 0) {
-          // Map title or subtitle appropriately if fetched dynamically
           const formatted = data.map(s => ({
             image: s.image_url || s.image,
             title: s.title || s.subtitle || s.description || "Madagascar"
@@ -43,7 +46,7 @@ const HomeHero = () => {
           setCurrentIndex(1);
         }
       })
-      .catch((err) => console.error('Error fetching slides:', err));
+      .catch((err) => console.error("Error fetching slides:", err));
   }, []);
 
   // Extend slides for infinite loop sliding
@@ -52,15 +55,6 @@ const HomeHero = () => {
     ...slides,
     slides[0]
   ];
-
-  // Auto-play interval
-  useEffect(() => {
-    if (slides.length <= 1) return;
-    timerRef.current = setInterval(() => {
-      handleNext();
-    }, 6000);
-    return () => clearInterval(timerRef.current);
-  }, [currentIndex, slides.length, isTransitioning]);
 
   let activeIndex = currentIndex - 1;
   if (currentIndex === 0) {
@@ -83,6 +77,15 @@ const HomeHero = () => {
     if (!isTransitioning) return;
     setCurrentIndex(index + 1);
   };
+
+  // Auto-play interval
+  useEffect(() => {
+    if (slides.length <= 1) return;
+    timerRef.current = setInterval(() => {
+      handleNext();
+    }, 6000);
+    return () => clearInterval(timerRef.current);
+  }, [currentIndex, slides.length, isTransitioning]);
 
   const handleTransitionEnd = () => {
     if (currentIndex === extendedSlides.length - 1) {
@@ -156,7 +159,7 @@ const HomeHero = () => {
               marginBottom: '24px',
               display: 'inline-block'
             }}>
-              Explor'île
+              {t("Explor'île")}
             </div>
 
             {/* Main Heading */}
@@ -168,7 +171,7 @@ const HomeHero = () => {
               margin: '0 0 24px 0',
               letterSpacing: '-0.5px'
             }}>
-              Agence de voyage et tour opérateur culturel et patrimonial
+              {t("Agence de voyage et tour opérateur culturel et patrimonial")}
             </h1>
 
             {/* Paragraph Text */}
@@ -183,13 +186,13 @@ const HomeHero = () => {
               gap: '16px'
             }}>
               <p style={{ margin: 0, fontWeight: 700, color: '#2D3748', fontSize: '17px' }}>
-                Découvrez Madagascar autrement avec Explor’île.
+                {t("Découvrez Madagascar autrement avec Explor’île.")}
               </p>
               <p style={{ margin: 0 }}>
-                Nous vous invitons à vivre des expériences uniques au croisement du tourisme culturel et patrimonial.
+                {t("Nous vous invitons à vivre des expériences uniques au croisement du tourisme culturel et patrimonial.")}
               </p>
               <p style={{ margin: 0 }}>
-                Nos voyages sont conçus à partir de recherches scientifiques, de savoirs locaux et de récits authentiques afin de vous offrir bien plus qu’un simple séjour : une véritable immersion au cœur de l’âme malgache.
+                {t("Nos voyages sont conçus à partir de recherches scientifiques, de savoirs locaux et de récits authentiques afin de vous offrir bien plus qu’un simple séjour : une véritable immersion au cœur de l’âme malgache.")}
               </p>
             </div>
 
@@ -219,7 +222,7 @@ const HomeHero = () => {
               e.currentTarget.style.boxShadow = '0 8px 24px rgba(27, 94, 32, 0.25)';
             }}
             >
-              Découvrir nos offres
+              {t("Découvrir nos offres")}
               <ArrowRight size={20} />
             </a>
           </div>
@@ -255,8 +258,8 @@ const HomeHero = () => {
                   }}
                 >
                   <img
-                    src={slide.image}
-                    alt={slide.title}
+                    src={getImageUrl(slide.image, "/image/home_hero.png")}
+                    alt={t(slide.title)}
                     style={{
                       width: '100%',
                       height: '100%',
@@ -289,7 +292,7 @@ const HomeHero = () => {
                       textAlign: 'center',
                       fontFamily: '"Outfit", sans-serif'
                     }}>
-                      {slide.title}
+                      {t(slide.title)}
                     </p>
                   </div>
                 </div>

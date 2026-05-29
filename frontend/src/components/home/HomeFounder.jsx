@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import { useTranslate } from '../../i18n/useTranslate';
 
 const HomeFounder = () => {
+  const { t } = useTranslate();
   const [isMobile, setIsMobile] = useState(window.innerWidth < 992);
 
   useEffect(() => {
@@ -77,7 +79,7 @@ const HomeFounder = () => {
                   textTransform: 'uppercase',
                   letterSpacing: '2px'
                 }}>
-                  Co-fondateur & Directeur
+                  {t("Co-fondateur & Directeur")}
                 </span>
               </div>
             </div>
@@ -97,7 +99,7 @@ const HomeFounder = () => {
               display: 'block',
               marginBottom: '16px'
             }}>
-              Le Mot du Fondateur
+              {t("Le Mot du Fondateur")}
             </span>
             <h2 style={{
               fontSize: isMobile ? '28px' : '42px',
@@ -107,7 +109,7 @@ const HomeFounder = () => {
               lineHeight: 1.2,
               fontWeight: 700
             }}>
-              Partager l'authenticité de Madagascar
+              {t("Partager l'authenticité de Madagascar")}
             </h2>
             <div style={{
               color: '#ccc',
@@ -116,10 +118,10 @@ const HomeFounder = () => {
               textAlign: 'justify'
             }}>
               <p style={{ marginBottom: '20px' }}>
-                "Passionné par le patrimoine vivant et la biodiversité de notre belle île, j'ai créé Explor'île avec l'ambition de proposer une nouvelle manière de voyager. Une approche plus humaine, plus responsable et profondément authentique."
+                "{t("Passionné par le patrimoine vivant et la biodiversité de notre belle île, j'ai créé Explor'île avec l'ambition de proposer une nouvelle manière de voyager. Une approche plus humaine, plus responsable et profondément authentique.")}"
               </p>
               <p style={{ marginBottom: '24px' }}>
-                "Notre démarche s'appuie sur des recherches approfondies, la valorisation des savoirs locaux et la collaboration directe avec les communautés hôtes. Chaque itinéraire est une passerelle tendue entre les cultures. En choisissant Explor'île, vous vivez une expérience enrichissante tout en contribuant activement à la préservation du patrimoine malgache."
+                "{t("Notre démarche s'appuie sur des recherches approfondies, la valorisation des savoirs locaux et la collaboration directe avec les communautés hôtes. Chaque itinéraire est une passerelle tendue entre les cultures. En choisissant Explor'île, vous vivez une expérience enrichissante tout en contribuant activement à la préservation du patrimoine malgache.")}"
               </p>
             </div>
             
@@ -146,7 +148,7 @@ const HomeFounder = () => {
                 fontSize: '13px',
                 fontWeight: 500
               }}>
-                Co-fondateur & Guide d'Explor'île
+                {t("Co-fondateur & Guide d'Explor'île")}
               </span>
             </div>
           </div>

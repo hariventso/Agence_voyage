@@ -1,129 +1,17 @@
-import React, { useEffect } from 'react';
-import { ArrowLeft, Clock, User, Calendar, Share2, Tag } from 'lucide-react';
-
-const blogPosts = {
-  '1': {
-    title: "À la découverte des trésors cachés de Madagascar",
-    category: "Aventure",
-    image: "/image/hero.png",
-    author: "Explor'île Team",
-    date: "12 Mai 2024",
-    readTime: "5 min",
-    content: `
-      Madagascar est une terre de mystères et d'aventures. Au-delà des circuits touristiques classiques, l'île cache des trésors insoupçonnés. 
-      Imaginez-vous marchant à travers des forêts denses pour découvrir une cascade cristalline dont personne n'a entendu parler, ou visitant un village reculé où les traditions ancestrales sont restées intactes.
-      
-      Dans cet article, nous vous emmenons hors des sentiers battus pour explorer l'âme véritable de la Grande Île. Nous parlerons des Tsingy de Bemaraha, des parcs nationaux moins connus et de l'importance de voyager de manière responsable pour préserver ces joyaux.
-      
-      La biodiversité de Madagascar est unique au monde. Plus de 90% de sa faune et de sa flore ne se trouvent nulle part ailleurs sur Terre. Explorer ces trésors cachés, c'est aussi prendre conscience de la fragilité de cet écosystème.
-    `
-  },
-  '2': {
-    title: "Guide des traditions locales malgaches",
-    category: "Culture",
-    image: "/image/mountain.png",
-    author: "Jean-Luc R.",
-    date: "10 Mai 2024",
-    readTime: "7 min",
-    content: `
-      La culture malgache est un mélange fascinant d'influences africaines et asiatiques. L'un des aspects les plus importants de la vie quotidienne est le concept de "Fady" ou tabous.
-      Chaque région, chaque clan a ses propres Fady qui dictent ce qui peut ou ne peut pas être fait. Comprendre ces traditions est essentiel pour tout voyageur souhaitant s'immerger respectueusement dans la société malgache.
-      
-      Nous explorerons également l'importance de la musique traditionnelle, comme le "Salegy", et le rôle central du riz dans la gastronomie et les rituels sociaux.
-    `
-  },
-  '3': {
-    title: "Observation des lémuriens : Guide du débutant",
-    category: "Nature",
-    image: "/image/hero_new.png",
-    author: "Sarah M.",
-    date: "08 Mai 2024",
-    readTime: "6 min",
-    content: `
-      Les lémuriens sont les ambassadeurs de Madagascar. Avec plus de 100 espèces différentes, l'île offre un spectacle naturel unique au monde. 
-      Du minuscule lémurien microcèbe à l'imposant Indri-Indri avec son cri mélancolique, chaque rencontre est un moment magique.
-      
-      Dans ce guide, nous vous donnons les meilleurs conseils pour observer ces primates dans leur habitat naturel : quels parcs visiter, à quelle heure de la journée partir en randonnée et comment se comporter pour ne pas perturber leur environnement.
-    `
-  },
-  '4': {
-    title: "Nosy Be : L'île aux parfums",
-    category: "Plages",
-    image: "/image/maldives.png",
-    author: "Explor'île Team",
-    date: "05 Mai 2024",
-    readTime: "4 min",
-    content: `
-      Nosy Be n'est pas seulement une destination de plage ; c'est une expérience sensorielle. L'air est imprégné de l'odeur sucrée de l'ylang-ylang et de la vanille.
-      Les eaux turquoise du canal du Mozambique invitent à la plongée et au snorkeling, révélant des récifs coralliens vibrants de vie.
-      
-      Découvrez les meilleures plages de l'île, les excursions vers les îles environnantes comme Nosy Komba et Nosy Tanikely, et la vie nocturne animée de Hell-Ville.
-    `
-  },
-  '5': {
-    title: "L'Allée des Baobabs : Un spectacle naturel",
-    category: "Tourisme",
-    image: "/image/mountain.png",
-    author: "Pierre D.",
-    date: "02 Mai 2024",
-    readTime: "5 min",
-    content: `
-      S'élevant majestueusement au-dessus de la savane, les baobabs de l'Allée des Baobabs sont parmi les arbres les plus emblématiques au monde. 
-      Ces géants vieux de plusieurs siècles créent un paysage surréaliste, particulièrement au lever et au coucher du soleil.
-      
-      Nous partageons avec vous l'histoire de ces "arbres à l'envers", les légendes qui les entourent et les meilleures façons de photographier ce site classé au patrimoine mondial.
-    `
-  },
-  '6': {
-    title: "Saveurs de Madagascar : Les plats incontournables",
-    category: "Gastronomie",
-    image: "/image/hero.png",
-    author: "Chef Mamy",
-    date: "01 Mai 2024",
-    readTime: "8 min",
-    content: `
-      La cuisine malgache est une aventure pour le palais. Le plat national, le Romazava, est un bouillon de viande et de brèdes (feuilles vertes) riche en saveurs. 
-      Le Ravitoto, à base de feuilles de manioc pilées et de viande de porc, est un autre classique à ne pas manquer.
-      
-      Apprenez-en plus sur les ingrédients locaux, l'importance du piment (Sakay) sur chaque table et les délicieux fruits tropicaux que vous pouvez déguster sur les marchés locaux.
-    `
-  }
-};
+/* eslint-disable react-hooks/set-state-in-effect */
+import { useEffect, useState, useCallback } from 'react';
+import { ArrowLeft, User, Calendar, Share2, Tag } from 'lucide-react';
+import { apiService } from '../services/api';
+import { getImageUrl } from '../services/images';
+import { useTranslate } from '../i18n/useTranslate';
 
 const PostDetail = ({ postId }) => {
-  const [post, setPost] = React.useState(null);
-  const [loading, setLoading] = React.useState(true);
-  const [isMobile, setIsMobile] = React.useState(window.innerWidth < 768);
+  const { t } = useTranslate();
+  const [post, setPost] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
-  useEffect(() => {
-    window.scrollTo(0, 0);
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', handleResize);
-    fetchPost();
-    return () => window.removeEventListener('resize', handleResize);
-  }, [postId]);
-
-  useEffect(() => {
-    if (!post) return;
-    const pageTitle = `${post.title} | Blog Explor'Île`;
-    const pageDescription = post.content ? post.content.substring(0, 160).replace(/\s+/g, ' ').trim() + '...' : 'Découvrez cet article du blog Explor\'Île.';
-    document.title = pageTitle;
-    const setMeta = (selector, attr, value) => {
-      const node = document.querySelector(selector);
-      if (node) node.setAttribute(attr, value);
-    };
-    setMeta('meta[name="description"]', 'content', pageDescription);
-    setMeta('meta[property="og:title"]', 'content', pageTitle);
-    setMeta('meta[property="og:description"]', 'content', pageDescription);
-    setMeta('meta[property="og:image"]', 'content', post.image || '/image/hero.png');
-    setMeta('meta[name="twitter:title"]', 'content', pageTitle);
-    setMeta('meta[name="twitter:description"]', 'content', pageDescription);
-    setMeta('meta[name="twitter:image"]', 'content', post.image || '/image/hero.png');
-    const canonical = document.querySelector('link[rel="canonical"]');
-    if (canonical) canonical.setAttribute('href', `${window.location.origin}${window.location.pathname}#post-${postId}`);
-  }, [post, postId]);
-
-  const fetchPost = async () => {
+  const fetchPost = useCallback(async () => {
     try {
       const data = await apiService.getPosts();
       const currentPost = data.find(p => String(p.id) === String(postId));
@@ -133,12 +21,40 @@ const PostDetail = ({ postId }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [postId]);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    fetchPost();
+    return () => window.removeEventListener('resize', handleResize);
+  }, [fetchPost]);
+
+  useEffect(() => {
+    if (!post) return;
+    const pageTitle = `${t(post.title)} | Blog Explor'Île`;
+    const pageDescription = post.content ? t(post.content.substring(0, 160)).replace(/\s+/g, ' ').trim() + '...' : 'Découvrez cet article du blog Explor\'Île.';
+    document.title = pageTitle;
+    const setMeta = (selector, attr, value) => {
+      const node = document.querySelector(selector);
+      if (node) node.setAttribute(attr, value);
+    };
+    setMeta('meta[name="description"]', 'content', pageDescription);
+    setMeta('meta[property="og:title"]', 'content', pageTitle);
+    setMeta('meta[property="og:description"]', 'content', pageDescription);
+    setMeta('meta[property="og:image"]', 'content', getImageUrl(post.image_url || post.image, '/image/hero.png'));
+    setMeta('meta[name="twitter:title"]', 'content', pageTitle);
+    setMeta('meta[name="twitter:description"]', 'content', pageDescription);
+    setMeta('meta[name="twitter:image"]', 'content', getImageUrl(post.image_url || post.image, '/image/hero.png'));
+    const canonical = document.querySelector('link[rel="canonical"]');
+    if (canonical) canonical.setAttribute('href', `${window.location.origin}${window.location.pathname}#post-${postId}`);
+  }, [post, postId, t]);
 
   if (loading) {
     return (
       <div style={{ padding: '150px 20px', textAlign: 'center', backgroundColor: '#000', color: '#fff', minHeight: '100vh' }}>
-        <p>Chargement de l'article...</p>
+        <p>{t("Chargement de l'article...")}</p>
       </div>
     );
   }
@@ -146,8 +62,8 @@ const PostDetail = ({ postId }) => {
   if (!post) {
     return (
       <div style={{ padding: isMobile ? '100px 20px' : '150px 20px', textAlign: 'center', backgroundColor: '#000', color: '#fff', minHeight: '100vh' }}>
-        <h2 style={{ fontSize: isMobile ? '1.8rem' : '2.5rem', marginBottom: '20px' }}>Oups ! Article non trouvé</h2>
-        <p style={{ color: '#aaa', marginBottom: '40px' }}>L'article que vous recherchez semble avoir disparu dans la jungle.</p>
+        <h2 style={{ fontSize: isMobile ? '1.8rem' : '2.5rem', marginBottom: '20px' }}>{t("Oups ! Article non trouvé")}</h2>
+        <p style={{ color: '#aaa', marginBottom: '40px' }}>{t("L'article que vous recherchez semble avoir disparu dans la jungle.")}</p>
         <a href="#blog" style={{ 
           backgroundColor: '#FF8C00', 
           color: '#fff', 
@@ -155,7 +71,7 @@ const PostDetail = ({ postId }) => {
           borderRadius: '50px', 
           textDecoration: 'none',
           fontWeight: 600
-        }}>Retour au Blog</a>
+        }}>{t("Retour au Blog")}</a>
       </div>
     );
   }
@@ -174,7 +90,7 @@ const PostDetail = ({ postId }) => {
         paddingBottom: isMobile ? '60px' : '80px',
         overflow: 'hidden'
       }}>
-        <img src={post.image_url || "/image/placeholder.png"} alt={post.title} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: 0 }} />
+        <img src={getImageUrl(post.image_url || post.image)} alt={t(post.title)} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: 0 }} />
         <div style={{ 
           position: 'absolute', 
           top: 0, 
@@ -201,7 +117,7 @@ const PostDetail = ({ postId }) => {
             marginBottom: isMobile ? '16px' : '24px'
           }}>
             <Tag size={14} />
-            {post.category}
+            {t(post.category)}
           </div>
           <h1 style={{ 
             fontSize: isMobile ? '1.8rem' : 'clamp(2.5rem, 6vw, 4.5rem)', 
@@ -212,7 +128,7 @@ const PostDetail = ({ postId }) => {
             lineHeight: 1.2,
             textShadow: '0 4px 20px rgba(0,0,0,0.3)'
           }}>
-            {post.title}
+            {t(post.title)}
           </h1>
           
           <div style={{ 
@@ -262,7 +178,7 @@ const PostDetail = ({ postId }) => {
             onMouseOut={(e) => e.target.style.color = '#666'}
             >
               <ArrowLeft size={20} />
-              Retour au Blog
+              {t("Retour au Blog")}
             </a>
           </div>
 
@@ -274,7 +190,7 @@ const PostDetail = ({ postId }) => {
             fontFamily: "'Plus Jakarta Sans', sans-serif",
             textAlign: 'justify'
           }}>
-            {post.content}
+            {t(post.content)}
           </div>
 
           {/* Share / Social */}
@@ -289,7 +205,7 @@ const PostDetail = ({ postId }) => {
             gap: '20px'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-              <span style={{ fontWeight: 700, color: '#222' }}>Partager :</span>
+              <span style={{ fontWeight: 700, color: '#222' }}>{t("Partager :")}</span>
               <div style={{ display: 'flex', gap: '10px' }}>
                 <button style={{ backgroundColor: '#f5f5f5', border: 'none', width: '40px', height: '40px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Share2 size={18} color="#FF8C00" /></button>
               </div>
@@ -304,7 +220,7 @@ const PostDetail = ({ postId }) => {
               fontSize: '0.9rem',
               width: isMobile ? '100%' : 'auto',
               textAlign: 'center'
-            }}>Planifier mon aventure</a>
+            }}>{t("Planifier mon aventure")}</a>
           </div>
         </div>
       </section>

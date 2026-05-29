@@ -1,5 +1,6 @@
-import React from 'react';
 import { Menu, X, User } from 'lucide-react';
+import { LanguageSwitcher } from '../../i18n/LanguageSwitcher';
+import { useTranslate } from '../../i18n/useTranslate';
 
 const Navbar = ({ 
   isScrolledOrInnerPage, 
@@ -14,6 +15,7 @@ const Navbar = ({
   isContactPage, 
   isAdminPage 
 }) => {
+  const { t } = useTranslate();
   const linkColor = (active) => active ? '#FF8C00' : (isScrolledOrInnerPage ? '#222' : '#fff');
 
   return (
@@ -38,12 +40,12 @@ const Navbar = ({
         </div>
 
         {/* Desktop Nav Links */}
-        <div className="nav-links nav-links-desktop">
-          <a href="#" style={{ color: linkColor(currentHash === '' || currentHash === '#'), fontWeight: 600, fontSize: '15px', textDecoration: 'none' }}>Accueil</a>
-          <a href="#destinations" style={{ color: linkColor(isDestinationPage), fontWeight: 600, fontSize: '15px', textDecoration: 'none' }}>Circuits</a>
-          <a href="#blog" style={{ color: linkColor(isBlogPage || isPostPage), fontWeight: 600, fontSize: '15px', textDecoration: 'none' }}>Blog</a>
-          <a href="#about" style={{ color: linkColor(isAboutPage), fontWeight: 600, fontSize: '15px', textDecoration: 'none' }}>À propos</a>
-          <a href="#contact" style={{ color: linkColor(isContactPage), fontWeight: 600, fontSize: '15px', textDecoration: 'none' }}>Contact</a>
+        <div className="nav-links nav-links-desktop" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+          <a href="#" style={{ color: linkColor(currentHash === '' || currentHash === '#'), fontWeight: 600, fontSize: '15px', textDecoration: 'none' }}>{t("Accueil")}</a>
+          <a href="#destinations" style={{ color: linkColor(isDestinationPage), fontWeight: 600, fontSize: '15px', textDecoration: 'none' }}>{t("Circuits")}</a>
+          <a href="#blog" style={{ color: linkColor(isBlogPage || isPostPage), fontWeight: 600, fontSize: '15px', textDecoration: 'none' }}>{t("Blog")}</a>
+          <a href="#about" style={{ color: linkColor(isAboutPage), fontWeight: 600, fontSize: '15px', textDecoration: 'none' }}>{t("À propos")}</a>
+          <a href="#contact" style={{ color: linkColor(isContactPage), fontWeight: 600, fontSize: '15px', textDecoration: 'none' }}>{t("Contact")}</a>
           <a href="#admin" title="Admin" style={{
             color: linkColor(isAdminPage),
             display: 'flex',
@@ -57,6 +59,7 @@ const Navbar = ({
           }}>
             <User size={18} />
           </a>
+          <LanguageSwitcher />
         </div>
 
         {/* Hamburger Button (Mobile) */}
@@ -79,11 +82,14 @@ const Navbar = ({
 
       {/* Mobile Menu Dropdown */}
       <div className={`mobile-menu ${mobileMenuOpen ? 'open' : ''}`}>
-        <a href="#" onClick={() => setMobileMenuOpen(false)} style={{ color: currentHash === '' || currentHash === '#' ? '#FF8C00' : '#222' }}>Accueil</a>
-        <a href="#destinations" onClick={() => setMobileMenuOpen(false)} style={{ color: isDestinationPage ? '#FF8C00' : '#222' }}>Destinations</a>
-        <a href="#blog" onClick={() => setMobileMenuOpen(false)} style={{ color: isBlogPage || isPostPage ? '#FF8C00' : '#222' }}>Blog</a>
-        <a href="#about" onClick={() => setMobileMenuOpen(false)} style={{ color: isAboutPage ? '#FF8C00' : '#222' }}>À propos</a>
-        <a href="#contact" onClick={() => setMobileMenuOpen(false)} style={{ color: isContactPage ? '#FF8C00' : '#222' }}>Contact</a>
+        <div style={{ padding: '10px 20px', borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'center' }}>
+          <LanguageSwitcher />
+        </div>
+        <a href="#" onClick={() => setMobileMenuOpen(false)} style={{ color: currentHash === '' || currentHash === '#' ? '#FF8C00' : '#222' }}>{t("Accueil")}</a>
+        <a href="#destinations" onClick={() => setMobileMenuOpen(false)} style={{ color: isDestinationPage ? '#FF8C00' : '#222' }}>{t("Destinations")}</a>
+        <a href="#blog" onClick={() => setMobileMenuOpen(false)} style={{ color: isBlogPage || isPostPage ? '#FF8C00' : '#222' }}>{t("Blog")}</a>
+        <a href="#about" onClick={() => setMobileMenuOpen(false)} style={{ color: isAboutPage ? '#FF8C00' : '#222' }}>{t("À propos")}</a>
+        <a href="#contact" onClick={() => setMobileMenuOpen(false)} style={{ color: isContactPage ? '#FF8C00' : '#222' }}>{t("Contact")}</a>
         <a href="#admin" onClick={() => setMobileMenuOpen(false)} style={{
           color: isAdminPage ? '#FF8C00' : '#222',
           display: 'flex',
@@ -93,7 +99,7 @@ const Navbar = ({
           paddingTop: '10px',
           borderTop: '1px solid #eee'
         }}>
-          <User size={18} /> Admin
+          <User size={18} /> {t("Admin")}
         </a>
       </div>
     </nav>

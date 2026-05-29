@@ -1,22 +1,34 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useTranslate } from "../../i18n/useTranslate";
 
-const DetailsSidebar = ({ isMobile, destination }) => {
+const DetailsSidebar = ({ destination }) => {
+  const { t } = useTranslate();
   const [activeImgIdx, setActiveImgIdx] = useState(0);
   const nameLower = (destination.name || '').toLowerCase();
-  
+
   // Decide which theme to use (Madagascar vs Italy/Mockup)
-  const isMadagascar = nameLower.includes('sud') || nameLower.includes('nosy') || nameLower.includes('marie') || nameLower.includes('sainte') || nameLower.includes('tana') || nameLower.includes('antananarivo');
+  const isMadagascar =
+    nameLower.includes("sud") ||
+    nameLower.includes("nosy") ||
+    nameLower.includes("marie") ||
+    nameLower.includes("sainte") ||
+    nameLower.includes("tana") ||
+    nameLower.includes("antananarivo");
 
-  const banner1Img = isMadagascar ? '/image/madagascar_river_boat.png' : '/image/image1.jpeg';
-  const banner1Title = isMadagascar ? 'Madagascar' : 'Italie';
-  const banner1Text = isMadagascar 
-    ? 'En savoir plus sur cette destination d\'exception' 
-    : 'En savoir plus sur cette destination en train';
+  const banner1Img = isMadagascar
+    ? "/image/madagascar_river_boat.png"
+    : "/image/image1.jpeg";
+  const banner1Title = isMadagascar ? t("Madagascar") : t("Italie");
+  const banner1Text = isMadagascar
+    ? t("En savoir plus sur cette destination d'exception")
+    : t("En savoir plus sur cette destination en train");
 
-  const banner2Bg = '/image/beach_sunset_hero.png';
-  const banner3Img = isMadagascar ? '/image/isalo_destination.png' : '/image/image3.jpeg';
-  const banner3Title = isMadagascar ? 'MADAGASCAR' : "L'ITALIE";
+  const banner2Bg = "/image/beach_sunset_hero.png";
+  const banner3Img = isMadagascar
+    ? "/image/isalo_destination.png"
+    : "/image/image3.jpeg";
+  const banner3Title = isMadagascar ? t("MADAGASCAR") : t("L'ITALIE");
 
   let galleryImages = [];
   try {
@@ -37,21 +49,85 @@ const DetailsSidebar = ({ isMobile, destination }) => {
   }, [galleryImages.length]);
 
   return (
-    <aside className="sidebar" style={{ 
-      padding: '20px 0', 
-      display: 'flex', 
-      flexDirection: 'column', 
-      gap: '24px',
-      position: 'sticky',
-      top: '100px',
-      alignSelf: 'start',
-      width: '100%',
-      maxHeight: 'calc(100vh - 120px)',
-      overflowY: 'auto',
-      scrollbarWidth: 'none',
-      fontFamily: '"Outfit", sans-serif'
-    }}>
-
+    <aside
+      className="sidebar"
+      style={{
+        padding: "20px 0",
+        display: "flex",
+        flexDirection: "column",
+        gap: "24px",
+        position: "sticky",
+        top: "100px",
+        alignSelf: "start",
+        width: "100%",
+        maxHeight: "calc(100vh - 120px)",
+        overflowY: "auto",
+        scrollbarWidth: "none",
+        fontFamily: '"Outfit", sans-serif',
+      }}
+    >
+      {/* Banner 1: Destination Info Card */}
+      <div
+        style={{
+          height: "180px",
+          borderRadius: "16px",
+          overflow: "hidden",
+          position: "relative",
+          backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.6)), url("${banner1Img}")`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          cursor: "pointer",
+          boxShadow: "0 4px 15px rgba(0,0,0,0.06)",
+          transition: "all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1)",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = "translateY(-4px)";
+          e.currentTarget.style.boxShadow = "0 12px 25px rgba(0,0,0,0.12)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = "none";
+          e.currentTarget.style.boxShadow = "0 4px 15px rgba(0,0,0,0.06)";
+        }}
+        onClick={() =>
+          document
+            .getElementById("formulaire-devis")
+            ?.scrollIntoView({ behavior: "smooth" })
+        }
+      >
+        <div
+          style={{
+            position: "absolute",
+            bottom: "20px",
+            left: "20px",
+            right: "20px",
+            color: "#fff",
+          }}
+        >
+          <h3
+            style={{
+              fontSize: "24px",
+              fontWeight: 800,
+              margin: "0 0 4px 0",
+              textShadow: "0 2px 4px rgba(0,0,0,0.3)",
+            }}
+          >
+            {banner1Title}
+          </h3>
+          <p
+            style={{
+              fontSize: "12px",
+              fontWeight: 600,
+              margin: 0,
+              opacity: 0.9,
+              display: "flex",
+              alignItems: "center",
+              gap: "4px",
+            }}
+          >
+            &lt; {banner1Text}
+          </p>
+        </div>
+      </div>
 
       {/* Banner 2: Dynamic Photo Gallery Slider OR Fallback Activities Promo */}
       {galleryImages.length > 0 ? (
@@ -132,10 +208,10 @@ const DetailsSidebar = ({ isMobile, destination }) => {
                 textTransform: 'uppercase',
                 letterSpacing: '0.5px'
               }}>
-                Galerie
+                {t("Galerie")}
               </span>
               <h4 style={{ fontSize: '15px', fontWeight: 800, margin: '8px 0 0', textShadow: '0 2px 4px rgba(0,0,0,0.4)', textTransform: 'uppercase' }}>
-                {destination.name} en images
+                {t(destination.name)} {t("en images")}
               </h4>
             </div>
             
@@ -197,7 +273,7 @@ const DetailsSidebar = ({ isMobile, destination }) => {
             borderRadius: '4px',
             alignSelf: 'flex-start'
           }}>
-            Sur place
+            {t("Sur place")}
           </div>
 
           <div style={{ margin: '20px 0' }}>
@@ -209,9 +285,9 @@ const DetailsSidebar = ({ isMobile, destination }) => {
               margin: 0,
               fontFamily: '"Outfit", sans-serif'
             }}>
-              TES ACTIVITÉS <br/>
-              <span style={{ color: '#FFD700' }}>SUR PLACE</span> <br/>
-              AU MEILLEUR PRIX
+              {t("TES ACTIVITÉS")} <br/>
+              <span style={{ color: '#FFD700' }}>{t("SUR PLACE")}</span> <br/>
+              {t("AU MEILLEUR PRIX")}
             </h2>
           </div>
 
@@ -230,12 +306,91 @@ const DetailsSidebar = ({ isMobile, destination }) => {
           }}
           onMouseEnter={(e) => e.stopPropagation()}
           >
-            JE DÉCOUVRE !
+            {t("JE DÉCOUVRE !")}
           </div>
         </div>
       )}
 
+      {/* Banner 3: Train / Booking Promo */}
+      <div
+        style={{
+          minHeight: "220px",
+          borderRadius: "16px",
+          overflow: "hidden",
+          position: "relative",
+          backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.85)), url("${banner3Img}")`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          cursor: "pointer",
+          boxShadow: "0 4px 15px rgba(0,0,0,0.06)",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "flex-end",
+          padding: "28px 24px",
+          transition: "all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1)",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = "translateY(-4px)";
+          e.currentTarget.style.boxShadow = "0 12px 25px rgba(0,0,0,0.12)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = "none";
+          e.currentTarget.style.boxShadow = "0 4px 15px rgba(0,0,0,0.06)";
+        }}
+        onClick={() =>
+          document
+            .getElementById("formulaire-devis")
+            ?.scrollIntoView({ behavior: "smooth" })
+        }
+      >
+        <div
+          style={{
+            position: "absolute",
+            top: "20px",
+            right: "0",
+            backgroundColor: "#C21A4B",
+            color: "#fff",
+            fontSize: "11px",
+            fontWeight: 800,
+            padding: "6px 14px 6px 16px",
+            borderRadius: "8px 0 0 8px",
+            boxShadow: "0 2px 5px rgba(0,0,0,0.2)",
+          }}
+        >
+          {t("AU MEILLEUR PRIX")}
+        </div>
 
+        <div>
+          <h3
+            style={{
+              color: "#fff",
+              fontSize: "18px",
+              fontWeight: 800,
+              margin: "0 0 16px 0",
+              lineHeight: 1.3,
+            }}
+          >
+            {banner3Title} <br />
+            {t("EN TRAIN")}
+          </h3>
+
+          <div
+            style={{
+              backgroundColor: "#fff",
+              color: "#C21A4B",
+              padding: "10px 20px",
+              borderRadius: "24px",
+              fontSize: "11px",
+              fontWeight: 800,
+              textAlign: "center",
+              display: "inline-block",
+              boxShadow: "0 4px 10px rgba(0,0,0,0.15)",
+            }}
+          >
+            {t("C'EST PAR ICI")}
+          </div>
+        </div>
+      </div>
     </aside>
   );
 };

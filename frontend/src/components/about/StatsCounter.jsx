@@ -1,11 +1,13 @@
-import React from 'react';
+import { useTranslate } from '../../i18n/useTranslate';
 
 const StatsCounter = ({ isMobile }) => {
+  const { t } = useTranslate();
+
   const stats = [
-    { label: 'Clients', value: '900' },
-    { label: 'Circuits', value: '48' },
-    { label: 'Équipe', value: '120' },
-    { label: 'Années d\'expérience', value: '15' }
+    { label: t('Clients'), value: '900' },
+    { label: t('Circuits'), value: '48' },
+    { label: t('Équipe'), value: '120' },
+    { label: t("Années d'expérience"), value: '15' }
   ];
 
   return (
@@ -40,7 +42,7 @@ const StatsCounter = ({ isMobile }) => {
           marginBottom: '48px',
           fontWeight: 400
         }}>
-          Doing the right thing, at the right time.
+          {t("Doing the right thing, at the right time.")}
         </h2>
 
         <div style={{

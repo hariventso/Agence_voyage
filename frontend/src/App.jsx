@@ -1,7 +1,8 @@
-import React, { useState, useEffect, Suspense, lazy } from 'react';
+import { useState, useEffect, Suspense, lazy } from 'react';
 import './index.css';
 import Layout from './components/layout/Layout';
 import PageLoader from './components/ui/PageLoader';
+import { useTranslate } from './i18n/useTranslate';
 
 // Lazy loading pages
 const Home = lazy(() => import('./pages/Home'));
@@ -15,9 +16,12 @@ const About = lazy(() => import('./pages/About'));
 const Admin = lazy(() => import('./pages/Admin'));
 
 function App() {
+  const { t } = useTranslate();
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [currentHash, setCurrentHash] = useState(window.location.hash || '#');
+  const getCurrentRoute = () =>
+    window.location.pathname === '/admin' ? '#admin' : window.location.hash || '#';
+  const [currentHash, setCurrentHash] = useState(getCurrentRoute);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -29,11 +33,20 @@ function App() {
 
   useEffect(() => {
     const handleHashChange = () => {
-      setCurrentHash(window.location.hash || '#');
+      setCurrentHash(getCurrentRoute());
       window.scrollTo(0, 0);
     };
     window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
+    window.addEventListener('popstate', handleHashChange);
+
+    if (window.location.pathname === '/admin' && window.location.hash !== '#admin') {
+      window.history.replaceState(null, '', '/admin#admin');
+    }
+
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+      window.removeEventListener('popstate', handleHashChange);
+    };
   }, []);
 
   // Routing Logic
@@ -41,16 +54,16 @@ function App() {
   const isContactPage = currentHash === '#contact';
   const isBlogPage = currentHash === '#blog';
   const isDetailPage = currentHash.startsWith('#detail-');
-  const destinationIdDetail = isDetailPage ? currentHash.split('-')[1] : null;
+  const destinationIdDetail = isDetailPage ? currentHash.replace('#detail-', '') : null;
   
   const isViewPage = currentHash.startsWith('#view-');
-  const destinationIdView = isViewPage ? currentHash.split('-')[1] : null;
+  const destinationIdView = isViewPage ? currentHash.replace('#view-', '') : null;
   const destinationServiceFilter = isDestinationPage && currentHash.includes('?service=') ? decodeURIComponent(currentHash.split('?service=')[1]) : null;
 
   const isAboutPage = currentHash === '#about';
   const isAdminPage = currentHash === '#admin';
   const isPostPage = currentHash.startsWith('#post-');
-  const postId = isPostPage ? currentHash.split('-')[1] : null;
+  const postId = isPostPage ? currentHash.replace('#post-', '') : null;
 
   const isScrolledOrInnerPage = scrolled || isDestinationPage || isDetailPage || isViewPage || isAboutPage || isContactPage || isBlogPage || isPostPage;
 
@@ -105,7 +118,7 @@ function App() {
         : "Explorez nos meilleures destinations à Madagascar : circuits, séjours balnéaires et aventures sur mesure.";
     } else if (isDetailPage) {
       title = "Détails de destination - Explor'Île";
-      description = "Découvrez le détail du circuit et réservez votre voyage authentique à Madagascar.";
+      description = "Découvrez le detail du circuit et réservez votre voyage authentique à Madagascar.";
     } else if (isViewPage) {
       title = "Destination en détail - Explor'Île";
       description = "Informations détaillées sur la destination et les offres de voyage à Madagascar.";
@@ -114,18 +127,18 @@ function App() {
       description = "Lisez des articles de blog sur Madagascar, la culture locale et les meilleures expériences de voyage.";
     }
 
-    document.title = title;
-    setMetaTag('description', description);
-    setMetaTag('keywords', 'voyage Madagascar, tourisme durable, circuit culturel, séjour balnéaire, explor ile, agence de voyage');
-    setMetaProperty('og:title', title);
-    setMetaProperty('og:description', description);
+    document.title = t(title);
+    setMetaTag('description', t(description));
+    setMetaTag('keywords', t('voyage Madagascar, tourisme durable, circuit culturel, séjour balnéaire, explor ile, agence de voyage'));
+    setMetaProperty('og:title', t(title));
+    setMetaProperty('og:description', t(description));
     setMetaProperty('og:url', `${baseUrl}${window.location.pathname}${window.location.hash}`);
     setMetaProperty('og:image', '/image/hero.png');
-    setMetaTag('twitter:title', title);
-    setMetaTag('twitter:description', description);
+    setMetaTag('twitter:title', t(title));
+    setMetaTag('twitter:description', t(description));
     setMetaTag('twitter:image', '/image/hero.png');
     setLink('canonical', `${baseUrl}${window.location.pathname}${window.location.hash}`);
-  }, [currentHash]);
+  }, [currentHash, t]);
 
   if (isAdminPage) {
     return (
