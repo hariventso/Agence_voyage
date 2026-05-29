@@ -1,132 +1,224 @@
 import React from 'react';
-import { MapPin, Sparkles, CreditCard, Leaf } from 'lucide-react';
 
 const DetailsSidebar = ({ isMobile, destination }) => {
+  const nameLower = (destination.name || '').toLowerCase();
+  
+  // Decide which theme to use (Madagascar vs Italy/Mockup)
+  const isMadagascar = nameLower.includes('sud') || nameLower.includes('nosy') || nameLower.includes('marie') || nameLower.includes('sainte') || nameLower.includes('tana') || nameLower.includes('antananarivo');
+
+  const banner1Img = isMadagascar ? '/image/madagascar_river_boat.png' : '/image/image1.jpeg';
+  const banner1Title = isMadagascar ? 'Madagascar' : 'Italie';
+  const banner1Text = isMadagascar 
+    ? 'En savoir plus sur cette destination d\'exception' 
+    : 'En savoir plus sur cette destination en train';
+
+  const banner2Bg = '/image/beach_sunset_hero.png';
+  const banner3Img = isMadagascar ? '/image/isalo_destination.png' : '/image/image3.jpeg';
+  const banner3Title = isMadagascar ? 'MADAGASCAR' : "L'ITALIE";
+
   return (
     <aside className="sidebar" style={{ 
       padding: '20px 0', 
       display: 'flex', 
       flexDirection: 'column', 
-      gap: '32px',
+      gap: '24px',
       position: 'sticky',
-      top: '120px',
-      alignSelf: 'start'
+      top: '100px',
+      alignSelf: 'start',
+      width: '100%',
+      maxHeight: 'calc(100vh - 120px)',
+      overflowY: 'auto',
+      scrollbarWidth: 'none',
+      fontFamily: '"Outfit", sans-serif'
     }}>
-      {/* Points Forts Card */}
-      <div className="points-forts-card" style={{
-        backgroundColor: '#fdfdfd',
-        padding: isMobile ? '24px 20px' : '40px',
-        border: '1px solid #eee',
-        borderRadius: '4px',
-        marginTop: isMobile ? '0' : '40px'
-      }}>
-        <h3 style={{
-          fontSize: '24px',
-          fontFamily: '"Playfair Display", serif',
-          textAlign: 'center',
-          color: '#1b4d3e',
-          marginBottom: '0'
-        }}>
-          Les points forts
-        </h3>
-        
-        <div style={{
-          width: '100%',
-          height: '8px',
-          margin: '10px auto 30px',
-          backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'200\' height=\'8\' viewBox=\'0 0 200 8\' fill=\'none\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M2 5.5C30 4 60 4.5 90 4.5C120 4.5 150 4 198 2.5\' stroke=\'%23333\' stroke-width=\'3\' stroke-linecap=\'round\'/%3E%3C/svg%3E")',
-          backgroundRepeat: 'no-repeat',
+      
+      {/* Banner 1: Destination Info Card */}
+      <div 
+        style={{
+          height: '180px',
+          borderRadius: '16px',
+          overflow: 'hidden',
+          position: 'relative',
+          backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.6)), url("${banner1Img}")`,
+          backgroundSize: 'cover',
           backgroundPosition: 'center',
-          backgroundSize: 'contain'
-        }}></div>
-
-        <ul style={{ listStyle: 'none', padding: 0, marginTop: '32px' }}>
-          {(destination.highlights 
-            ? destination.highlights.split('\n').filter(h => h.trim() !== '')
-            : [
-                `Découverte immersive de ${destination.name}`,
-                `Un circuit de type ${destination.type} parfaitement équilibré`,
-                "Des paysages uniques et une biodiversité exceptionnelle",
-                "Un accompagnement personnalisé par nos experts locaux"
-              ]
-          ).map((point, index) => (
-            <li key={index} style={{
-              display: 'flex',
-              gap: '16px',
-              marginBottom: '32px',
-              fontSize: '14px',
-              lineHeight: 1.6,
-              color: '#333',
-              alignItems: 'flex-start'
-            }}>
-              <div style={{ marginTop: '4px', flexShrink: 0 }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2e7d32" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path>
-                  <path d="M2 12h20"></path>
-                </svg>
-              </div>
-              <span style={{ textAlign: 'justify' }}>{point}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      {/* Nos Garanties Card */}
-      <div className="garanties-card" style={{
-        backgroundColor: '#fdfdfd',
-        padding: isMobile ? '24px 20px' : '40px',
-        border: '1px solid #eee',
-        borderRadius: '4px'
-      }}>
-        <h3 style={{
-          fontSize: '24px',
-          fontFamily: '"Playfair Display", serif',
-          textAlign: 'center',
-          color: '#1b4d3e',
-          marginBottom: '0'
-        }}>
-          Nos garanties
-        </h3>
-        
+          cursor: 'pointer',
+          boxShadow: '0 4px 15px rgba(0,0,0,0.06)',
+          transition: 'all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1)'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'translateY(-4px)';
+          e.currentTarget.style.boxShadow = '0 12px 25px rgba(0,0,0,0.12)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'none';
+          e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.06)';
+        }}
+        onClick={() => document.getElementById('formulaire-devis')?.scrollIntoView({ behavior: 'smooth' })}
+      >
         <div style={{
-          width: '100%',
-          height: '8px',
-          margin: '10px auto 30px',
-          backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'200\' height=\'8\' viewBox=\'0 0 200 8\' fill=\'none\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M2 5.5C30 4 60 4.5 90 4.5C120 4.5 150 4 198 2.5\' stroke=\'%23333\' stroke-width=\'3\' stroke-linecap=\'round\'/%3E%3C/svg%3E")',
-          backgroundRepeat: 'no-repeat',
-          backgroundSize: 'contain'
-        }}></div>
-
-        <div className="garanties-grid" style={{
-          display: 'grid',
-          gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
-          gap: '1px',
-          backgroundColor: '#eee',
-          border: '1px solid #eee',
-          marginTop: '32px'
+          position: 'absolute',
+          bottom: '20px',
+          left: '20px',
+          right: '20px',
+          color: '#fff'
         }}>
-          {[
-            { label: 'Expertise locale', icon: <MapPin size={24} color="#333" strokeWidth={1.5} /> },
-            { label: 'Expérience sur-mesure', icon: <Sparkles size={24} color="#333" strokeWidth={1.5} /> },
-            { label: 'Paiement sécurisé', icon: <CreditCard size={24} color="#333" strokeWidth={1.5} /> },
-            { label: 'Engagement responsable', icon: <Leaf size={24} color="#333" strokeWidth={1.5} /> }
-          ].map((item, index) => (
-            <div key={index} style={{
-              backgroundColor: '#fdfdfd',
-              padding: '24px 12px',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              textAlign: 'center',
-              gap: '12px'
-            }}>
-              {item.icon}
-              <span style={{ fontSize: '11px', fontWeight: 700, color: '#333' }}>{item.label}</span>
-            </div>
-          ))}
+          <h3 style={{ fontSize: '24px', fontWeight: 800, margin: '0 0 4px 0', textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>
+            {banner1Title}
+          </h3>
+          <p style={{ fontSize: '12px', fontWeight: 600, margin: 0, opacity: 0.9, display: 'flex', alignItems: 'center', gap: '4px' }}>
+            &lt; {banner1Text}
+          </p>
         </div>
       </div>
+
+      {/* Banner 2: Activities Promo */}
+      <div 
+        style={{
+          minHeight: '280px',
+          borderRadius: '16px',
+          overflow: 'hidden',
+          position: 'relative',
+          backgroundImage: `linear-gradient(to bottom, rgba(10,46,36,0.5), rgba(10,46,36,0.95)), url("${banner2Bg}")`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          cursor: 'pointer',
+          boxShadow: '0 4px 15px rgba(0,0,0,0.06)',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          padding: '28px 24px',
+          transition: 'all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1)'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'translateY(-4px)';
+          e.currentTarget.style.boxShadow = '0 12px 25px rgba(0,0,0,0.12)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'none';
+          e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.06)';
+        }}
+        onClick={() => document.getElementById('formulaire-devis')?.scrollIntoView({ behavior: 'smooth' })}
+      >
+        <div style={{
+          backgroundColor: '#C21A4B',
+          color: '#fff',
+          fontSize: '10px',
+          fontWeight: 800,
+          textTransform: 'uppercase',
+          letterSpacing: '1px',
+          padding: '4px 10px',
+          borderRadius: '4px',
+          alignSelf: 'flex-start'
+        }}>
+          Sur place
+        </div>
+
+        <div style={{ margin: '20px 0' }}>
+          <h2 style={{
+            color: '#fff',
+            fontSize: '26px',
+            lineHeight: 1.2,
+            fontWeight: 800,
+            margin: 0,
+            fontFamily: '"Outfit", sans-serif'
+          }}>
+            TES ACTIVITÉS <br/>
+            <span style={{ color: '#FFD700' }}>SUR PLACE</span> <br/>
+            AU MEILLEUR PRIX
+          </h2>
+        </div>
+
+        <div style={{
+          backgroundColor: '#C21A4B',
+          color: '#fff',
+          padding: '12px 24px',
+          borderRadius: '24px',
+          fontSize: '13px',
+          fontWeight: 800,
+          textAlign: 'center',
+          boxShadow: '0 4px 10px rgba(194,26,75,0.3)',
+          transition: 'background-color 0.2s',
+          alignSelf: 'center',
+          width: '80%'
+        }}
+        onMouseEnter={(e) => e.stopPropagation()}
+        >
+          JE DÉCOUVRE !
+        </div>
+      </div>
+
+      {/* Banner 3: Train / Booking Promo */}
+      <div 
+        style={{
+          minHeight: '220px',
+          borderRadius: '16px',
+          overflow: 'hidden',
+          position: 'relative',
+          backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.85)), url("${banner3Img}")`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          cursor: 'pointer',
+          boxShadow: '0 4px 15px rgba(0,0,0,0.06)',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'flex-end',
+          padding: '28px 24px',
+          transition: 'all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1)'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'translateY(-4px)';
+          e.currentTarget.style.boxShadow = '0 12px 25px rgba(0,0,0,0.12)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'none';
+          e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.06)';
+        }}
+        onClick={() => document.getElementById('formulaire-devis')?.scrollIntoView({ behavior: 'smooth' })}
+      >
+        <div style={{
+          position: 'absolute',
+          top: '20px',
+          right: '0',
+          backgroundColor: '#C21A4B',
+          color: '#fff',
+          fontSize: '11px',
+          fontWeight: 800,
+          padding: '6px 14px 6px 16px',
+          borderRadius: '8px 0 0 8px',
+          boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
+        }}>
+          AU MEILLEUR PRIX
+        </div>
+
+        <div>
+          <h3 style={{
+            color: '#fff',
+            fontSize: '18px',
+            fontWeight: 800,
+            margin: '0 0 16px 0',
+            lineHeight: 1.3
+          }}>
+            {banner3Title} <br/>
+            EN TRAIN
+          </h3>
+          
+          <div style={{
+            backgroundColor: '#fff',
+            color: '#C21A4B',
+            padding: '10px 20px',
+            borderRadius: '24px',
+            fontSize: '11px',
+            fontWeight: 800,
+            textAlign: 'center',
+            display: 'inline-block',
+            boxShadow: '0 4px 10px rgba(0,0,0,0.15)'
+          }}>
+            C'EST PAR ICI
+          </div>
+        </div>
+      </div>
+
     </aside>
   );
 };

@@ -74,7 +74,7 @@ function About() {
       <AboutTeam isMobile={isMobile} />
       <TeamExpertGrid teamMembers={teamMembers} isMobile={isMobile} />
       <StatsCounter isMobile={isMobile} />
-      <DestinationPopular isMobile={isMobile} destinations={destinations} />
+      <DestinationPopular isMobile={isMobile} destinations={destinations} loading={loading} />
       <TestimonialSlider 
         testimonials={testimonials} 
         activeReview={activeReview} 

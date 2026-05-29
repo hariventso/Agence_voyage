@@ -48,6 +48,7 @@ export const apiService = {
     }),
 
   getDestinations: () => fetchJson(`${API_BASE_URL}/destinations`),
+  getDestination: (id) => fetchJson(`${API_BASE_URL}/destinations/${id}`),
   deleteDestination: (id) => fetchJson(`${API_BASE_URL}/destinations/${id}`, { method: 'DELETE' }),
   createDestination: (data) =>
     fetchJson(`${API_BASE_URL}/destinations`, {
@@ -110,6 +111,12 @@ export const apiService = {
   getMessages: () => fetchJson(`${API_BASE_URL}/messages`),
   deleteMessage: (id) => fetchJson(`${API_BASE_URL}/messages/${id}`, { method: 'DELETE' }),
   markMessageRead: (id) => fetchJson(`${API_BASE_URL}/messages/${id}/read`, { method: 'PUT' }),
+  createMessage: (data) =>
+    fetchJson(`${API_BASE_URL}/messages`, {
+      method: 'POST',
+      headers: jsonHeaders,
+      body: JSON.stringify(data),
+    }),
 
   getBookings: () => fetchJson(`${API_BASE_URL}/bookings`),
   deleteBooking: (id) => fetchJson(`${API_BASE_URL}/bookings/${id}`, { method: 'DELETE' }),
@@ -159,6 +166,21 @@ export const apiService = {
       method: 'POST',
       headers: jsonHeaders,
       body: JSON.stringify(email ? { email } : {}),
+    }),
+
+  getSlides: () => fetchJson(`${API_BASE_URL}/slides`),
+  deleteSlide: (id) => fetchJson(`${API_BASE_URL}/slides/${id}`, { method: 'DELETE' }),
+  createSlide: (data) =>
+    fetchJson(`${API_BASE_URL}/slides`, {
+      method: 'POST',
+      headers: jsonHeaders,
+      body: JSON.stringify(data),
+    }),
+  updateSlide: (id, data) =>
+    fetchJson(`${API_BASE_URL}/slides/${id}`, {
+      method: 'PUT',
+      headers: jsonHeaders,
+      body: JSON.stringify(data),
     }),
 
   uploadImage: async (file) => {

@@ -84,7 +84,7 @@ function Destination({ serviceFilter }) {
 
       <DestinationGrid loading={loading} destinations={filteredDestinations} />
       
-      <DestinationPopular isMobile={isMobile} destinations={destinations.filter((d) => d.is_popular)} />
+      <DestinationPopular isMobile={isMobile} destinations={destinations.filter((d) => d.is_popular)} loading={loading} />
 
       <section style={{ backgroundColor: '#000', padding: '40px 20px', textAlign: 'center', borderTop: '1px solid #111', color: '#666' }}>
         <p>© 2026 Explor'île Madagascar - Tous droits réservés</p>

@@ -17,6 +17,8 @@ import {
   User as UserIcon,
   Users,
   X,
+  ArrowUp,
+  ArrowDown,
 } from 'lucide-react';
 import { apiService } from '../services/api';
 
@@ -58,6 +60,10 @@ const emptyFormData = {
   event_time: '09:00',
   location: '',
   employee_id: '',
+  button_text: '',
+  link: '',
+  slide_order: 0,
+  subtitle: '',
 };
 
 const todayKey = () => new Date().toISOString().slice(0, 10);
@@ -88,6 +94,77 @@ const getReminderLabel = (hours) => `Rappel automatique ${hours}h avant`;
 
 const normalizeSearch = (value) => (value || '').toLowerCase();
 
+const parseItinerary = (itineraryStr, destination) => {
+  let itineraryTitle = `Découvrez ${destination?.name || ''}`;
+  let itineraryDesc = destination?.description || '';
+  let stops = [];
+
+  if (itineraryStr) {
+    const trimmed = itineraryStr.trim();
+    if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        itineraryTitle = parsed.title || itineraryTitle;
+        itineraryDesc = parsed.description || itineraryDesc;
+        stops = parsed.stops || [];
+        return { title: itineraryTitle, description: itineraryDesc, stops };
+      } catch (e) {
+        console.error("Failed to parse itinerary JSON object", e);
+      }
+    } else if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+      try {
+        stops = JSON.parse(trimmed);
+        return { title: itineraryTitle, description: itineraryDesc, stops };
+      } catch (e) {
+        console.error("Failed to parse itinerary JSON array", e);
+      }
+    }
+
+    // Fallback to legacy parser:
+    const lines = trimmed.split('\n').filter(p => p.trim() !== '');
+    let startIndex = 0;
+    
+    const isStopPattern = (str) => {
+      return /^(Jour\s+\d+|Étape\s+\d+|Stop\s+\d+|[A-Za-zÀ-ÿ\s\-]+[:\-]\s*[A-Za-zÀ-ÿ\s\-]+)/i.test(str.trim());
+    };
+
+    if (lines.length > 0 && !isStopPattern(lines[0])) {
+      itineraryTitle = lines[0].trim();
+      startIndex = 1;
+      if (lines.length > 1 && !isStopPattern(lines[1])) {
+        itineraryDesc = lines[1].trim();
+        startIndex = 2;
+      }
+    }
+
+    const stopLines = lines.slice(startIndex);
+    const fallbackImages = ['/image/about_hero.png', '/image/mountain.png', '/image/madagascar_river_boat.png', '/image/beach_sunset_hero.png'];
+    
+    stops = stopLines.map((p, idx) => {
+      let title = `Étape ${idx + 1}`;
+      let desc = p;
+      let incontournable = "Découverte des plus beaux secrets et panoramas de cette étape phare du circuit.";
+      const matchTitle = p.match(/^(Jour\s+\d+|[A-Za-zÀ-ÿ\s\-]+)\s*[:\-]/i);
+      if (matchTitle) {
+        title = matchTitle[1].trim();
+        desc = p.substring(matchTitle[0].length).trim();
+      }
+      const isLast = idx === stopLines.length - 1;
+      return {
+        name: title,
+        role: idx === 0 ? 'Départ' : isLast ? 'Arrivée' : 'Escale',
+        description: desc,
+        incontournable: incontournable,
+        image: fallbackImages[idx % fallbackImages.length],
+        transit: !isLast ? `Transfert Local ➔ Étape ${idx + 2} - ~ 3h` : '',
+        transitType: 'car'
+      };
+    });
+  }
+
+  return { title: itineraryTitle, description: itineraryDesc, stops };
+};
+
 const Admin = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [activeTab, setActiveTab] = useState('agenda');
@@ -116,6 +193,7 @@ const Admin = () => {
   const [testimonials, setTestimonials] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [calendarEvents, setCalendarEvents] = useState([]);
+  const [slides, setSlides] = useState([]);
 
   const [showModal, setShowModal] = useState(false);
   const [showBookingModal, setShowBookingModal] = useState(false);
@@ -126,6 +204,7 @@ const Admin = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [dialog, setDialog] = useState({ show: false, message: '', type: 'alert', onConfirm: null });
+  const [itineraryData, setItineraryData] = useState({ title: '', description: '', stops: [] });
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 1024);
@@ -145,7 +224,7 @@ const Admin = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [d, s, m, p, b, t, te, e, events] = await Promise.all([
+      const [d, s, m, p, b, t, te, e, events, sl] = await Promise.all([
         apiService.getDestinations(),
         apiService.getServices(),
         apiService.getMessages(),
@@ -155,6 +234,7 @@ const Admin = () => {
         apiService.getTestimonials(),
         apiService.getEmployees(),
         apiService.getCalendarEvents(visibleMonth),
+        apiService.getSlides(),
       ]);
 
       setDestinations(d);
@@ -166,6 +246,7 @@ const Admin = () => {
       setTestimonials(te);
       setEmployees(e);
       setCalendarEvents(events);
+      setSlides(sl);
     } catch (error) {
       console.error(error);
       setDialog({ show: true, type: 'alert', message: error.message, onConfirm: null });
@@ -200,6 +281,9 @@ const Admin = () => {
       ...emptyFormData,
       event_date: selectedDate,
     });
+    if (type === 'destination') {
+      setItineraryData({ title: '', description: '', stops: [] });
+    }
   };
 
   const openAddModal = (type = 'event') => {
@@ -220,6 +304,10 @@ const Admin = () => {
       });
     } else {
       setFormData({ ...emptyFormData, ...item });
+    }
+
+    if (type === 'destination') {
+      setItineraryData(parseItinerary(item.itinerary, item));
     }
 
     setShowModal(true);
@@ -246,7 +334,7 @@ const Admin = () => {
             status: formData.status,
             image_url: finalImageUrl,
             description: formData.description,
-            itinerary: formData.itinerary,
+            itinerary: JSON.stringify(itineraryData),
             accommodation: formData.accommodation,
             budget: formData.budget,
             tips: formData.tips,
@@ -305,6 +393,20 @@ const Admin = () => {
           else await apiService.createTestimonial(payload);
           break;
         }
+        case 'slide': {
+          const payload = {
+            title: formData.title,
+            subtitle: formData.subtitle,
+            description: formData.description,
+            image_url: finalImageUrl,
+            button_text: formData.button_text,
+            link: formData.link,
+            slide_order: Number(formData.slide_order || 0),
+          };
+          if (editingId) await apiService.updateSlide(editingId, payload);
+          else await apiService.createSlide(payload);
+          break;
+        }
         case 'employee': {
           const payload = {
             name: formData.name,
@@ -355,6 +457,7 @@ const Admin = () => {
       event: 'cet evenement',
       booking: 'cette reservation',
       message: 'ce message',
+      slide: 'ce slide',
     };
 
     setDialog({
@@ -372,6 +475,7 @@ const Admin = () => {
           if (type === 'event') await apiService.deleteCalendarEvent(id);
           if (type === 'booking') await apiService.deleteBooking(id);
           if (type === 'message') await apiService.deleteMessage(id);
+          if (type === 'slide') await apiService.deleteSlide(id);
           setDialog((current) => ({ ...current, show: false }));
           await fetchData();
         } catch (error) {
@@ -466,6 +570,7 @@ const Admin = () => {
       testimonials: 'TEMOIGNAGES',
       bookings: 'RESERVATIONS',
       messages: 'MESSAGES',
+      slides: 'SLIDES HERO',
     };
     return titles[activeTab] || 'ADMIN';
   };
@@ -477,6 +582,7 @@ const Admin = () => {
     if (activeTab === 'destinations') return 'destination';
     if (activeTab === 'team') return 'team';
     if (activeTab === 'testimonials') return 'testimonial';
+    if (activeTab === 'slides') return 'slide';
     return 'post';
   }, [activeTab]);
 
@@ -596,6 +702,8 @@ const Admin = () => {
               uploading={uploading}
               employees={employees}
               reminderLeadHours={adminConfig.reminderLeadHours}
+              itineraryData={itineraryData}
+              setItineraryData={setItineraryData}
             />
           ) : loading ? (
             <div style={emptyStateStyle}>Chargement des donnees...</div>
@@ -684,6 +792,14 @@ const Admin = () => {
                   viewMode={viewMode}
                   openEdit={(item) => openEditModal(item, 'testimonial')}
                   onDelete={(id) => handleDelete(id, 'testimonial')}
+                />
+              )}
+              {activeTab === 'slides' && (
+                <ProductGrid
+                  p={slides.filter((item) => normalizeSearch(item.title).includes(normalizeSearch(searchTerm)))}
+                  viewMode={viewMode}
+                  openEdit={(item) => openEditModal(item, 'slide')}
+                  onDelete={(id) => handleDelete(id, 'slide')}
                 />
               )}
             </>
@@ -948,6 +1064,8 @@ const AdminForm = ({
   uploading,
   employees,
   reminderLeadHours,
+  itineraryData,
+  setItineraryData,
 }) => (
   <div style={{ animation: 'fadeIn 0.3s ease-out' }}>
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
@@ -963,7 +1081,7 @@ const AdminForm = ({
     </div>
 
     <form onSubmit={handleSubmit} style={formGridStyle}>
-      {['destination', 'post', 'team', 'testimonial'].includes(modalType) ? (
+      {['destination', 'post', 'team', 'testimonial', 'slide'].includes(modalType) ? (
         <div style={imageUploadAreaStyle}>
           {selectedFile || formData.image_url ? (
             <img
@@ -1140,6 +1258,31 @@ const AdminForm = ({
           </>
         )}
 
+        {modalType === 'slide' && (
+          <>
+            <FormField label="Titre">
+              <input style={inputStyle} value={formData.title} onChange={(e) => setFormData((current) => ({ ...current, title: e.target.value }))} required />
+            </FormField>
+            <FormField label="Sous-titre">
+              <input style={inputStyle} value={formData.subtitle} onChange={(e) => setFormData((current) => ({ ...current, subtitle: e.target.value }))} />
+            </FormField>
+            <div style={dualFieldGridStyle}>
+              <FormField label="Texte du bouton">
+                <input style={inputStyle} value={formData.button_text} onChange={(e) => setFormData((current) => ({ ...current, button_text: e.target.value }))} />
+              </FormField>
+              <FormField label="Lien du bouton">
+                <input style={inputStyle} value={formData.link} onChange={(e) => setFormData((current) => ({ ...current, link: e.target.value }))} />
+              </FormField>
+            </div>
+            <FormField label="Ordre d'affichage">
+              <input type="number" style={inputStyle} value={formData.slide_order} onChange={(e) => setFormData((current) => ({ ...current, slide_order: e.target.value }))} />
+            </FormField>
+            <FormField label="Description">
+              <textarea style={{ ...inputStyle, height: 160 }} value={formData.description} onChange={(e) => setFormData((current) => ({ ...current, description: e.target.value }))} />
+            </FormField>
+          </>
+        )}
+
         {modalType === 'destination' && (
           <>
             <FormField label="Nom">
@@ -1157,11 +1300,11 @@ const AdminForm = ({
               <textarea style={{ ...inputStyle, height: 130 }} value={formData.description} onChange={(e) => setFormData((current) => ({ ...current, description: e.target.value }))} />
             </FormField>
             <div style={dualFieldGridStyle}>
-              <FormField label="Itineraire">
-                <textarea style={{ ...inputStyle, height: 110 }} value={formData.itinerary} onChange={(e) => setFormData((current) => ({ ...current, itinerary: e.target.value }))} />
-              </FormField>
               <FormField label="Hebergement">
                 <textarea style={{ ...inputStyle, height: 110 }} value={formData.accommodation} onChange={(e) => setFormData((current) => ({ ...current, accommodation: e.target.value }))} />
+              </FormField>
+              <FormField label="Points forts">
+                <textarea style={{ ...inputStyle, height: 110 }} value={formData.highlights} onChange={(e) => setFormData((current) => ({ ...current, highlights: e.target.value }))} />
               </FormField>
             </div>
             <div style={dualFieldGridStyle}>
@@ -1172,9 +1315,320 @@ const AdminForm = ({
                 <textarea style={{ ...inputStyle, height: 110 }} value={formData.tips} onChange={(e) => setFormData((current) => ({ ...current, tips: e.target.value }))} />
               </FormField>
             </div>
-            <FormField label="Points forts">
-              <textarea style={{ ...inputStyle, height: 100 }} value={formData.highlights} onChange={(e) => setFormData((current) => ({ ...current, highlights: e.target.value }))} />
-            </FormField>
+
+            {/* Custom Structured Itinerary Editor */}
+            <div style={{
+              border: '1px solid #cbd5e1',
+              borderRadius: '20px',
+              padding: '24px',
+              backgroundColor: '#f8fafc',
+              marginTop: '16px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '20px'
+            }}>
+              <div style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '12px' }}>
+                <h4 style={{ fontSize: '16px', fontWeight: 800, color: '#0f766e', margin: 0 }}>Éditeur d'Itinéraire</h4>
+                <p style={{ fontSize: '12px', color: '#64748b', margin: '4px 0 0' }}>Configurez le titre de l'itinéraire, sa description générale et les différentes étapes.</p>
+              </div>
+
+              <FormField label="Titre de l'itinéraire">
+                <input
+                  style={inputStyle}
+                  value={itineraryData?.title || ''}
+                  onChange={(e) => setItineraryData(prev => ({ ...prev, title: e.target.value }))}
+                  placeholder={`Découvrez ${formData.name || ''}`}
+                />
+              </FormField>
+
+              <FormField label="Description générale de l'itinéraire">
+                <textarea
+                  style={{ ...inputStyle, height: '80px' }}
+                  value={itineraryData?.description || ''}
+                  onChange={(e) => setItineraryData(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Itinéraire sur-mesure proposé pour votre voyage..."
+                />
+              </FormField>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <label style={fieldLabelStyle}>Étapes de l'itinéraire ({itineraryData?.stops?.length || 0})</label>
+                  <button
+                    type="button"
+                    onClick={() => setItineraryData(prev => ({
+                      ...prev,
+                      stops: [
+                        ...(prev.stops || []),
+                        {
+                          name: '',
+                          role: (prev.stops || []).length === 0 ? 'Départ' : 'Escale',
+                          description: '',
+                          incontournable: '',
+                          image: '',
+                          transit: '',
+                          transitType: 'car'
+                        }
+                      ]
+                    }))}
+                    style={{
+                      ...secondaryButtonStyle,
+                      height: '32px',
+                      padding: '0 12px',
+                      borderRadius: '8px'
+                    }}
+                  >
+                    <Plus size={14} /> Ajouter une étape
+                  </button>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  {(itineraryData?.stops || []).map((stop, index) => {
+                    const handleStepFieldChange = (field, val) => {
+                      setItineraryData(prev => ({
+                        ...prev,
+                        stops: prev.stops.map((s, i) => i === index ? { ...s, [field]: val } : s)
+                      }));
+                    };
+
+                    const handleMoveStep = (direction) => {
+                      if (direction === 'up' && index === 0) return;
+                      if (direction === 'down' && index === itineraryData.stops.length - 1) return;
+                      const nextIndex = direction === 'up' ? index - 1 : index + 1;
+                      const newStops = [...itineraryData.stops];
+                      const temp = newStops[index];
+                      newStops[index] = newStops[nextIndex];
+                      newStops[nextIndex] = temp;
+                      
+                      // Also adjust roles intelligently if it's moved to first or last
+                      const updatedStops = newStops.map((s, idx) => {
+                        let role = s.role;
+                        if (idx === 0) role = 'Départ';
+                        else if (idx === newStops.length - 1) role = 'Arrivée';
+                        else if (s.role === 'Départ' || s.role === 'Arrivée') role = 'Escale';
+                        return { ...s, role };
+                      });
+
+                      setItineraryData(prev => ({ ...prev, stops: updatedStops }));
+                    };
+
+                    const handleStepFileChange = async (e) => {
+                      const file = e.target.files[0];
+                      if (!file) return;
+                      try {
+                        const uploadResult = await apiService.uploadImage(file);
+                        handleStepFieldChange('image', uploadResult.imageUrl);
+                      } catch (err) {
+                        alert("Erreur lors de l'upload de l'image de l'étape : " + err.message);
+                      }
+                    };
+
+                    return (
+                      <div key={index} style={{
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '16px',
+                        padding: '16px',
+                        backgroundColor: '#fff',
+                        boxShadow: '0 4px 10px rgba(0,0,0,0.02)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '12px',
+                        position: 'relative'
+                      }}>
+                        {/* Step Header */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f1f5f9', paddingBottom: '8px' }}>
+                          <span style={{ fontWeight: 800, color: '#1e293b', fontSize: '13px' }}>
+                            Étape {index + 1} ({stop.role || 'Escale'})
+                          </span>
+                          <div style={{ display: 'flex', gap: '6px' }}>
+                            <button
+                              type="button"
+                              disabled={index === 0}
+                              onClick={() => handleMoveStep('up')}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                width: '28px',
+                                height: '28px',
+                                borderRadius: '6px',
+                                border: '1px solid #e2e8f0',
+                                backgroundColor: '#fff',
+                                cursor: index === 0 ? 'not-allowed' : 'pointer',
+                                opacity: index === 0 ? 0.3 : 1
+                              }}
+                            >
+                              <ArrowUp size={14} />
+                            </button>
+                            <button
+                              type="button"
+                              disabled={index === itineraryData.stops.length - 1}
+                              onClick={() => handleMoveStep('down')}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                width: '28px',
+                                height: '28px',
+                                borderRadius: '6px',
+                                border: '1px solid #e2e8f0',
+                                backgroundColor: '#fff',
+                                cursor: index === itineraryData.stops.length - 1 ? 'not-allowed' : 'pointer',
+                                opacity: index === itineraryData.stops.length - 1 ? 0.3 : 1
+                              }}
+                            >
+                              <ArrowDown size={14} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setItineraryData(prev => ({
+                                  ...prev,
+                                  stops: prev.stops.filter((_, i) => i !== index)
+                                }));
+                              }}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                width: '28px',
+                                height: '28px',
+                                borderRadius: '6px',
+                                border: '1px solid #fee2e2',
+                                backgroundColor: '#fff',
+                                color: '#ef4444',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Step Form Body */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '16px' }}>
+                          {/* Left Column Fields */}
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <FormField label="Nom de l'étape">
+                              <input
+                                style={inputStyle}
+                                value={stop.name || ''}
+                                onChange={(e) => handleStepFieldChange('name', e.target.value)}
+                                placeholder="ex: Haute Ville"
+                              />
+                            </FormField>
+
+                            <FormField label="Rôle de l'étape">
+                              <select
+                                style={inputStyle}
+                                value={stop.role || 'Escale'}
+                                onChange={(e) => handleStepFieldChange('role', e.target.value)}
+                              >
+                                <option value="Départ">Départ</option>
+                                <option value="Escale">Escale</option>
+                                <option value="Arrivée">Arrivée</option>
+                              </select>
+                            </FormField>
+
+                            <FormField label="L'incontournable (Highlight)">
+                              <input
+                                style={inputStyle}
+                                value={stop.incontournable || ''}
+                                onChange={(e) => handleStepFieldChange('incontournable', e.target.value)}
+                                placeholder="ex: Le Palais de la Reine (Rova)"
+                              />
+                            </FormField>
+
+                            <FormField label="Transit / Transfert">
+                              <input
+                                style={inputStyle}
+                                value={stop.transit || ''}
+                                onChange={(e) => handleStepFieldChange('transit', e.target.value)}
+                                placeholder="ex: Véhicule Privé ➔ Antsirabe - 4h"
+                              />
+                            </FormField>
+
+                            <FormField label="Type de transit">
+                              <select
+                                style={inputStyle}
+                                value={stop.transitType || 'car'}
+                                onChange={(e) => handleStepFieldChange('transitType', e.target.value)}
+                              >
+                                <option value="car">Voiture / Véhicule</option>
+                                <option value="ship">Bateau / Pirogue</option>
+                                <option value="train">Train</option>
+                              </select>
+                            </FormField>
+                          </div>
+
+                          {/* Right Column Step Image Upload/Preview */}
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <label style={fieldLabelStyle}>Image de l'étape</label>
+                            <div style={{
+                              border: '1px dashed #cbd5e1',
+                              borderRadius: '12px',
+                              height: '140px',
+                              position: 'relative',
+                              overflow: 'hidden',
+                              backgroundColor: '#f8fafc',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}>
+                              {stop.image ? (
+                                <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+                                  <img src={stop.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                  <button
+                                    type="button"
+                                    onClick={() => handleStepFieldChange('image', '')}
+                                    style={{
+                                      position: 'absolute',
+                                      top: '6px',
+                                      right: '6px',
+                                      backgroundColor: 'rgba(15, 23, 42, 0.75)',
+                                      color: '#fff',
+                                      border: 'none',
+                                      borderRadius: '50%',
+                                      width: '24px',
+                                      height: '24px',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      cursor: 'pointer'
+                                    }}
+                                  >
+                                    <X size={12} />
+                                  </button>
+                                </div>
+                              ) : (
+                                <div style={{ textAlign: 'center', padding: '12px', color: '#94a3b8' }}>
+                                  <ImageIcon size={32} style={{ margin: '0 auto 8px', opacity: 0.5 }} />
+                                  <span style={{ fontSize: '11px', display: 'block' }}>Uploader une image</span>
+                                </div>
+                              )}
+                              <input
+                                type="file"
+                                onChange={handleStepFileChange}
+                                style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Step Description Field */}
+                        <FormField label="Description de l'étape">
+                          <textarea
+                            style={{ ...inputStyle, height: '80px' }}
+                            value={stop.description || ''}
+                            onChange={(e) => handleStepFieldChange('description', e.target.value)}
+                            placeholder="Entrez les détails de ce que les voyageurs feront durant cette étape..."
+                          />
+                        </FormField>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
           </>
         )}
 

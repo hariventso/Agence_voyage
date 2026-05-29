@@ -13,6 +13,7 @@ import {
   CalendarDays,
   Briefcase,
   ConciergeBell,
+  Sliders,
 } from 'lucide-react';
 
 const sectionTitle = {
@@ -85,7 +86,11 @@ const AdminSidebar = ({
         ? 'employee'
         : activeTab === 'services'
           ? 'service'
-          : 'post';
+          : activeTab === 'destinations'
+            ? 'destination'
+            : activeTab === 'slides'
+              ? 'slide'
+              : 'post';
 
   const quickCreateLabel =
     activeTab === 'agenda'
@@ -94,7 +99,11 @@ const AdminSidebar = ({
         ? 'Nouvel employe'
         : activeTab === 'services'
           ? 'Nouveau service'
-        : 'Nouvel article';
+          : activeTab === 'destinations'
+            ? 'Nouvelle destination'
+            : activeTab === 'slides'
+              ? 'Nouveau slide'
+              : 'Nouvel article';
 
   return (
     <>
@@ -240,6 +249,15 @@ const AdminSidebar = ({
               active={activeTab === 'blog'}
               onClick={() => {
                 setActiveTab('blog');
+                if (isMobile) setShowSidebar(false);
+              }}
+            />
+            <NavItem
+              icon={<Sliders size={18} />}
+              label="Slides Hero"
+              active={activeTab === 'slides'}
+              onClick={() => {
+                setActiveTab('slides');
                 if (isMobile) setShowSidebar(false);
               }}
             />

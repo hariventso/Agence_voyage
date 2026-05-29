@@ -278,6 +278,31 @@ const repairDB = async () => {
     await client.query("ALTER TABLE calendar_events ADD COLUMN IF NOT EXISTS event_type VARCHAR(80) DEFAULT 'evenement';");
     await client.query("ALTER TABLE calendar_events ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;");
 
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS slides (
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(255),
+        subtitle VARCHAR(255),
+        description TEXT,
+        image_url TEXT,
+        button_text VARCHAR(100),
+        link VARCHAR(255),
+        slide_order INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    const slidesCount = await client.query("SELECT COUNT(*) FROM slides;");
+    if (Number(slidesCount.rows[0].count) === 0) {
+      await client.query(`
+        INSERT INTO slides (title, subtitle, description, image_url, button_text, link, slide_order)
+        VALUES
+        ('Explor''île', 'Sur les traces des Malgaches', 'Envie de découvrir Madagascar au-delà des sentiers battus ? Explor’île vous invite à vivre des expériences uniques, au croisement du tourisme culturel et de l’aventure. Nos voyages sont conçus à partir de recherches scientifiques, de savoirs locaux et de récits authentiques, pour vous offrir bien plus qu’un simple séjour : une véritable immersion au cœur de l’âme malgache.', '/image/beach_sunset_hero.png', 'Découvrir nos offres', '#destinations', 0),
+        ('Aventure Isalo', 'Randonnées et Canyons Spectaculaires', 'Parcourez les paysages lunaires et les piscines naturelles du parc national de l''Isalo. Une immersion totale au milieu de canyons sculptés par le temps, de faune endémique et de savanes dorées, guidée par nos experts locaux.', '/image/isalo_destination.png', 'Explorer les circuits', '#destinations', 1),
+        ('Nosy Be & Sainte Marie', 'Paradis Tropicaux et Eaux Cristallines', 'Évadez-vous sur des plages de sable blanc bordées de cocotiers. Du parfum d''ylang-ylang de Nosy Be aux eaux calmes de Sainte Marie où dansent les baleines à bosse, vivez une expérience balnéaire inoubliable.', '/image/home_beach_hero.png', 'Découvrir nos séjours', '#destinations', 2);
+      `);
+    }
+
     console.log('Base de données vérifiée et à jour.');
   } finally {
     client.release();
@@ -727,6 +752,53 @@ app.put('/api/testimonials/:id', async (req, res) => {
 app.delete('/api/testimonials/:id', async (req, res) => {
   try {
     await pool.query('DELETE FROM testimonials WHERE id = $1', [req.params.id]);
+    res.json({ message: 'Deleted' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/slides', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM slides ORDER BY slide_order ASC');
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/slides', async (req, res) => {
+  try {
+    const { title, subtitle, description, image_url, button_text, link, slide_order } = req.body;
+    const result = await pool.query(
+      `INSERT INTO slides (title, subtitle, description, image_url, button_text, link, slide_order)
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+      [title, subtitle, description, image_url, button_text, link, Number(slide_order || 0)]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/slides/:id', async (req, res) => {
+  try {
+    const { title, subtitle, description, image_url, button_text, link, slide_order } = req.body;
+    const result = await pool.query(
+      `UPDATE slides
+       SET title = $1, subtitle = $2, description = $3, image_url = $4, button_text = $5, link = $6, slide_order = $7
+       WHERE id = $8 RETURNING *`,
+      [title, subtitle, description, image_url, button_text, link, Number(slide_order || 0), req.params.id]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/slides/:id', async (req, res) => {
+  try {
+    await pool.query('DELETE FROM slides WHERE id = $1', [req.params.id]);
     res.json({ message: 'Deleted' });
   } catch (err) {
     res.status(500).json({ error: err.message });

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Mail, Calendar, Clock, CreditCard, Leaf } from 'lucide-react';
 import DetailsHero from '../components/details/DetailsHero';
 import FloatingInfoCard from '../components/details/FloatingInfoCard';
 import DetailsTabs from '../components/details/DetailsTabs';
@@ -6,6 +7,22 @@ import DetailsSidebar from '../components/details/DetailsSidebar';
 import BookingForm from '../components/details/BookingForm';
 import DestinationGrid from '../components/destinations/DestinationGrid';
 import { apiService } from '../services/api';
+
+const InstagramIcon = ({ size = 18 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block' }}>
+    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+  </svg>
+);
+
+const LinkedinIcon = ({ size = 18 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block' }}>
+    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+    <rect x="2" y="9" width="4" height="12"></rect>
+    <circle cx="4" cy="4" r="2"></circle>
+  </svg>
+);
 
 const Details = ({ destinationId }) => {
   const [destination, setDestination] = useState(null);
@@ -15,6 +32,8 @@ const Details = ({ destinationId }) => {
   const [showStickyBar, setShowStickyBar] = useState(false);
   const [activeTab, setActiveTab] = useState('itineraire');
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [activeDeparture, setActiveDeparture] = useState('Depuis Lyon');
+  const [activeOption, setActiveOption] = useState('Option n°1');
   const [formData, setFormData] = useState({
     nom: '', email: '', telephone: '', participants: '2',
     dateDepart: '', duree: '', typeVoyage: 'devis', message: ''
@@ -144,25 +163,214 @@ const Details = ({ destinationId }) => {
   if (!destination) return <div style={{ padding: '100px', textAlign: 'center', backgroundColor: '#000', color: '#fff', height: '100vh' }}>Destination non trouvée</div>;
 
   return (
-    <div className="details-page" style={{ overflowX: 'hidden' }}>
+    <div className="details-page" style={{ position: 'relative', fontFamily: '"Outfit", sans-serif' }}>
       <DetailsHero isMobile={isMobile} destination={destination} />
 
-      <section className="main-content-section" style={{ backgroundColor: '#fff', position: 'relative' }}>
-        <div className="container" style={{ position: 'relative', maxWidth: '1400px', width: '100%', margin: '0 auto' }}>
+      <section className="main-content-section" style={{ backgroundColor: '#fff', position: 'relative', padding: '60px 0' }}>
+        <div className="container" style={{
+          position: 'relative',
+          maxWidth: '1240px',
+          width: '90%',
+          margin: '0 auto'
+        }}>
 
-          <FloatingInfoCard isMobile={isMobile} destination={destination} />
-
-          <div className="details-body-grid" style={{
-            display: 'grid',
-            gridTemplateColumns: isMobile ? '100%' : 'minmax(0, 1fr) minmax(320px, 400px)',
-            gap: isMobile ? '32px' : '60px',
-            alignItems: 'start',
-            paddingTop: isMobile ? '0' : '40px',
-            width: '100%'
-          }}>
-            <DetailsTabs activeTab={activeTab} setActiveTab={setActiveTab} isMobile={isMobile} destination={destination} />
-            <DetailsSidebar isMobile={isMobile} destination={destination} />
+          {/* Top Departure Tabs */}
+          <div style={{ display: 'flex', gap: '12px', overflowX: 'auto', paddingBottom: '12px', marginBottom: '16px', scrollbarWidth: 'none' }}>
+            {['Depuis Bordeaux', 'Depuis Lyon', 'Depuis Marseille', 'Depuis Paris'].map((city) => (
+              <button
+                key={city}
+                onClick={() => setActiveDeparture(city)}
+                style={{
+                  padding: '12px 28px',
+                  borderRadius: '12px',
+                  border: 'none',
+                  fontSize: '14px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  backgroundColor: activeDeparture === city ? '#2D4A43' : '#F0F1F3',
+                  color: activeDeparture === city ? '#fff' : '#4a5568',
+                  boxShadow: activeDeparture === city ? '0 4px 10px rgba(45,74,67,0.2)' : 'none',
+                  transition: 'all 0.25s',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                {city}
+              </button>
+            ))}
           </div>
+
+          {/* Sub options */}
+          <div style={{ display: 'flex', gap: '12px', marginBottom: '32px' }}>
+            {['Option n°1', 'Option n°2'].map((opt) => (
+              <button
+                key={opt}
+                onClick={() => setActiveOption(opt)}
+                style={{
+                  padding: '8px 18px',
+                  borderRadius: '20px',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  border: activeOption === opt ? 'none' : '1.5px solid #cbd5e0',
+                  backgroundColor: activeOption === opt ? '#2D4A43' : 'transparent',
+                  color: activeOption === opt ? '#fff' : '#4a5568',
+                  transition: 'all 0.25s'
+                }}
+              >
+                {opt}
+              </button>
+            ))}
+          </div>
+
+          {/* En Bref & Map Row */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: isMobile ? '1fr' : '300px 1fr',
+            gap: '32px',
+            marginBottom: '48px',
+            alignItems: 'stretch'
+          }}>
+            {/* En Bref Card */}
+            <div style={{
+              border: '1.5px solid #e2e8f0',
+              borderRadius: '20px',
+              padding: '28px',
+              backgroundColor: '#fff',
+              boxShadow: '0 10px 30px rgba(0,0,0,0.03)',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center'
+            }}>
+              <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#1B3D34', marginBottom: '20px', textAlign: 'center', fontFamily: '"Outfit", sans-serif', letterSpacing: '0.5px' }}>En bref</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
+                  <div style={{ color: '#C21A4B', marginTop: '2px', backgroundColor: '#FFF5F7', padding: '6px', borderRadius: '8px' }}><Calendar size={18} /></div>
+                  <div>
+                    <div style={{ fontSize: '11px', fontWeight: 800, color: '#718096', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Durées conseillées :</div>
+                    <div style={{ fontSize: '13px', fontWeight: 600, color: '#2d3748', marginTop: '2px' }}>{destination.duration ? `${destination.duration}j, ${Math.ceil(destination.duration/2)}j, ${destination.duration*2}j` : '2 semaines, 1 semaine, 3 semaines'}</div>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
+                  <div style={{ color: '#C21A4B', marginTop: '2px', backgroundColor: '#FFF5F7', padding: '6px', borderRadius: '8px' }}><Clock size={18} /></div>
+                  <div>
+                    <div style={{ fontSize: '11px', fontWeight: 800, color: '#718096', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Heures de transport :</div>
+                    <div style={{ fontSize: '13px', fontWeight: 600, color: '#2d3748', marginTop: '2px' }}>~ {destination.duration ? Math.round(destination.duration * 1.5) : 21}h</div>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
+                  <div style={{ color: '#C21A4B', marginTop: '2px', backgroundColor: '#FFF5F7', padding: '6px', borderRadius: '8px' }}><CreditCard size={18} /></div>
+                  <div>
+                    <div style={{ fontSize: '11px', fontWeight: 800, color: '#718096', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Prix estimé :</div>
+                    <div style={{ fontSize: '13px', fontWeight: 800, color: '#2d3748', marginTop: '2px' }}>~ {destination.price || '157 €'}</div>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
+                  <div style={{ color: '#2F855A', marginTop: '2px', backgroundColor: '#F0FDF4', padding: '6px', borderRadius: '8px' }}><Leaf size={18} /></div>
+                  <div>
+                    <div style={{ fontSize: '11px', fontWeight: 800, color: '#718096', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Impact CO2 :</div>
+                    <div style={{ fontSize: '13px', fontWeight: 700, color: '#2F855A', marginTop: '2px' }}>10x moins polluant qu'en avion</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Map Frame */}
+            <div style={{
+              borderRadius: '20px',
+              overflow: 'hidden',
+              boxShadow: '0 10px 30px rgba(0,0,0,0.03)',
+              border: '1.5px solid #e2e8f0',
+              height: isMobile ? '300px' : 'auto',
+              minHeight: '280px',
+              position: 'relative'
+            }}>
+              <iframe
+                title={`Carte de ${destination.name}`}
+                src={`https://maps.google.com/maps?q=${encodeURIComponent(destination.name + ' Madagascar')}&t=&z=13&ie=UTF8&iwloc=&output=embed`}
+                width="100%"
+                height="100%"
+                style={{ border: 0, display: 'block' }}
+                allowFullScreen=""
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+              ></iframe>
+            </div>
+          </div>
+
+          {/* Main layout - 3 columns grid on desktop starting at the tabs section */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: isMobile ? '1fr' : '60px 1fr 320px',
+            gap: isMobile ? '32px' : '40px',
+            alignItems: 'start',
+            width: '100%',
+            paddingTop: '20px'
+          }}>
+            {/* Column 1: Sticky Social Bar (desktop only) */}
+            {!isMobile && (
+              <div style={{
+                position: 'sticky',
+                top: '100px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px',
+                zIndex: 10,
+                alignSelf: 'start',
+                alignItems: 'center'
+              }}>
+                <a href="https://instagram.com" target="_blank" rel="noreferrer" 
+                   style={socialIconStyle}
+                   onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.15)'; e.currentTarget.style.backgroundColor = '#9d123c'; }}
+                   onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.backgroundColor = '#C21A4B'; }}>
+                  <InstagramIcon size={18} />
+                </a>
+                <a href="https://tiktok.com" target="_blank" rel="noreferrer" 
+                   style={socialIconStyle}
+                   onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.15)'; e.currentTarget.style.backgroundColor = '#9d123c'; }}
+                   onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.backgroundColor = '#C21A4B'; }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block' }}>
+                    <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" />
+                  </svg>
+                </a>
+                <a href="https://linkedin.com" target="_blank" rel="noreferrer" 
+                   style={socialIconStyle}
+                   onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.15)'; e.currentTarget.style.backgroundColor = '#9d123c'; }}
+                   onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.backgroundColor = '#C21A4B'; }}>
+                  <LinkedinIcon size={18} />
+                </a>
+                <a href="mailto:contact@explorile.mg" 
+                   style={socialIconStyle}
+                   onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.15)'; e.currentTarget.style.backgroundColor = '#9d123c'; }}
+                   onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.backgroundColor = '#C21A4B'; }}>
+                  <Mail size={18} />
+                </a>
+              </div>
+            )}
+
+            {/* Column 2: Scrollable Tabs & Itinerary Content */}
+            <div style={{ width: '100%' }}>
+              <DetailsTabs 
+                activeTab={activeTab} 
+                setActiveTab={setActiveTab} 
+                isMobile={isMobile} 
+                destination={destination}
+                activeDeparture={activeDeparture}
+                activeOption={activeOption}
+              />
+            </div>
+
+            {/* Column 3: Sticky Sidebar (desktop only) */}
+            {!isMobile && (
+              <DetailsSidebar isMobile={false} destination={destination} />
+            )}
+          </div>
+
+          {/* Mobile sidebar (below the tabs) */}
+          {isMobile && (
+            <div style={{ marginTop: '32px' }}>
+              <DetailsSidebar isMobile={true} destination={destination} />
+            </div>
+          )}
         </div>
       </section>
 
@@ -207,6 +415,21 @@ const Details = ({ destinationId }) => {
       )}
     </div>
   );
+};
+
+const socialIconStyle = {
+  width: '40px',
+  height: '40px',
+  borderRadius: '50%',
+  backgroundColor: '#C21A4B',
+  color: '#fff',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  cursor: 'pointer',
+  transition: 'transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), background-color 0.25s ease',
+  textDecoration: 'none',
+  boxShadow: '0 4px 10px rgba(194,26,75,0.3)'
 };
 
 const modalOverlayStyle = { position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 };
