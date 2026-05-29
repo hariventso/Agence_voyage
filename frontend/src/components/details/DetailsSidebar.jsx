@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTranslate } from "../../i18n/useTranslate";
 
-const DetailsSidebar = ({ destination }) => {
+const DetailsSidebar = ({ destination, isMobile }) => {
   const { t } = useTranslate();
   const [activeImgIdx, setActiveImgIdx] = useState(0);
   const nameLower = (destination.name || '').toLowerCase();
@@ -56,12 +56,12 @@ const DetailsSidebar = ({ destination }) => {
         display: "flex",
         flexDirection: "column",
         gap: "24px",
-        position: "sticky",
-        top: "100px",
-        alignSelf: "start",
+        position: isMobile ? "static" : "sticky",
+        top: isMobile ? "auto" : "100px",
+        alignSelf: isMobile ? "stretch" : "start",
         width: "100%",
-        maxHeight: "calc(100vh - 120px)",
-        overflowY: "auto",
+        maxHeight: isMobile ? "none" : "calc(100vh - 120px)",
+        overflowY: isMobile ? "visible" : "auto",
         scrollbarWidth: "none",
         fontFamily: '"Outfit", sans-serif',
       }}
@@ -131,9 +131,9 @@ const DetailsSidebar = ({ destination }) => {
 
       {/* Banner 2: Dynamic Photo Gallery Slider OR Fallback Activities Promo */}
       {galleryImages.length > 0 ? (
-        <div 
+        <div
           style={{
-            height: '420px',
+            height: isMobile ? '280px' : '420px',
             borderRadius: '16px',
             overflow: 'hidden',
             position: 'relative',
@@ -214,7 +214,7 @@ const DetailsSidebar = ({ destination }) => {
                 {t(destination.name)} {t("en images")}
               </h4>
             </div>
-            
+
             {/* Simple Indicators */}
             <div style={{ display: 'flex', gap: '6px' }}>
               {galleryImages.map((_, index) => (
@@ -235,7 +235,7 @@ const DetailsSidebar = ({ destination }) => {
           </div>
         </div>
       ) : (
-        <div 
+        <div
           style={{
             minHeight: '280px',
             borderRadius: '16px',
@@ -285,8 +285,8 @@ const DetailsSidebar = ({ destination }) => {
               margin: 0,
               fontFamily: '"Outfit", sans-serif'
             }}>
-              {t("TES ACTIVITÉS")} <br/>
-              <span style={{ color: '#FFD700' }}>{t("SUR PLACE")}</span> <br/>
+              {t("TES ACTIVITÉS")} <br />
+              <span style={{ color: '#FFD700' }}>{t("SUR PLACE")}</span> <br />
               {t("AU MEILLEUR PRIX")}
             </h2>
           </div>
@@ -304,7 +304,7 @@ const DetailsSidebar = ({ destination }) => {
             alignSelf: 'center',
             width: '80%'
           }}
-          onMouseEnter={(e) => e.stopPropagation()}
+            onMouseEnter={(e) => e.stopPropagation()}
           >
             {t("JE DÉCOUVRE !")}
           </div>

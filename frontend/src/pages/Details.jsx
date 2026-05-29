@@ -28,6 +28,7 @@ const LinkedinIcon = ({ size = 18 }) => (
 const Details = ({ destinationId }) => {
   const { t } = useTranslate();
   const [destination, setDestination] = useState(null);
+  const [destinations, setDestinations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showStickyBar, setShowStickyBar] = useState(false);
@@ -47,10 +48,14 @@ const Details = ({ destinationId }) => {
       if (!destinationId) return;
       setLoading(true);
       try {
-        const destData = await apiService.getDestination(destinationId);
+        const [destData, allDests] = await Promise.all([
+          apiService.getDestination(destinationId),
+          apiService.getDestinations()
+        ]);
 
         if (!destData) throw new Error(t('Destination non trouvée'));
         setDestination(destData);
+        setDestinations(allDests ? allDests.filter(d => d.status === 'Actif') : []);
 
         setError(null);
       } catch (err) {
@@ -136,13 +141,13 @@ const Details = ({ destinationId }) => {
       // Si c'est un devis : envoi via WhatsApp
       const whatsappNumber = '261341776169'; // Numéro à adapter
       const text = `${t("Bonjour, je souhaite un devis pour le circuit :")} ${t(destination.name)}. %0A%0A` +
-                   `${t("Détails :")} %0A` +
-                   `- ${t("Nom")} : ${formData.nom} %0A` +
-                   `- ${t("Email")} : ${formData.email} %0A` +
-                   `- ${t("Téléphone")} : ${formData.telephone} %0A` +
-                   `- ${t("Participants")} : ${formData.participants} %0A` +
-                   `- ${t("Date de départ")} : ${formData.dateDepart} %0A` +
-                   `- ${t("Message")} : ${formData.message}`;
+        `${t("Détails :")} %0A` +
+        `- ${t("Nom")} : ${formData.nom} %0A` +
+        `- ${t("Email")} : ${formData.email} %0A` +
+        `- ${t("Téléphone")} : ${formData.telephone} %0A` +
+        `- ${t("Participants")} : ${formData.participants} %0A` +
+        `- ${t("Date de départ")} : ${formData.dateDepart} %0A` +
+        `- ${t("Message")} : ${formData.message}`;
       const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${text}`;
       window.open(whatsappUrl, '_blank');
 
@@ -240,7 +245,7 @@ const Details = ({ destinationId }) => {
                   <div style={{ color: '#C21A4B', marginTop: '2px', backgroundColor: '#FFF5F7', padding: '6px', borderRadius: '8px' }}><Calendar size={18} /></div>
                   <div>
                     <div style={{ fontSize: '11px', fontWeight: 800, color: '#718096', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{t("Durées conseillées :")}</div>
-                    <div style={{ fontSize: '13px', fontWeight: 600, color: '#2d3748', marginTop: '2px' }}>{destination.duration ? `${destination.duration}${t("j")}, ${Math.ceil(destination.duration/2)}${t("j")}, ${destination.duration*2}${t("j")}` : t('2 semaines, 1 semaine, 3 semaines')}</div>
+                    <div style={{ fontSize: '13px', fontWeight: 600, color: '#2d3748', marginTop: '2px' }}>{destination.duration ? `${destination.duration}${t("j")}, ${Math.ceil(destination.duration / 2)}${t("j")}, ${destination.duration * 2}${t("j")}` : t('2 semaines, 1 semaine, 3 semaines')}</div>
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
@@ -458,224 +463,224 @@ const Details = ({ destinationId }) => {
         // ─────────────────────────────────────────────────────────────────
 
         return (
-        <section style={{
-          backgroundColor: '#f8f9fa',
-          padding: isMobile ? '60px 20px' : '100px 20px',
-          color: '#333'
-        }}>
-          <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+          <section style={{
+            backgroundColor: '#f8f9fa',
+            padding: isMobile ? '60px 20px' : '100px 20px',
+            color: '#333'
+          }}>
+            <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
 
-            {/* En-tête */}
-            <div style={{ textAlign: 'center', marginBottom: '56px' }}>
-              <p style={{
-                fontFamily: "'Playfair Display', serif",
-                fontStyle: 'italic',
-                color: '#C21A4B',
-                fontSize: isMobile ? '1.1rem' : '1.4rem',
-                margin: '0 0 8px 0',
-                fontWeight: 500
-              }}>
-                Vous aimerez aussi
-              </p>
-              <h2 style={{
-                fontSize: isMobile ? '28px' : '44px',
-                fontFamily: '"Playfair Display", serif',
-                color: '#0a2e24',
-                fontWeight: 800,
-                margin: '0 0 16px 0',
-                letterSpacing: '-0.5px'
-              }}>
-                Circuits Similaires
-              </h2>
+              {/* En-tête */}
+              <div style={{ textAlign: 'center', marginBottom: '56px' }}>
+                <p style={{
+                  fontFamily: "'Playfair Display', serif",
+                  fontStyle: 'italic',
+                  color: '#C21A4B',
+                  fontSize: isMobile ? '1.1rem' : '1.4rem',
+                  margin: '0 0 8px 0',
+                  fontWeight: 500
+                }}>
+                  Vous aimerez aussi
+                </p>
+                <h2 style={{
+                  fontSize: isMobile ? '28px' : '44px',
+                  fontFamily: '"Playfair Display", serif',
+                  color: '#0a2e24',
+                  fontWeight: 800,
+                  margin: '0 0 16px 0',
+                  letterSpacing: '-0.5px'
+                }}>
+                  Circuits Similaires
+                </h2>
+                <div style={{
+                  width: '60px',
+                  height: '3px',
+                  background: 'linear-gradient(90deg, #C21A4B, #FF8C00)',
+                  borderRadius: '2px',
+                  margin: '0 auto'
+                }} />
+              </div>
+
+              {/* Grille de cartes */}
               <div style={{
-                width: '60px',
-                height: '3px',
-                background: 'linear-gradient(90deg, #C21A4B, #FF8C00)',
-                borderRadius: '2px',
-                margin: '0 auto'
-              }} />
-            </div>
+                display: 'grid',
+                gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
+                gap: '28px'
+              }}>
+                {similarCircuits.map((c, i) => {
+                  const reviewData = [
+                    { rating: 5, count: 20 },
+                    { rating: 5, count: 12 },
+                    { rating: 4, count: 18 },
+                    { rating: 5, count: 24 }
+                  ][i % 4];
+                  const durationLabel = c.duration ? `${c.duration} JOURS` : '7 JOURS';
 
-            {/* Grille de cartes */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
-              gap: '28px'
-            }}>
-              {similarCircuits.map((c, i) => {
-                const reviewData = [
-                  { rating: 5, count: 20 },
-                  { rating: 5, count: 12 },
-                  { rating: 4, count: 18 },
-                  { rating: 5, count: 24 }
-                ][i % 4];
-                const durationLabel = c.duration ? `${c.duration} JOURS` : '7 JOURS';
-
-                return (
-                  <div
-                    key={c.id}
-                    onClick={() => { window.location.hash = `#detail-${c.id}`; }}
-                    style={{
-                      position: 'relative',
-                      borderRadius: '18px',
-                      overflow: 'hidden',
-                      height: isMobile ? '240px' : '320px',
-                      cursor: 'pointer',
-                      boxShadow: '0 10px 30px rgba(0,0,0,0.08)',
-                      transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1)'
-                    }}
-                    onMouseOver={e => {
-                      e.currentTarget.style.transform = 'translateY(-6px)';
-                      e.currentTarget.style.boxShadow = '0 20px 40px rgba(0,0,0,0.18)';
-                    }}
-                    onMouseOut={e => {
-                      e.currentTarget.style.transform = 'translateY(0)';
-                      e.currentTarget.style.boxShadow = '0 10px 30px rgba(0,0,0,0.08)';
-                    }}
-                  >
-                    {/* Image de fond */}
-                    <img
-                      src={c.image_url || '/image/mountain.png'}
-                      alt={c.name}
+                  return (
+                    <div
+                      key={c.id}
+                      onClick={() => { window.location.hash = `#detail-${c.id}`; }}
                       style={{
-                        width: '100%', height: '100%', objectFit: 'cover',
-                        position: 'absolute', top: 0, left: 0, zIndex: 0
+                        position: 'relative',
+                        borderRadius: '18px',
+                        overflow: 'hidden',
+                        height: isMobile ? '240px' : '320px',
+                        cursor: 'pointer',
+                        boxShadow: '0 10px 30px rgba(0,0,0,0.08)',
+                        transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1)'
                       }}
-                    />
+                      onMouseOver={e => {
+                        e.currentTarget.style.transform = 'translateY(-6px)';
+                        e.currentTarget.style.boxShadow = '0 20px 40px rgba(0,0,0,0.18)';
+                      }}
+                      onMouseOut={e => {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = '0 10px 30px rgba(0,0,0,0.08)';
+                      }}
+                    >
+                      {/* Image de fond */}
+                      <img
+                        src={c.image_url || '/image/mountain.png'}
+                        alt={c.name}
+                        style={{
+                          width: '100%', height: '100%', objectFit: 'cover',
+                          position: 'absolute', top: 0, left: 0, zIndex: 0
+                        }}
+                      />
 
-                    {/* Gradient sombre */}
-                    <div style={{
-                      position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
-                      background: 'linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.38) 40%, rgba(0,0,0,0.88) 100%)',
-                      zIndex: 1
-                    }} />
-
-                    {/* Contenu */}
-                    <div style={{
-                      position: 'relative', zIndex: 2, height: '100%',
-                      display: 'flex', flexDirection: 'column',
-                      justifyContent: 'space-between',
-                      padding: '24px', boxSizing: 'border-box', color: '#fff'
-                    }}>
-                      {/* Ligne haute */}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', flex: 1, marginRight: '8px' }}>
-                          <span style={{
-                            fontSize: '11px', fontWeight: 700,
-                            display: 'inline-flex', alignItems: 'center',
-                            gap: '6px', letterSpacing: '0.5px',
-                            backgroundColor: 'rgba(255,255,255,0.15)',
-                            backdropFilter: 'blur(6px)',
-                            padding: '4px 10px', borderRadius: '20px'
-                          }}>
-                            <span style={{
-                              width: '7px', height: '7px', borderRadius: '50%',
-                              backgroundColor: '#FF8C00', display: 'inline-block'
-                            }} />
-                            {c.type || 'Circuit'}
-                          </span>
-                          {c._reasons && c._reasons.map((reason, ri) => (
-                            <span key={ri} style={{
-                              fontSize: '10px', fontWeight: 700,
-                              backgroundColor: reason === 'Même type'
-                                ? 'rgba(194,26,75,0.75)'
-                                : reason === 'Budget similaire'
-                                ? 'rgba(255,140,0,0.75)'
-                                : reason === 'Durée similaire'
-                                ? 'rgba(45,74,67,0.85)'
-                                : 'rgba(80,80,80,0.65)',
-                              backdropFilter: 'blur(4px)',
-                              color: '#fff',
-                              padding: '3px 8px',
-                              borderRadius: '20px',
-                              letterSpacing: '0.3px',
-                              whiteSpace: 'nowrap'
-                            }}>
-                              ✓ {reason}
-                            </span>
-                          ))}
-                        </div>
-                        <Bookmark size={20} fill="#fff" stroke="none" style={{ opacity: 0.9, flexShrink: 0 }} />
-                      </div>
-
-                      {/* Ligne basse */}
+                      {/* Gradient sombre */}
                       <div style={{
-                        display: 'flex', justifyContent: 'space-between',
-                        alignItems: 'flex-end', flexWrap: 'wrap', gap: '12px'
+                        position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+                        background: 'linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.38) 40%, rgba(0,0,0,0.88) 100%)',
+                        zIndex: 1
+                      }} />
+
+                      {/* Contenu */}
+                      <div style={{
+                        position: 'relative', zIndex: 2, height: '100%',
+                        display: 'flex', flexDirection: 'column',
+                        justifyContent: 'space-between',
+                        padding: '24px', boxSizing: 'border-box', color: '#fff'
                       }}>
-                        <div style={{ textAlign: 'left' }}>
-                          <h3 style={{
-                            fontSize: isMobile ? '1.2rem' : '1.5rem',
-                            fontFamily: '"Outfit", sans-serif',
-                            fontWeight: 800, color: '#fff',
-                            margin: '0 0 6px 0',
-                            letterSpacing: '-0.3px',
-                            textTransform: 'uppercase'
-                          }}>
-                            {c.name}
-                          </h3>
-                          <span style={{
-                            fontSize: '13px', fontWeight: 700,
-                            textDecoration: 'underline', letterSpacing: '0.5px'
-                          }}>
-                            {c.price} | {durationLabel}
-                          </span>
+                        {/* Ligne haute */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', flex: 1, marginRight: '8px' }}>
+                            <span style={{
+                              fontSize: '11px', fontWeight: 700,
+                              display: 'inline-flex', alignItems: 'center',
+                              gap: '6px', letterSpacing: '0.5px',
+                              backgroundColor: 'rgba(255,255,255,0.15)',
+                              backdropFilter: 'blur(6px)',
+                              padding: '4px 10px', borderRadius: '20px'
+                            }}>
+                              <span style={{
+                                width: '7px', height: '7px', borderRadius: '50%',
+                                backgroundColor: '#FF8C00', display: 'inline-block'
+                              }} />
+                              {c.type || 'Circuit'}
+                            </span>
+                            {c._reasons && c._reasons.map((reason, ri) => (
+                              <span key={ri} style={{
+                                fontSize: '10px', fontWeight: 700,
+                                backgroundColor: reason === 'Même type'
+                                  ? 'rgba(194,26,75,0.75)'
+                                  : reason === 'Budget similaire'
+                                    ? 'rgba(255,140,0,0.75)'
+                                    : reason === 'Durée similaire'
+                                      ? 'rgba(45,74,67,0.85)'
+                                      : 'rgba(80,80,80,0.65)',
+                                backdropFilter: 'blur(4px)',
+                                color: '#fff',
+                                padding: '3px 8px',
+                                borderRadius: '20px',
+                                letterSpacing: '0.3px',
+                                whiteSpace: 'nowrap'
+                              }}>
+                                ✓ {reason}
+                              </span>
+                            ))}
+                          </div>
+                          <Bookmark size={20} fill="#fff" stroke="none" style={{ opacity: 0.9, flexShrink: 0 }} />
                         </div>
 
-                        {/* Étoiles */}
+                        {/* Ligne basse */}
                         <div style={{
-                          display: 'flex', alignItems: 'center',
-                          gap: '6px', fontSize: '11px', fontWeight: 700
+                          display: 'flex', justifyContent: 'space-between',
+                          alignItems: 'flex-end', flexWrap: 'wrap', gap: '12px'
                         }}>
-                          <span style={{ color: '#FFBC0A', fontSize: '14px', letterSpacing: '1px' }}>
-                            {'★'.repeat(reviewData.rating)}
-                          </span>
-                          <span style={{ color: '#fff', opacity: 0.85 }}>
-                            {reviewData.count} AVIS
-                          </span>
+                          <div style={{ textAlign: 'left' }}>
+                            <h3 style={{
+                              fontSize: isMobile ? '1.2rem' : '1.5rem',
+                              fontFamily: '"Outfit", sans-serif',
+                              fontWeight: 800, color: '#fff',
+                              margin: '0 0 6px 0',
+                              letterSpacing: '-0.3px',
+                              textTransform: 'uppercase'
+                            }}>
+                              {c.name}
+                            </h3>
+                            <span style={{
+                              fontSize: '13px', fontWeight: 700,
+                              textDecoration: 'underline', letterSpacing: '0.5px'
+                            }}>
+                              {c.price} | {durationLabel}
+                            </span>
+                          </div>
+
+                          {/* Étoiles */}
+                          <div style={{
+                            display: 'flex', alignItems: 'center',
+                            gap: '6px', fontSize: '11px', fontWeight: 700
+                          }}>
+                            <span style={{ color: '#FFBC0A', fontSize: '14px', letterSpacing: '1px' }}>
+                              {'★'.repeat(reviewData.rating)}
+                            </span>
+                            <span style={{ color: '#fff', opacity: 0.85 }}>
+                              {reviewData.count} AVIS
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
 
-            {/* Bouton voir tous les circuits */}
-            <div style={{ textAlign: 'center', marginTop: '48px' }}>
-              <button
-                onClick={() => { window.location.hash = ''; window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: '10px',
-                  padding: '14px 36px',
-                  backgroundColor: '#0a2e24',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '30px',
-                  fontSize: '14px',
-                  fontWeight: 800,
-                  cursor: 'pointer',
-                  fontFamily: '"Outfit", sans-serif',
-                  letterSpacing: '0.5px',
-                  boxShadow: '0 6px 20px rgba(10,46,36,0.25)',
-                  transition: 'all 0.3s ease'
-                }}
-                onMouseOver={e => {
-                  e.currentTarget.style.backgroundColor = '#C21A4B';
-                  e.currentTarget.style.boxShadow = '0 8px 24px rgba(194,26,75,0.35)';
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                }}
-                onMouseOut={e => {
-                  e.currentTarget.style.backgroundColor = '#0a2e24';
-                  e.currentTarget.style.boxShadow = '0 6px 20px rgba(10,46,36,0.25)';
-                  e.currentTarget.style.transform = 'translateY(0)';
-                }}
-              >
-                Voir tous nos circuits →
-              </button>
+              {/* Bouton voir tous les circuits */}
+              <div style={{ textAlign: 'center', marginTop: '48px' }}>
+                <button
+                  onClick={() => { window.location.hash = ''; window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: '10px',
+                    padding: '14px 36px',
+                    backgroundColor: '#0a2e24',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '30px',
+                    fontSize: '14px',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    fontFamily: '"Outfit", sans-serif',
+                    letterSpacing: '0.5px',
+                    boxShadow: '0 6px 20px rgba(10,46,36,0.25)',
+                    transition: 'all 0.3s ease'
+                  }}
+                  onMouseOver={e => {
+                    e.currentTarget.style.backgroundColor = '#C21A4B';
+                    e.currentTarget.style.boxShadow = '0 8px 24px rgba(194,26,75,0.35)';
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                  }}
+                  onMouseOut={e => {
+                    e.currentTarget.style.backgroundColor = '#0a2e24';
+                    e.currentTarget.style.boxShadow = '0 6px 20px rgba(10,46,36,0.25)';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                  }}
+                >
+                  Voir tous nos circuits →
+                </button>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
         );
       })()}
 
