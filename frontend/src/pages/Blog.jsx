@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { apiService } from '../services/api';
+import { getImageUrl } from '../services/images';
 
 function Blog() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -91,7 +92,7 @@ function Blog() {
             }}>
               {posts.map(post => (
                 <div key={post.id} style={{ backgroundColor: '#111', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,0.3)', display: 'flex', flexDirection: 'column' }}>
-                  <img src={post.image_url || '/image/placeholder.png'} alt={post.title} style={{ width: '100%', height: '250px', objectFit: 'cover' }} />
+                  <img src={getImageUrl(post.image_url)} alt={post.title} style={{ width: '100%', height: '250px', objectFit: 'cover' }} />
                   <div style={{ padding: '30px', flex: 1, display: 'flex', flexDirection: 'column' }}>
                     <span style={{ color: '#FF8C00', fontSize: '0.9rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>{post.category}</span>
                     <h3 style={{ fontSize: '1.5rem', margin: '15px 0', color: '#fff', fontWeight: 700, lineHeight: 1.3 }}>{post.title}</h3>

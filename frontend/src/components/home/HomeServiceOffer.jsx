@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowRight } from 'lucide-react';
+import { getImageUrl } from '../../services/images';
 
 const defaultServices = [
   {
@@ -51,7 +52,7 @@ const ServiceCard = ({ service }) => {
     >
       {/* Image de fond avec effet de zoom */}
       <img
-        src={service.image_url || '/image/hero_new.png'}
+        src={getImageUrl(service.image_url, '/image/hero_new.png')}
         alt={service.name}
         loading="lazy"
         style={{

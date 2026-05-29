@@ -21,6 +21,7 @@ import {
   ArrowDown,
 } from 'lucide-react';
 import { apiService } from '../services/api';
+import { getImageUrl } from '../services/images';
 
 import AdminSidebar from '../components/admin/AdminSidebar';
 import AdminHeader from '../components/admin/AdminHeader';
@@ -1085,7 +1086,7 @@ const AdminForm = ({
         <div style={imageUploadAreaStyle}>
           {selectedFile || formData.image_url ? (
             <img
-              src={selectedFile ? URL.createObjectURL(selectedFile) : formData.image_url}
+              src={selectedFile ? URL.createObjectURL(selectedFile) : getImageUrl(formData.image_url)}
               alt=""
               style={{ width: '100%', height: '100%', objectFit: 'cover' }}
             />
@@ -1576,7 +1577,7 @@ const AdminForm = ({
                             }}>
                               {stop.image ? (
                                 <div style={{ width: '100%', height: '100%', position: 'relative' }}>
-                                  <img src={stop.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                  <img src={getImageUrl(stop.image)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                   <button
                                     type="button"
                                     onClick={() => handleStepFieldChange('image', '')}

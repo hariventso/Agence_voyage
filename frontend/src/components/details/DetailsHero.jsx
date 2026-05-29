@@ -1,10 +1,11 @@
 import React from 'react';
 import { Info } from 'lucide-react';
+import { getImageUrl } from '../../services/images';
 
 const DetailsHero = ({ isMobile, destination }) => {
   return (
     <section className="details-hero" style={{
-      backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.3)), url("${destination.image_url || '/image/details_hero.png'}")`,
+      backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.3)), url("${getImageUrl(destination.image_url, '/image/details_hero.png')}")`,
       backgroundSize: 'cover',
       backgroundPosition: 'center',
       height: isMobile ? '60vh' : '75vh',

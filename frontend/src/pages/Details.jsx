@@ -7,6 +7,7 @@ import DetailsSidebar from '../components/details/DetailsSidebar';
 import BookingForm from '../components/details/BookingForm';
 import DestinationGrid from '../components/destinations/DestinationGrid';
 import { apiService } from '../services/api';
+import { getImageUrl } from '../services/images';
 
 const InstagramIcon = ({ size = 18 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block' }}>
@@ -81,10 +82,10 @@ const Details = ({ destinationId }) => {
     setMeta('meta[name="description"]', 'content', pageDescription);
     setMeta('meta[property="og:title"]', 'content', pageTitle);
     setMeta('meta[property="og:description"]', 'content', pageDescription);
-    setMeta('meta[property="og:image"]', 'content', destination.image_url || '/image/hero.png');
+    setMeta('meta[property="og:image"]', 'content', getImageUrl(destination.image_url, '/image/hero.png'));
     setMeta('meta[name="twitter:title"]', 'content', pageTitle);
     setMeta('meta[name="twitter:description"]', 'content', pageDescription);
-    setMeta('meta[name="twitter:image"]', 'content', destination.image_url || '/image/hero.png');
+    setMeta('meta[name="twitter:image"]', 'content', getImageUrl(destination.image_url, '/image/hero.png'));
     const canonical = document.querySelector('link[rel="canonical"]');
     if (canonical) canonical.setAttribute('href', `${window.location.origin}${window.location.pathname}#detail-${destinationId}`);
   }, [destination, destinationId]);
