@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS destinations (
     budget TEXT,
     tips TEXT,
     highlights TEXT,
+    is_popular BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -106,6 +107,18 @@ CREATE TABLE IF NOT EXISTS calendar_events (
     reminder_sent_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS slides (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(255),
+    subtitle VARCHAR(255),
+    description TEXT,
+    image_url TEXT,
+    button_text VARCHAR(100),
+    link VARCHAR(255),
+    slide_order INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 INSERT INTO destinations (name, type, price, status)
