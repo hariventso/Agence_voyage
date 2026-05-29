@@ -118,7 +118,7 @@ const DetailsTabs = ({ activeTab, setActiveTab, isMobile, destination, activeDep
 
       {/* Tab Content Area */}
       <div className="tab-content" style={{ padding: '12px 0', width: '100%' }}>
-        {activeTab === 'itineraire' && <ItineraryTab isMobile={isMobile} destination={destination} activeDeparture={activeDeparture} activeOption={activeOption} />}
+        {activeTab === 'itineraire' && <ItineraryTab isMobile={isMobile} destination={destination} activeDeparture={activeDeparture} activeOption={activeOption} setActiveTab={setActiveTab} />}
         {activeTab === 'hebergement' && <AccommodationTab isMobile={isMobile} destination={destination} />}
         {activeTab === 'budget' && <BudgetTab isMobile={isMobile} destination={destination} />}
         {activeTab === 'conseils' && <TipsTab isMobile={isMobile} destination={destination} />}
@@ -128,7 +128,7 @@ const DetailsTabs = ({ activeTab, setActiveTab, isMobile, destination, activeDep
 };
 
 // Sub-tab components
-const ItineraryTab = ({ isMobile, destination, activeDeparture, activeOption }) => {
+const ItineraryTab = ({ isMobile, destination, activeDeparture, activeOption, setActiveTab }) => {
   // Hardcoded curated stops for high-fidelity look, fallback to mockup Lyon-Milan-Rome stops
   const nameLower = (destination.name || '').toLowerCase();
   
@@ -432,12 +432,6 @@ const ItineraryTab = ({ isMobile, destination, activeDeparture, activeOption }) 
                         <p style={{ fontSize: '14px', color: '#4A5568', lineHeight: 1.6, margin: '0 0 12px 0', textAlign: 'justify' }}>
                           {stop.description}
                         </p>
-                        <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', marginTop: '12px' }}>
-                          <span style={{ color: '#C21A4B', fontWeight: 800, fontSize: '13px', whiteSpace: 'nowrap' }}>L'incontournable :</span>
-                          <span style={{ fontSize: '13px', color: '#2D3748', fontWeight: 600, lineHeight: 1.5 }}>
-                            {stop.incontournable}
-                          </span>
-                        </div>
                       </div>
 
 
@@ -480,7 +474,10 @@ const ItineraryTab = ({ isMobile, destination, activeDeparture, activeOption }) 
                       </div>
 
                       <button
-                        onClick={() => document.getElementById('formulaire-devis')?.scrollIntoView({ behavior: 'smooth' })}
+                        onClick={() => {
+                          setActiveTab('budget');
+                          document.querySelector('.tabs-header')?.scrollIntoView({ behavior: 'smooth' });
+                        }}
                         style={{
                           backgroundColor: '#C21A4B',
                           color: '#fff',
@@ -536,19 +533,26 @@ const AccommodationTab = ({ isMobile, destination }) => (
 );
 
 const BudgetTab = ({ isMobile, destination }) => (
-  <div className="budget-tab" style={{ padding: '8px' }}>
-    <h2 style={{ fontSize: '24px', color: '#1B3D34', fontFamily: '"Outfit", sans-serif', fontWeight: 800, marginBottom: '16px' }}>
+  <div className="budget-tab" style={{ padding: '8px', fontFamily: '"Outfit", sans-serif' }}>
+    <h2 style={{ fontSize: '24px', color: '#1B3D34', fontWeight: 800, marginBottom: '16px' }}>
       Détails du Budget
     </h2>
+    
+    {/* Dynamic Linked Budget Text from Admin Dashboard */}
     <div style={{ 
       fontSize: '15px', 
       color: '#4A5568', 
       lineHeight: 1.7, 
       textAlign: 'justify',
       whiteSpace: 'pre-wrap',
-      marginBottom: '32px'
+      marginBottom: '16px',
+      backgroundColor: '#F8FAFC', 
+      padding: '24px', 
+      borderRadius: '16px',
+      borderLeft: '4.5px solid #2D4A43',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.01)'
     }}>
-      {destination.budget || `À partir de ${destination.price}. Ce tarif inclut généralement l'hébergement, les transports locaux et l'assistance sur place. Pour un devis personnalisé adapté à vos besoins spécifiques, n'hésitez pas à nous contacter.`}
+      {destination.budget || `À partir de ${destination.price || 'un tarif avantageux'}. Ce tarif inclut généralement l'hébergement, les transports locaux et l'assistance sur place. Pour un devis personnalisé adapté à vos besoins spécifiques, n'hésitez pas à nous contacter.`}
     </div>
   </div>
 );

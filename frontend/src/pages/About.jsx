@@ -22,7 +22,6 @@ const travelReviews = [
 
 function About() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  const [activeReview, setActiveReview] = useState(0);
   const [teamMembers, setTeamMembers] = useState([]);
   const [testimonials, setTestimonials] = useState([]);
   const [destinations, setDestinations] = useState([]);
@@ -53,18 +52,8 @@ function About() {
 
     fetchData();
 
-    const interval = setInterval(() => {
-      setTestimonials(current => {
-        if (current.length > 0) {
-          setActiveReview(prev => (prev + 1) % current.length);
-        }
-        return current;
-      });
-    }, 5000);
-
     return () => {
       window.removeEventListener('resize', handleResize);
-      clearInterval(interval);
     };
   }, []);
 
@@ -77,8 +66,6 @@ function About() {
       <DestinationPopular isMobile={isMobile} destinations={destinations} loading={loading} />
       <TestimonialSlider 
         testimonials={testimonials} 
-        activeReview={activeReview} 
-        setActiveReview={setActiveReview} 
         isMobile={isMobile} 
       />
     </div>
