@@ -1,5 +1,6 @@
 import React from 'react';
 import { CheckCircle, MapPin, Train, Car, Ship, MessageSquare, Compass, ChevronRight } from 'lucide-react';
+import { getImageUrl } from '../../services/images';
 
 const parseItinerary = (itineraryStr, destination) => {
   let itineraryTitle = `Découvrez ${destination?.name || ''}`;
@@ -415,7 +416,7 @@ const ItineraryTab = ({ isMobile, destination, activeDeparture, activeOption }) 
                     }}>
                       <img
                         className="stop-card-image"
-                        src={stop.image || '/image/hero.png'}
+                        src={getImageUrl(stop.image, '/image/hero.png')}
                         alt={stop.name}
                         style={{
                           width: '100%',

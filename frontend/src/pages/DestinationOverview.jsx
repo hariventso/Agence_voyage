@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import DestinationGrid from '../components/destinations/DestinationGrid';
 import { apiService } from '../services/api';
+import { getImageUrl } from '../services/images';
 
 const DestinationOverview = ({ destinationId }) => {
   const [destination, setDestination] = useState(null);
@@ -50,7 +51,7 @@ const DestinationOverview = ({ destinationId }) => {
         justifyContent: 'center'
       }}>
         <img 
-          src={destination.image_url || '/image/mountain.png'} 
+          src={getImageUrl(destination.image_url, '/image/mountain.png')} 
           alt={destination.name} 
           style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: 0 }} 
         />

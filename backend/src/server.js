@@ -32,7 +32,10 @@ const startServer = async () => {
 
   const app = createApp();
   reminderInterval = setInterval(runReminderJob, config.calendar.reminderCheckIntervalMs);
-  server = app.listen(config.app.port, () => console.log(`Backend on ${config.app.baseUrl}`));
+  server = app.listen(config.app.port, () => {
+    console.log(`Backend on ${config.app.baseUrl}`);
+    console.log(`Origines API autorisées: ${config.app.allowedOrigins.join(', ')}`);
+  });
 };
 
 process.on('SIGINT', () => shutdown('SIGINT'));

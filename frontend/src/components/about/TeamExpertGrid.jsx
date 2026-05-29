@@ -1,4 +1,5 @@
 import React from 'react';
+import { getImageUrl } from '../../services/images';
 
 const TeamExpertGrid = ({ teamMembers, isMobile }) => {
   return (
@@ -74,7 +75,7 @@ const TeamMemberCard = ({ member, isMobile }) => (
       backgroundColor: '#333',
     }}>
       <img
-        src={member.image_url || member.image || '/image/placeholder.png'}
+        src={getImageUrl(member.image_url || member.image)}
         alt={member.name}
         style={{
           width: '100%',

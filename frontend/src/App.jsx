@@ -17,7 +17,9 @@ const Admin = lazy(() => import('./pages/Admin'));
 function App() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [currentHash, setCurrentHash] = useState(window.location.hash || '#');
+  const getCurrentRoute = () =>
+    window.location.pathname === '/admin' ? '#admin' : window.location.hash || '#';
+  const [currentHash, setCurrentHash] = useState(getCurrentRoute);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -29,11 +31,20 @@ function App() {
 
   useEffect(() => {
     const handleHashChange = () => {
-      setCurrentHash(window.location.hash || '#');
+      setCurrentHash(getCurrentRoute());
       window.scrollTo(0, 0);
     };
     window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
+    window.addEventListener('popstate', handleHashChange);
+
+    if (window.location.pathname === '/admin' && window.location.hash !== '#admin') {
+      window.history.replaceState(null, '', '/admin#admin');
+    }
+
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+      window.removeEventListener('popstate', handleHashChange);
+    };
   }, []);
 
   // Routing Logic
@@ -41,16 +52,16 @@ function App() {
   const isContactPage = currentHash === '#contact';
   const isBlogPage = currentHash === '#blog';
   const isDetailPage = currentHash.startsWith('#detail-');
-  const destinationIdDetail = isDetailPage ? currentHash.split('-')[1] : null;
+  const destinationIdDetail = isDetailPage ? currentHash.replace('#detail-', '') : null;
   
   const isViewPage = currentHash.startsWith('#view-');
-  const destinationIdView = isViewPage ? currentHash.split('-')[1] : null;
+  const destinationIdView = isViewPage ? currentHash.replace('#view-', '') : null;
   const destinationServiceFilter = isDestinationPage && currentHash.includes('?service=') ? decodeURIComponent(currentHash.split('?service=')[1]) : null;
 
   const isAboutPage = currentHash === '#about';
   const isAdminPage = currentHash === '#admin';
   const isPostPage = currentHash.startsWith('#post-');
-  const postId = isPostPage ? currentHash.split('-')[1] : null;
+  const postId = isPostPage ? currentHash.replace('#post-', '') : null;
 
   const isScrolledOrInnerPage = scrolled || isDestinationPage || isDetailPage || isViewPage || isAboutPage || isContactPage || isBlogPage || isPostPage;
 

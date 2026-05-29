@@ -1,5 +1,7 @@
 import React, { useEffect } from 'react';
 import { ArrowLeft, Clock, User, Calendar, Share2, Tag } from 'lucide-react';
+import { apiService } from '../services/api';
+import { getImageUrl } from '../services/images';
 
 const blogPosts = {
   '1': {
@@ -115,10 +117,10 @@ const PostDetail = ({ postId }) => {
     setMeta('meta[name="description"]', 'content', pageDescription);
     setMeta('meta[property="og:title"]', 'content', pageTitle);
     setMeta('meta[property="og:description"]', 'content', pageDescription);
-    setMeta('meta[property="og:image"]', 'content', post.image || '/image/hero.png');
+    setMeta('meta[property="og:image"]', 'content', getImageUrl(post.image_url || post.image, '/image/hero.png'));
     setMeta('meta[name="twitter:title"]', 'content', pageTitle);
     setMeta('meta[name="twitter:description"]', 'content', pageDescription);
-    setMeta('meta[name="twitter:image"]', 'content', post.image || '/image/hero.png');
+    setMeta('meta[name="twitter:image"]', 'content', getImageUrl(post.image_url || post.image, '/image/hero.png'));
     const canonical = document.querySelector('link[rel="canonical"]');
     if (canonical) canonical.setAttribute('href', `${window.location.origin}${window.location.pathname}#post-${postId}`);
   }, [post, postId]);
@@ -174,7 +176,7 @@ const PostDetail = ({ postId }) => {
         paddingBottom: isMobile ? '60px' : '80px',
         overflow: 'hidden'
       }}>
-        <img src={post.image_url || "/image/placeholder.png"} alt={post.title} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: 0 }} />
+        <img src={getImageUrl(post.image_url || post.image)} alt={post.title} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: 0 }} />
         <div style={{ 
           position: 'absolute', 
           top: 0, 

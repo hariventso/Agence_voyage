@@ -134,3 +134,15 @@ VALUES
 ('Mialy Rakoto', 'mialy@example.com', 'Guide Senior', '+261 34 00 000 00', 'Actif'),
 ('Andry Ranaivo', 'andry@example.com', 'Coordinateur Logistique', '+261 34 11 111 11', 'Actif')
 ON CONFLICT (email) DO NOTHING;
+
+-- Table pour les utilisateurs (Administration)
+CREATE TABLE IF NOT EXISTS users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO users (username, password)
+VALUES ('Tourisme', '2026')
+ON CONFLICT (username) DO NOTHING;

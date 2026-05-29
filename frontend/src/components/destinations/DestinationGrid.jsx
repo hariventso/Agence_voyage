@@ -1,5 +1,6 @@
 import React from 'react';
 import { MapPin } from 'lucide-react';
+import { getImageUrl } from '../../services/images';
 
 const DestinationGrid = ({ loading, destinations }) => {
   return (
@@ -27,7 +28,7 @@ const DestinationGrid = ({ loading, destinations }) => {
                 onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}
               >
                 <div style={{ position: 'relative', height: '220px' }}>
-                  <img src={dest.image_url || '/image/mountain.png'} alt={dest.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <img src={getImageUrl(dest.image_url, '/image/mountain.png')} alt={dest.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#FF8C00', color: '#fff', padding: '10px 20px', fontWeight: 600 }}>
                     {dest.service_name}
                   </div>

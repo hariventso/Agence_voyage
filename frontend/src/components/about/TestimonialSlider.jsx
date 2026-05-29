@@ -1,4 +1,5 @@
 import React from 'react';
+import { getImageUrl } from '../../services/images';
 
 const TestimonialSlider = ({ testimonials, activeReview, setActiveReview, isMobile }) => {
   if (testimonials.length === 0) return null;
@@ -48,7 +49,7 @@ const TestimonialSlider = ({ testimonials, activeReview, setActiveReview, isMobi
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '24px' }}>
             <img
-              src={testimonials[activeReview]?.image_url || testimonials[activeReview]?.image || '/image/placeholder.png'}
+              src={getImageUrl(testimonials[activeReview]?.image_url || testimonials[activeReview]?.image)}
               alt={testimonials[activeReview]?.name}
               style={{ width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover' }}
             />

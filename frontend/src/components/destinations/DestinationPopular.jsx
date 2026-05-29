@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Bookmark, Clock, Tag } from 'lucide-react';
+import { getImageUrl } from '../../services/images';
 
 const defaultDestinations = [
   {
@@ -42,6 +43,12 @@ const defaultDestinations = [
 
 const DestinationPopular = ({ isMobile, destinations = [], loading = false }) => {
   const [mobileView, setMobileView] = useState(window.innerWidth < 768);
+  const isDatabaseDestination = (id) => /^\d+$/.test(String(id));
+  const openDestination = (destination) => {
+    window.location.hash = isDatabaseDestination(destination.id)
+      ? `#detail-${destination.id}`
+      : '#destinations';
+  };
 
   useEffect(() => {
     const handleResize = () => setMobileView(window.innerWidth < 768);
@@ -111,16 +118,31 @@ const DestinationPopular = ({ isMobile, destinations = [], loading = false }) =>
           }}>
             Top Destinations
           </p>
-          <h2 style={{ 
-            fontSize: mobileView ? '28px' : '48px', 
-            fontFamily: '"Playfair Display", serif', 
-            color: '#0a2e24', 
-            fontWeight: 800,
-            margin: 0,
-            letterSpacing: '-0.5px'
-          }}>
+          <button
+            type="button"
+            onClick={() => { window.location.hash = '#destinations'; }}
+            aria-label="Voir tous les circuits populaires"
+            style={{
+              background: 'none',
+              border: 'none',
+              padding: 0,
+              fontSize: mobileView ? '28px' : '48px',
+              fontFamily: '"Playfair Display", serif',
+              color: '#0a2e24',
+              fontWeight: 800,
+              margin: 0,
+              letterSpacing: '-0.5px',
+              cursor: 'pointer'
+            }}
+            onMouseOver={e => {
+              e.currentTarget.style.color = '#FF8C00';
+            }}
+            onMouseOut={e => {
+              e.currentTarget.style.color = '#0a2e24';
+            }}
+          >
             Circuits Populaires
-          </h2>
+          </button>
         </div>
 
         {/* Grille de cartes */}
@@ -139,7 +161,7 @@ const DestinationPopular = ({ isMobile, destinations = [], loading = false }) =>
               return (
                 <div 
                   key={i} 
-                  onClick={() => window.location.hash = `#detail-${c.id}`}
+                  onClick={() => openDestination(c)}
                   style={{ 
                     position: 'relative',
                     borderRadius: '16px',
@@ -160,7 +182,7 @@ const DestinationPopular = ({ isMobile, destinations = [], loading = false }) =>
                 >
                   {/* Image de fond */}
                   <img 
-                    src={c.image_url || '/image/placeholder.png'} 
+                    src={getImageUrl(c.image_url)} 
                     alt={c.name} 
                     style={{ 
                       width: '100%', 

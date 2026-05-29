@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { apiService } from '../../services/api';
+import { getImageUrl } from '../../services/images';
 
 const fallbackSlides = [
   {
@@ -146,7 +147,7 @@ const HomeHero = () => {
             }}
           >
             <img
-              src={slide.image_url || slide.image}
+              src={getImageUrl(slide.image_url || slide.image, '/image/home_hero.png')}
               alt={slide.title}
               style={{
                 width: '100%',

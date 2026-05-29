@@ -1,5 +1,6 @@
 import React from 'react';
 import { Edit, Trash2 } from 'lucide-react';
+import { getImageUrl } from '../../services/images';
 
 const thStyle = {
   padding: '16px 24px',
@@ -39,7 +40,7 @@ const TeamView = ({ t, viewMode, openEdit, onDelete }) => {
               <tr key={member.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                 <td style={tdStyle}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <img src={member.image_url || '/image/placeholder.png'} alt="" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} />
+                    <img src={getImageUrl(member.image_url)} alt="" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} />
                     <b>{member.name}</b>
                   </div>
                 </td>
@@ -63,7 +64,7 @@ const TeamView = ({ t, viewMode, openEdit, onDelete }) => {
       {t.map(member => (
         <div key={member.id} style={cardStyle}>
           <div style={{ position: 'relative', height: '280px', borderRadius: '24px', overflow: 'hidden', marginBottom: '24px' }}>
-            <img src={member.image_url || '/image/placeholder.png'} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <img src={getImageUrl(member.image_url)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             <div style={{ position: 'absolute', top: '20px', left: '20px', backgroundColor: '#6366f1', color: '#fff', padding: '4px 12px', borderRadius: '8px', fontSize: '10px', fontWeight: 900 }}>{member.role?.toUpperCase()}</div>
           </div>
           <h3 style={{ fontSize: '18px', fontWeight: 900, marginBottom: '8px', textTransform: 'uppercase' }}>{member.name}</h3>

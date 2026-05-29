@@ -1,19 +1,31 @@
-const path = require('path');
+const path = require("path");
 
-require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
+require("dotenv").config({
+  path: path.resolve(__dirname, "../../.env"),
+  override: true,
+});
 
 const numberFromEnv = (name, fallback) => {
   const value = Number(process.env[name]);
   return Number.isFinite(value) ? value : fallback;
 };
 
-const port = numberFromEnv('PORT', 5000);
+const port = numberFromEnv("PORT", 5000);
+const allowedOrigins = (
+  process.env.CORS_ORIGINS ||
+  process.env.FRONTEND_URL ||
+  "http://localhost:5173"
+)
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
 const config = {
   app: {
     port,
     baseUrl: process.env.PUBLIC_BACKEND_URL || `http://localhost:${port}`,
-    uploadDir: path.resolve(__dirname, '../../uploads'),
+    uploadDir: path.resolve(__dirname, "../../uploads"),
+    allowedOrigins,
   },
   db: {
     connectionString: process.env.DATABASE_URL || undefined,
@@ -24,12 +36,15 @@ const config = {
     port: process.env.DB_PORT ? Number(process.env.DB_PORT) : undefined,
   },
   admin: {
-    username: process.env.ADMIN_USER || 'Tourisme',
-    password: process.env.ADMIN_PASSWORD || '2026',
+    username: process.env.ADMIN_USER,
+    password: process.env.ADMIN_PASSWORD,
   },
   calendar: {
-    reminderLeadHours: numberFromEnv('CALENDAR_REMINDER_HOURS', 24),
-    reminderCheckIntervalMs: numberFromEnv('CALENDAR_REMINDER_INTERVAL_MS', 60 * 60 * 1000),
+    reminderLeadHours: numberFromEnv("CALENDAR_REMINDER_HOURS", 24),
+    reminderCheckIntervalMs: numberFromEnv(
+      "CALENDAR_REMINDER_INTERVAL_MS",
+      60 * 60 * 1000,
+    ),
   },
   smtp: {
     host: process.env.SMTP_HOST,
@@ -37,16 +52,16 @@ const config = {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
     from: process.env.SMTP_FROM,
-    secure: String(process.env.SMTP_SECURE || 'false') === 'true',
+    secure: String(process.env.SMTP_SECURE || "false") === "true",
   },
 };
 
 config.smtp.configured = Boolean(
   config.smtp.host &&
-    config.smtp.port &&
-    config.smtp.user &&
-    config.smtp.pass &&
-    config.smtp.from
+  config.smtp.port &&
+  config.smtp.user &&
+  config.smtp.pass &&
+  config.smtp.from,
 );
 
 module.exports = config;
