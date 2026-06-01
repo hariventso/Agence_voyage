@@ -34,6 +34,7 @@ const ensureSchema = async () => {
     await client.query("ALTER TABLE destinations ADD COLUMN IF NOT EXISTS highlights TEXT;");
     await client.query("ALTER TABLE destinations ADD COLUMN IF NOT EXISTS service_name VARCHAR(255);");
     await client.query("ALTER TABLE destinations ADD COLUMN IF NOT EXISTS is_popular BOOLEAN DEFAULT FALSE;");
+    await client.query("ALTER TABLE destinations ADD COLUMN IF NOT EXISTS gallery TEXT;");
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS services (

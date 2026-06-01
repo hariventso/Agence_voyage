@@ -2,18 +2,18 @@ import { Menu, X, User } from 'lucide-react';
 import { LanguageSwitcher } from '../../i18n/LanguageSwitcher';
 import { useTranslate } from '../../i18n/useTranslate';
 
-const Navbar = ({ 
-  isScrolledOrInnerPage, 
-  scrolled, 
-  mobileMenuOpen, 
-  setMobileMenuOpen, 
-  currentHash, 
-  isDestinationPage, 
-  isBlogPage, 
-  isPostPage, 
-  isAboutPage, 
-  isContactPage, 
-  isAdminPage 
+const Navbar = ({
+  isScrolledOrInnerPage,
+  scrolled,
+  mobileMenuOpen,
+  setMobileMenuOpen,
+  currentHash,
+  isDestinationPage,
+  isBlogPage,
+  isPostPage,
+  isAboutPage,
+  isContactPage,
+  isAdminPage
 }) => {
   const { t } = useTranslate();
   const linkColor = (active) => active ? '#FF8C00' : (isScrolledOrInnerPage ? '#222' : '#fff');
@@ -21,7 +21,6 @@ const Navbar = ({
   return (
     <nav className={`navbar ${isScrolledOrInnerPage ? 'scrolled' : ''}`} style={{
       background: isScrolledOrInnerPage ? 'rgba(255, 255, 255, 0.97)' : 'transparent',
-      padding: scrolled ? '12px 0' : '20px 0',
       backdropFilter: isScrolledOrInnerPage ? 'blur(10px)' : 'none',
       boxShadow: isScrolledOrInnerPage ? '0 4px 20px rgba(0,0,0,0.08)' : 'none',
       position: 'fixed',

@@ -68,6 +68,7 @@ const emptyFormData = {
   link: "",
   slide_order: 0,
   subtitle: "",
+  gallery: "",
 };
 
 const eventTypeOptions = [
@@ -401,6 +402,7 @@ const Admin = () => {
             budget: formData.budget,
             tips: formData.tips,
             highlights: formData.highlights,
+            gallery: formData.gallery,
           };
           if (editingId) await apiService.updateDestination(editingId, payload);
           else await apiService.createDestination(payload);
@@ -1797,6 +1799,147 @@ const AdminForm = ({
                   }
                 />
               </FormField>
+            </div>
+
+            {/* Galerie Photos Editor */}
+            <div style={{
+              border: '1px solid #cbd5e1',
+              borderRadius: '20px',
+              padding: '24px',
+              backgroundColor: '#f8fafc',
+              marginTop: '16px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '20px'
+            }}>
+              <div style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '12px' }}>
+                <h4 style={{ fontSize: '16px', fontWeight: 800, color: '#0f766e', margin: 0 }}>Galerie de Photos</h4>
+                <p style={{ fontSize: '12px', color: '#64748b', margin: '4px 0 0' }}>Ajoutez des images pour alimenter le diaporama/carrousel sur la droite de la page de détails.</p>
+              </div>
+
+              {(() => {
+                let galleryImages = [];
+                try {
+                  if (formData.gallery) {
+                    galleryImages = JSON.parse(formData.gallery);
+                    if (!Array.isArray(galleryImages)) galleryImages = [];
+                  }
+                } catch (e) {
+                  console.error("Failed to parse gallery JSON", e);
+                }
+
+                const handleAddGalleryImage = async (e) => {
+                  const file = e.target.files[0];
+                  if (!file) return;
+                  try {
+                    const uploadResult = await apiService.uploadImage(file);
+                    const updated = [...galleryImages, uploadResult.imageUrl];
+                    setFormData(current => ({ ...current, gallery: JSON.stringify(updated) }));
+                  } catch (err) {
+                    alert("Erreur lors de l'upload de l'image de la galerie : " + err.message);
+                  }
+                };
+
+                const handleRemoveGalleryImage = (indexToRemove) => {
+                  const updated = galleryImages.filter((_, idx) => idx !== indexToRemove);
+                  setFormData(current => ({ ...current, gallery: JSON.stringify(updated) }));
+                };
+
+                return (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <label style={fieldLabelStyle}>Images de la Galerie ({galleryImages.length})</label>
+                      <div style={{ position: 'relative' }}>
+                        <button
+                          type="button"
+                          style={{
+                            ...secondaryButtonStyle,
+                            height: '32px',
+                            padding: '0 12px',
+                            borderRadius: '8px'
+                          }}
+                        >
+                          <Plus size={14} /> Ajouter une image
+                        </button>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleAddGalleryImage}
+                          style={{
+                            position: 'absolute',
+                            inset: 0,
+                            opacity: 0,
+                            cursor: 'pointer'
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    {galleryImages.length === 0 ? (
+                      <div style={{
+                        border: '1px dashed #cbd5e1',
+                        borderRadius: '12px',
+                        padding: '24px',
+                        textAlign: 'center',
+                        color: '#94a3b8',
+                        fontSize: '13px'
+                      }}>
+                        Aucune image dans la galerie. Ajoutez-en pour remplacer les bannières statiques du détail.
+                      </div>
+                    ) : (
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
+                        gap: '12px'
+                      }}>
+                        {galleryImages.map((imgUrl, idx) => (
+                          <div key={idx} style={{
+                            position: 'relative',
+                            borderRadius: '12px',
+                            overflow: 'hidden',
+                            height: '80px',
+                            border: '1px solid #e2e8f0',
+                            backgroundColor: '#fff',
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
+                          }}>
+                            <img
+                              src={imgUrl}
+                              alt=""
+                              style={{
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'cover'
+                              }}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveGalleryImage(idx)}
+                              style={{
+                                position: 'absolute',
+                                top: '4px',
+                                right: '4px',
+                                backgroundColor: 'rgba(239, 68, 68, 0.9)',
+                                color: '#fff',
+                                border: 'none',
+                                borderRadius: '50%',
+                                width: '20px',
+                                height: '20px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                cursor: 'pointer',
+                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                              }}
+                            >
+                              <X size={10} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Custom Structured Itinerary Editor */}

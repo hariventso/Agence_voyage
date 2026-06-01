@@ -1,37 +1,22 @@
-import { useState, useEffect, useCallback } from "react";
-import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
-import { apiService } from "../../services/api";
+import React, { useState, useEffect, useRef } from 'react';
+import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
+import { apiService } from '../../services/api';
 import { getImageUrl } from "../../services/images";
 import { useTranslate } from "../../i18n/useTranslate";
 
 const fallbackSlides = [
   {
-    image: "/image/beach_sunset_hero.png",
-    title: "Explor'île",
-    subtitle: "Sur les traces des Malgaches",
-    description:
-      "Envie de découvrir Madagascar au-delà des sentiers battus ? Explor’île vous invite à vivre des expériences uniques, au croisement du tourisme culturel et de l’aventure. Nos voyages sont conçus à partir de recherches scientifiques, de savoirs locaux et de récits authentiques, pour vous offrir bien plus qu’un simple séjour : une véritable immersion au cœur de l’âme malgache.",
-    buttonText: "Découvrir nos offres",
-    link: "#destinations",
+    image: '/image/beach_sunset_hero.png',
+    title: "Sur les traces malgaches",
   },
   {
-    image: "/image/isalo_destination.png",
-    title: "Aventure Isalo",
-    subtitle: "Randonnées et Canyons Spectaculaires",
-    description:
-      "Parcourez les paysages lunaires et les piscines naturelles du parc national de l''Isalo. Une immersion totale au milieu de canyons sculptés par le temps, de faune endémique et de savanes dorées, guidée par nos experts locaux.",
-    buttonText: "Explorer les circuits",
-    link: "#destinations",
+    image: '/image/isalo_destination.png',
+    title: "Découvrez Madagascar avec nous — faites-en votre aventure",
   },
   {
-    image: "/image/home_beach_hero.png",
-    title: "Nosy Be & Sainte Marie",
-    subtitle: "Paradis Tropicaux et Eaux Cristallines",
-    description:
-      "Évadez-vous sur des plages de sable blanc bordées de cocotiers. Du parfum d''ylang-ylang de Nosy Be aux eaux calmes de Sainte Marie où dansent les baleines à bosse, vivez une expérience balnéaire inoubliable.",
-    buttonText: "Découvrir nos séjours",
-    link: "#destinations",
-  },
+    image: '/image/home_beach_hero.png',
+    title: "18 ethnies à découvrir, un mode de vie dynamique et diversifié",
+  }
 ];
 
 const HomeHero = () => {
@@ -39,44 +24,38 @@ const HomeHero = () => {
   const [slides, setSlides] = useState(fallbackSlides);
   const [currentIndex, setCurrentIndex] = useState(1);
   const [isTransitioning, setIsTransitioning] = useState(true);
-  const [animate, setAnimate] = useState(true);
-  const [prevActiveIndex, setPrevActiveIndex] = useState(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 992);
+  const timerRef = useRef(null);
 
-  const handleNext = useCallback(() => {
-    if (!isTransitioning) return;
-    setCurrentIndex((prev) => prev + 1);
-  }, [isTransitioning]);
-
-  const handlePrev = useCallback(() => {
-    if (!isTransitioning) return;
-    setCurrentIndex((prev) => prev - 1);
-  }, [isTransitioning]);
-
-  const handleDotClick = (index) => {
-    if (!isTransitioning) return;
-    setCurrentIndex(index + 1);
-  };
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 992);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     apiService
       .getSlides()
       .then((data) => {
         if (data && data.length > 0) {
-          setSlides(data);
-          setCurrentIndex(1); // reset index when slides change
+          const formatted = data.map(s => ({
+            image: s.image_url || s.image,
+            title: s.title || s.subtitle || s.description || "Madagascar"
+          }));
+          setSlides(formatted);
+          setCurrentIndex(1);
         }
       })
       .catch((err) => console.error("Error fetching slides:", err));
   }, []);
 
-  // Extend the slides array to enable infinite scrolling
+  // Extend slides for infinite loop sliding
   const extendedSlides = [
-    slides[slides.length - 1], // Clone of the last slide
-    ...slides, // Original slides
-    slides[0], // Clone of the first slide
+    slides[slides.length - 1],
+    ...slides,
+    slides[0]
   ];
 
-  // Which slide index is currently active (0 to slides.length - 1)
   let activeIndex = currentIndex - 1;
   if (currentIndex === 0) {
     activeIndex = slides.length - 1;
@@ -84,32 +63,31 @@ const HomeHero = () => {
     activeIndex = 0;
   }
 
-  // Adjust animation state during render if index changed
-  if (prevActiveIndex !== activeIndex) {
-    setPrevActiveIndex(activeIndex);
-    setAnimate(false);
-  }
+  const handlePrev = () => {
+    if (!isTransitioning) return;
+    setCurrentIndex((prev) => prev - 1);
+  };
 
-  // Auto-play interval (resets when index changes)
+  const handleNext = () => {
+    if (!isTransitioning) return;
+    setCurrentIndex((prev) => prev + 1);
+  };
+
+  const handleDotClick = (index) => {
+    if (!isTransitioning) return;
+    setCurrentIndex(index + 1);
+  };
+
+  // Auto-play interval
   useEffect(() => {
-    const timer = setInterval(() => {
+    if (slides.length <= 1) return;
+    timerRef.current = setInterval(() => {
       handleNext();
     }, 6000);
-    return () => clearInterval(timer);
-  }, [handleNext]);
-
-  // Text slide-up animation trigger on active slide change
-  useEffect(() => {
-    if (!animate) {
-      const timeout = setTimeout(() => {
-        setAnimate(true);
-      }, 50);
-      return () => clearTimeout(timeout);
-    }
-  }, [animate]);
+    return () => clearInterval(timerRef.current);
+  }, [currentIndex, slides.length, isTransitioning]);
 
   const handleTransitionEnd = () => {
-    // Jump to the actual slide when hitting a clone boundary
     if (currentIndex === extendedSlides.length - 1) {
       setIsTransitioning(false);
       setCurrentIndex(1);
@@ -119,7 +97,6 @@ const HomeHero = () => {
     }
   };
 
-  // Re-enable transitions after jumping back to normal index range
   useEffect(() => {
     if (!isTransitioning) {
       const timeout = setTimeout(() => {
@@ -129,273 +106,297 @@ const HomeHero = () => {
     }
   }, [isTransitioning]);
 
-  // Guard: don't render if activeIndex is out of bounds
   if (!slides[activeIndex]) return null;
 
   return (
-    <section
-      className="hero"
-      style={{
-        position: "relative",
-        height: "100vh",
-        overflow: "hidden",
-        display: "flex",
-        alignItems: "center",
-      }}
-    >
-      {/* Background Images Sliding Container */}
-      <div
-        onTransitionEnd={handleTransitionEnd}
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          width: `${extendedSlides.length * 100}%`,
-          height: "100%",
-          display: "flex",
-          transform: `translateX(-${(currentIndex * 100) / extendedSlides.length}%)`,
-          transition: isTransitioning
-            ? "transform 1s cubic-bezier(0.16, 1, 0.3, 1)"
-            : "none",
-          zIndex: 1,
-        }}
-      >
-        {extendedSlides.map((slide, index) => (
-          <div
-            key={index}
-            style={{
-              width: `${100 / extendedSlides.length}%`,
-              height: "100%",
-              position: "relative",
-              flexShrink: 0,
-            }}
-          >
-            <img
-              src={getImageUrl(
-                slide.image_url || slide.image,
-                "/image/home_hero.png",
-              )}
-              alt={t(slide.title)}
-              style={{
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-                objectPosition: "center",
-                filter: "brightness(1.1) contrast(1.1) saturate(1.05)",
-              }}
-            />
-          </div>
-        ))}
-      </div>
+    <section className="hero" style={{
+      position: 'relative',
+      minHeight: isMobile ? 'auto' : '100vh',
+      backgroundColor: '#FAF9F6',
+      display: 'flex',
+      alignItems: 'center',
+      padding: isMobile ? '120px 20px 60px' : '100px 0 80px',
+      overflow: 'hidden',
+      fontFamily: '"Outfit", sans-serif'
+    }}>
+      {/* Decorative background shape */}
+      <div style={{
+        position: 'absolute',
+        top: '-10%',
+        right: '-10%',
+        width: '60%',
+        height: '80%',
+        background: 'radial-gradient(circle, rgba(27, 94, 32, 0.05) 0%, rgba(255,255,255,0) 70%)',
+        zIndex: 1,
+        pointerEvents: 'none'
+      }} />
 
-      {/* Static overlay gradient on top of sliding background */}
-      <div
-        className="hero-overlay"
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          width: "100%",
-          height: "100%",
-          background:
-            "linear-gradient(90deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.25) 50%, rgba(255,255,255,0) 100%)",
-          zIndex: 2,
-          pointerEvents: "none",
-        }}
-      />
-
-      {/* Main Content */}
-      <div
-        className="container"
-        style={{ position: "relative", zIndex: 5, width: "100%" }}
-      >
-        <div
-          className="hero-content"
-          style={{
-            opacity: animate ? 1 : 0,
-            transform: animate ? "translateY(0)" : "translateY(25px)",
-            transition:
-              "opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1)",
-            maxWidth: "650px",
-          }}
-        >
-          <h1
-            style={{
-              color: "#1B5E20",
-              fontFamily: "'Plus Jakarta Sans', sans-serif",
-              letterSpacing: "-1px",
-              fontSize: "clamp(40px, 8vw, 72px)",
-              margin: "0 0 8px 0",
+      <div className="container" style={{ position: 'relative', zIndex: 5, width: '100%' }}>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: isMobile ? '1fr' : '1.1fr 0.9fr',
+          gap: isMobile ? '40px' : '64px',
+          alignItems: 'center'
+        }}>
+          
+          {/* Left Column: Presentation Info */}
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: isMobile ? 'center' : 'flex-start',
+            textAlign: isMobile ? 'center' : 'left'
+          }}>
+            {/* Small Green Badge */}
+            <div style={{
+              backgroundColor: 'rgba(27, 94, 32, 0.08)',
+              color: '#1B5E20',
+              padding: '6px 16px',
+              borderRadius: '30px',
+              fontSize: '13px',
               fontWeight: 800,
-            }}
-          >
-            {t(slides[activeIndex].title)}
-          </h1>
-          <h2
-            style={{
-              color: "#000000",
-              fontWeight: 700,
-              marginBottom: "24px",
-              fontFamily: "'Plus Jakarta Sans', sans-serif",
-              lineHeight: 1.3,
-              fontSize: "clamp(20px, 4vw, 32px)",
-            }}
-          >
-            {t(slides[activeIndex].subtitle)}
-          </h2>
-          <p
-            style={{
-              color: "#222",
-              lineHeight: 1.6,
+              letterSpacing: '1px',
+              textTransform: 'uppercase',
+              marginBottom: '24px',
+              display: 'inline-block'
+            }}>
+              {t("Explor'île")}
+            </div>
+
+            {/* Main Heading */}
+            <h1 style={{
+              color: '#1B3D34',
+              fontSize: isMobile ? '32px' : '48px',
+              lineHeight: 1.15,
+              fontWeight: 850,
+              margin: '0 0 24px 0',
+              letterSpacing: '-0.5px'
+            }}>
+              {t("Agence de voyage et tour opérateur culturel et patrimonial")}
+            </h1>
+
+            {/* Paragraph Text */}
+            <div style={{
+              fontSize: '16px',
+              lineHeight: 1.8,
+              color: '#4A5568',
+              marginBottom: '40px',
               fontWeight: 500,
-              marginBottom: "32px",
-              background: "rgba(255, 255, 255, 0.72)",
-              padding: "24px",
-              borderRadius: "16px",
-              backdropFilter: "blur(10px)",
-              border: "1px solid rgba(255, 255, 255, 0.4)",
-              textAlign: "justify",
-              boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.05)",
-              fontSize: "clamp(14px, 2vw, 16px)",
-            }}
-          >
-            {t(slides[activeIndex].description)}
-          </p>
-          <a
-            href={slides[activeIndex].link}
-            style={{
-              display: "inline-flex",
-              backgroundColor: "#1B5E20",
-              color: "#fff",
-              padding: "16px 36px",
-              borderRadius: "100px",
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px'
+            }}>
+              <p style={{ margin: 0, fontWeight: 700, color: '#2D3748', fontSize: '17px' }}>
+                {t("Découvrez Madagascar autrement avec Explor’île.")}
+              </p>
+              <p style={{ margin: 0 }}>
+                {t("Nous vous invitons à vivre des expériences uniques au croisement du tourisme culturel et patrimonial.")}
+              </p>
+              <p style={{ margin: 0 }}>
+                {t("Nos voyages sont conçus à partir de recherches scientifiques, de savoirs locaux et de récits authentiques afin de vous offrir bien plus qu’un simple séjour : une véritable immersion au cœur de l’âme malgache.")}
+              </p>
+            </div>
+
+            {/* CTA Button */}
+            <a href="#destinations" style={{
+              display: 'inline-flex',
+              backgroundColor: '#1B5E20',
+              color: '#fff',
+              padding: '16px 36px',
+              borderRadius: '100px',
               fontWeight: 600,
-              fontSize: "16px",
-              textDecoration: "none",
-              alignItems: "center",
-              gap: "8px",
-              boxShadow: "0 4px 18px rgba(27, 94, 32, 0.35)",
-              transition: "all 0.3s ease",
+              fontSize: '16px',
+              textDecoration: 'none',
+              alignItems: 'center',
+              gap: '8px',
+              boxShadow: '0 8px 24px rgba(27, 94, 32, 0.25)',
+              transition: 'all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1)',
             }}
             onMouseOver={(e) => {
-              e.currentTarget.style.backgroundColor = "#154A19";
-              e.currentTarget.style.transform = "translateY(-2px)";
-              e.currentTarget.style.boxShadow =
-                "0 6px 22px rgba(27, 94, 32, 0.45)";
+              e.currentTarget.style.backgroundColor = '#154A19';
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 12px 30px rgba(27, 94, 32, 0.35)';
             }}
             onMouseOut={(e) => {
-              e.currentTarget.style.backgroundColor = "#1B5E20";
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow =
-                "0 4px 18px rgba(27, 94, 32, 0.35)";
+              e.currentTarget.style.backgroundColor = '#1B5E20';
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 8px 24px rgba(27, 94, 32, 0.25)';
             }}
-          >
-            {t(
-              slides[activeIndex].button_text || slides[activeIndex].buttonText,
-            )}
-            <ArrowRight size={20} />
-          </a>
+            >
+              {t("Découvrir nos offres")}
+              <ArrowRight size={20} />
+            </a>
+          </div>
+
+          {/* Right Column: Sliding Image Gallery */}
+          <div style={{
+            position: 'relative',
+            width: '100%',
+            height: isMobile ? '360px' : '530px',
+            borderRadius: '24px',
+            overflow: 'hidden',
+            boxShadow: '0 20px 40px rgba(10, 46, 36, 0.12)'
+          }}>
+            {/* Sliding Track */}
+            <div
+              onTransitionEnd={handleTransitionEnd}
+              style={{
+                display: 'flex',
+                width: `${extendedSlides.length * 100}%`,
+                height: '100%',
+                transform: `translateX(-${(currentIndex * 100) / extendedSlides.length}%)`,
+                transition: isTransitioning ? 'transform 1s cubic-bezier(0.16, 1, 0.3, 1)' : 'none',
+              }}
+            >
+              {extendedSlides.map((slide, idx) => (
+                <div
+                  key={idx}
+                  style={{
+                    width: `${100 / extendedSlides.length}%`,
+                    height: '100%',
+                    position: 'relative',
+                    flexShrink: 0
+                  }}
+                >
+                  <img
+                    src={getImageUrl(slide.image, "/image/home_hero.png")}
+                    alt={t(slide.title)}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      objectPosition: 'center',
+                    }}
+                  />
+                  
+                  {/* Text Overlay Card */}
+                  <div style={{
+                    position: 'absolute',
+                    bottom: '24px',
+                    left: '24px',
+                    right: '24px',
+                    background: 'rgba(10, 46, 36, 0.72)',
+                    backdropFilter: 'blur(12px)',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    padding: '20px 24px',
+                    borderRadius: '16px',
+                    color: '#fff',
+                    boxShadow: '0 10px 30px rgba(0, 0, 0, 0.25)',
+                    transform: 'translateY(0)',
+                    transition: 'all 0.3s'
+                  }}>
+                    <p style={{
+                      margin: 0,
+                      fontSize: isMobile ? '15px' : '18px',
+                      fontWeight: 700,
+                      lineHeight: 1.4,
+                      textAlign: 'center',
+                      fontFamily: '"Outfit", sans-serif'
+                    }}>
+                      {t(slide.title)}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Slide Navigation Arrow Left */}
+            <button
+              onClick={() => { handlePrev(); clearInterval(timerRef.current); }}
+              style={{
+                position: 'absolute',
+                left: '16px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                backgroundColor: 'rgba(255, 255, 255, 0.85)',
+                border: 'none',
+                color: '#1B3D34',
+                width: '40px',
+                height: '40px',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                zIndex: 10,
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                transition: 'all 0.2s'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.backgroundColor = '#fff';
+                e.currentTarget.style.transform = 'translateY(-50%) scale(1.08)';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.85)';
+                e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
+              }}
+            >
+              <ChevronLeft size={20} />
+            </button>
+
+            {/* Slide Navigation Arrow Right */}
+            <button
+              onClick={() => { handleNext(); clearInterval(timerRef.current); }}
+              style={{
+                position: 'absolute',
+                right: '16px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                backgroundColor: 'rgba(255, 255, 255, 0.85)',
+                border: 'none',
+                color: '#1B3D34',
+                width: '40px',
+                height: '40px',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                zIndex: 10,
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                transition: 'all 0.2s'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.backgroundColor = '#fff';
+                e.currentTarget.style.transform = 'translateY(-50%) scale(1.08)';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.85)';
+                e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
+              }}
+            >
+              <ChevronRight size={20} />
+            </button>
+
+            {/* Dots Indicators */}
+            <div style={{
+              position: 'absolute',
+              top: '20px',
+              right: '20px',
+              display: 'flex',
+              gap: '6px',
+              zIndex: 10
+            }}>
+              {slides.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => { handleDotClick(index); clearInterval(timerRef.current); }}
+                  style={{
+                    width: index === activeIndex ? '20px' : '8px',
+                    height: '8px',
+                    borderRadius: '4px',
+                    backgroundColor: index === activeIndex ? '#fff' : 'rgba(255, 255, 255, 0.5)',
+                    border: 'none',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                    padding: 0
+                  }}
+                />
+              ))}
+            </div>
+
+          </div>
+
         </div>
-      </div>
-
-      {/* Navigation Controls (Arrows) */}
-      <button
-        onClick={handlePrev}
-        style={{
-          position: "absolute",
-          left: "24px",
-          top: "50%",
-          transform: "translateY(-50%)",
-          backgroundColor: "rgba(255, 255, 255, 0.25)",
-          backdropFilter: "blur(8px)",
-          border: "1px solid rgba(255, 255, 255, 0.4)",
-          color: "#000",
-          width: "48px",
-          height: "48px",
-          borderRadius: "50%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          cursor: "pointer",
-          zIndex: 10,
-          transition: "all 0.3s ease",
-        }}
-        onMouseOver={(e) => {
-          e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.55)";
-          e.currentTarget.style.transform = "translateY(-50%) scale(1.08)";
-        }}
-        onMouseOut={(e) => {
-          e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.25)";
-          e.currentTarget.style.transform = "translateY(-50%) scale(1)";
-        }}
-      >
-        <ChevronLeft size={24} />
-      </button>
-
-      <button
-        onClick={handleNext}
-        style={{
-          position: "absolute",
-          right: "24px",
-          top: "50%",
-          transform: "translateY(-50%)",
-          backgroundColor: "rgba(255, 255, 255, 0.25)",
-          backdropFilter: "blur(8px)",
-          border: "1px solid rgba(255, 255, 255, 0.4)",
-          color: "#000",
-          width: "48px",
-          height: "48px",
-          borderRadius: "50%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          cursor: "pointer",
-          zIndex: 10,
-          transition: "all 0.3s ease",
-        }}
-        onMouseOver={(e) => {
-          e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.55)";
-          e.currentTarget.style.transform = "translateY(-50%) scale(1.08)";
-        }}
-        onMouseOut={(e) => {
-          e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.25)";
-          e.currentTarget.style.transform = "translateY(-50%) scale(1)";
-        }}
-      >
-        <ChevronRight size={24} />
-      </button>
-
-      {/* Slide Indicators (Dots) */}
-      <div
-        style={{
-          position: "absolute",
-          bottom: "32px",
-          left: "50%",
-          transform: "translateX(-50%)",
-          display: "flex",
-          gap: "10px",
-          zIndex: 10,
-        }}
-      >
-        {slides.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => handleDotClick(index)}
-            style={{
-              width: index === activeIndex ? "28px" : "10px",
-              height: "10px",
-              borderRadius: "999px",
-              backgroundColor:
-                index === activeIndex ? "#1B5E20" : "rgba(0, 0, 0, 0.35)",
-              border:
-                index === activeIndex
-                  ? "none"
-                  : "1px solid rgba(255, 255, 255, 0.4)",
-              cursor: "pointer",
-              transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
-            }}
-          />
-        ))}
       </div>
     </section>
   );

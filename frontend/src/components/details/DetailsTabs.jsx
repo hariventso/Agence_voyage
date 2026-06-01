@@ -153,6 +153,7 @@ const DetailsTabs = ({
             destination={destination}
             activeDeparture={activeDeparture}
             activeOption={activeOption}
+            setActiveTab={setActiveTab}
           />
         )}
         {activeTab === "hebergement" && (
@@ -171,10 +172,10 @@ const ItineraryTab = ({
   destination,
   activeDeparture,
   activeOption,
+  setActiveTab,
 }) => {
   const { t } = useTranslate();
   const nameLower = (destination.name || "").toLowerCase();
-
   const sudStops = [
     {
       name: t("Antananarivo"),
@@ -733,11 +734,10 @@ const ItineraryTab = ({
                       </div>
 
                       <button
-                        onClick={() =>
-                          document
-                            .getElementById("formulaire-devis")
-                            ?.scrollIntoView({ behavior: "smooth" })
-                        }
+                        onClick={() => {
+                          setActiveTab('budget');
+                          document.querySelector('.tabs-header')?.scrollIntoView({ behavior: 'smooth' });
+                        }}
                         style={{
                           backgroundColor: "#C21A4B",
                           color: "#fff",
@@ -824,34 +824,31 @@ const AccommodationTab = ({ destination }) => {
 const BudgetTab = ({ destination }) => {
   const { t } = useTranslate();
   return (
-    <div className="budget-tab" style={{ padding: "8px" }}>
-      <h2
-        style={{
-          fontSize: "24px",
-          color: "#1B3D34",
-          fontFamily: '"Outfit", sans-serif',
-          fontWeight: 800,
-          marginBottom: "16px",
-        }}
-      >
+    <div className="budget-tab" style={{ padding: '8px', fontFamily: '"Outfit", sans-serif' }}>
+      <h2 style={{ fontSize: '24px', color: '#1B3D34', fontWeight: 800, marginBottom: '16px' }}>
         {t("Détails du Budget")}
       </h2>
-      <div
-        style={{
-          fontSize: "15px",
-          color: "#4A5568",
-          lineHeight: 1.7,
-          textAlign: "justify",
-          whiteSpace: "pre-wrap",
-          marginBottom: "32px",
-        }}
-      >
-        {t(destination.budget) ||
-          `${t("À partir de")} ${t(destination.price)}. ${t("Ce tarif inclut généralement l'hébergement, les transports locaux et l'assistance sur place. Pour un devis personnalisé adapté à vos neuromande, n'hésitez pas à nous contacter.")}`}
+      
+      {/* Dynamic Linked Budget Text from Admin Dashboard */}
+      <div style={{ 
+        fontSize: '15px', 
+        color: '#4A5568', 
+        lineHeight: 1.7, 
+        textAlign: 'justify',
+        whiteSpace: 'pre-wrap',
+        marginBottom: '16px',
+        backgroundColor: '#F8FAFC', 
+        padding: '24px', 
+        borderRadius: '16px',
+        borderLeft: '4.5px solid #2D4A43',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.01)'
+      }}>
+        {t(destination.budget) || `${t("À partir de")} ${t(destination.price || 'un tarif avantageux')}. ${t("Ce tarif inclut généralement l'hébergement, les transports locaux et l'assistance sur place. Pour un devis personnalisé adapté à vos besoins spécifiques, n'hésitez pas à nous contacter.")}`}
       </div>
     </div>
   );
 };
+
 
 const TipsTab = ({ destination }) => {
   const { t } = useTranslate();

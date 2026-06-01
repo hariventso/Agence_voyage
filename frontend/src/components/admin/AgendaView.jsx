@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -119,14 +119,31 @@ const AgendaView = ({
       </div>
 
       <div style={panelStyle}>
-        <div style={calendarToolbarStyle}>
+        <div style={{
+          ...calendarToolbarStyle,
+          flexDirection: isMobile ? 'column' : 'row',
+          alignItems: isMobile ? 'stretch' : 'center',
+          gap: isMobile ? 12 : 16
+        }}>
           <div>
             <div style={eyebrowStyle}>Planning interactif</div>
-            <h3 style={calendarTitleStyle}>{currentTitle || 'Agenda'}</h3>
+            <h3 style={{
+              ...calendarTitleStyle,
+              fontSize: isMobile ? 18 : 22
+            }}>{currentTitle || 'Agenda'}</h3>
           </div>
 
-          <div style={toolbarActionsStyle}>
-            <div style={segmentedControlStyle}>
+          <div style={{
+            ...toolbarActionsStyle,
+            justifyContent: isMobile ? 'space-between' : 'flex-start',
+            width: isMobile ? '100%' : 'auto',
+          }}>
+            <div style={{
+              ...segmentedControlStyle,
+              width: isMobile ? '100%' : 'auto',
+              display: 'flex',
+              justifyContent: 'space-between'
+            }}>
             {[
               ['dayGridMonth', 'Mois'],
               ['timeGridWeek', 'Semaine'],
@@ -137,6 +154,7 @@ const AgendaView = ({
                 onClick={() => changeView(value)}
                 style={{
                   ...segmentedButtonStyle,
+                  flex: isMobile ? 1 : 'none',
                   backgroundColor: agendaViewMode === value ? '#082f49' : 'transparent',
                   color: agendaViewMode === value ? '#fff' : '#334155',
                 }}
@@ -145,19 +163,32 @@ const AgendaView = ({
               </button>
             ))}
             </div>
-            <button type="button" onClick={() => navigate('prev')} style={iconNavStyle} aria-label="Periode precedente">
-              <ChevronLeft size={18} />
-            </button>
-            <button type="button" onClick={() => navigate('today')} style={todayButtonStyle}>
-              Aujourd'hui
-            </button>
-            <button type="button" onClick={() => navigate('next')} style={iconNavStyle} aria-label="Periode suivante">
-              <ChevronRight size={18} />
-            </button>
-            <button type="button" onClick={() => openAddEventOnDate(new Date().toISOString().slice(0, 10))} style={createButtonStyle}>
-              <CalendarPlus size={16} />
-              Nouvelle tache
-            </button>
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center', width: isMobile ? '100%' : 'auto', justifyContent: isMobile ? 'space-between' : 'flex-start', marginTop: isMobile ? 8 : 0 }}>
+              <button type="button" onClick={() => navigate('prev')} style={iconNavStyle} aria-label="Periode precedente">
+                <ChevronLeft size={18} />
+              </button>
+              <button type="button" onClick={() => navigate('today')} style={{
+                ...todayButtonStyle,
+                flex: isMobile ? 1 : 'none',
+                textAlign: 'center'
+              }}>
+                Aujourd'hui
+              </button>
+              <button type="button" onClick={() => navigate('next')} style={iconNavStyle} aria-label="Periode suivante">
+                <ChevronRight size={18} />
+              </button>
+              <button type="button" onClick={() => openAddEventOnDate(new Date().toISOString().slice(0, 10))} style={{
+                ...createButtonStyle,
+                flex: isMobile ? 1 : 'none',
+                justifyContent: 'center',
+                padding: isMobile ? '0 10px' : '0 14px',
+                fontSize: isMobile ? 11 : 12
+              }}>
+                <CalendarPlus size={16} />
+                {!isMobile && "Nouvelle tache"}
+                {isMobile && "Ajouter"}
+              </button>
+            </div>
           </div>
         </div>
 

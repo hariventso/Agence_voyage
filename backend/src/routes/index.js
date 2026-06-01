@@ -74,6 +74,7 @@ router.use(
       'budget',
       'tips',
       'highlights',
+      'gallery',
     ],
   })
 );
