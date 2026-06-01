@@ -67,6 +67,7 @@ router.use(
       'type',
       'price',
       'status',
+      'service_name',
       'image_url',
       'description',
       'itinerary',

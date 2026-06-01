@@ -8,7 +8,7 @@ const routes = require('./routes');
 
 const corsOptions = {
   origin(origin, callback) {
-    if (origin && config.app.allowedOrigins.includes(origin)) {
+    if (!origin || config.app.allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
 

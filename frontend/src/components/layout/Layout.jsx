@@ -1,5 +1,6 @@
 import Navbar from './Navbar';
 import Footer from './Footer';
+import ContactWidget from '../ui/ContactWidget';
 
 const Layout = ({ children, ...navbarProps }) => {
   return (
@@ -9,6 +10,7 @@ const Layout = ({ children, ...navbarProps }) => {
         {children}
       </main>
       <Footer />
+      <ContactWidget />
     </div>
   );
 };

@@ -3,7 +3,7 @@ const config = require('../config/env');
 const requireAllowedOrigin = (req, res, next) => {
   const origin = req.get('Origin');
 
-  if (origin && config.app.allowedOrigins.includes(origin)) {
+  if (!origin || config.app.allowedOrigins.includes(origin)) {
     return next();
   }
 

@@ -30,7 +30,8 @@ const ServiceCard = ({ service }) => {
   const [isHovered, setIsHovered] = useState(false);
 
   const handleClick = () => {
-    window.location.href = `/services#${encodeURIComponent(service.name)}`;
+    // Naviguer vers la page destinations filtrée par ce service (routing hash de l'app)
+    window.location.hash = `destinations?service=${encodeURIComponent(service.name)}`;
   };
 
   return (
@@ -114,7 +115,7 @@ const ServiceCard = ({ service }) => {
           color: 'rgba(255,255,255,0.85)',
           fontSize: '0.9rem',
           lineHeight: 1.6,
-          margin: '0 0 18px 0',
+          margin: '0',
           maxHeight: isHovered ? '80px' : '0px',
           opacity: isHovered ? 1 : 0,
           overflow: 'hidden',
@@ -122,29 +123,6 @@ const ServiceCard = ({ service }) => {
         }}>
           {t(service.description)}
         </p>
-
-        {/* Bouton "En savoir plus" */}
-        <div style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '8px',
-          backgroundColor: '#FF8C00',
-          color: '#fff',
-          padding: '10px 22px',
-          borderRadius: '100px',
-          fontWeight: 700,
-          fontSize: '0.85rem',
-          letterSpacing: '0.5px',
-          width: 'fit-content',
-          opacity: isHovered ? 1 : 0,
-          transform: isHovered ? 'translateY(0)' : 'translateY(12px)',
-          transition: 'opacity 0.35s ease, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-          boxShadow: '0 4px 16px rgba(255,140,0,0.4)',
-          pointerEvents: isHovered ? 'auto' : 'none',
-        }}>
-          {t("En savoir plus")}
-          <ArrowRight size={16} />
-        </div>
       </div>
     </div>
   );
@@ -156,6 +134,8 @@ const HomeServiceOffer = ({ loading, services }) => {
   const displayServices = (!loading && (!services || services.length === 0))
     ? defaultServices
     : (services || defaultServices);
+
+  const slicedServices = displayServices.slice(0, 3);
 
   const [mobileView, setMobileView] = useState(window.innerWidth < 640);
   const [tabletView, setTabletView] = useState(window.innerWidth < 1024);
@@ -212,35 +192,49 @@ const HomeServiceOffer = ({ loading, services }) => {
             gridTemplateColumns: mobileView ? '1fr' : tabletView ? '1fr 1fr' : 'repeat(3, 1fr)',
             gap: '28px',
           }}>
-            {displayServices.map((service) => (
+            {slicedServices.map((service) => (
               <ServiceCard key={service.id} service={service} />
             ))}
           </div>
         )}
 
-        {/* Lien "Voir toutes nos offres" */}
-        {!loading && (
+        {/* Bouton "En savoir plus" global au bas */}
+        {!loading && displayServices.length > 3 && (
           <div style={{ textAlign: 'center', marginTop: '48px' }}>
             <a
-              href="/services"
+              href="#destinations"
+              onClick={e => {
+                e.preventDefault();
+                window.location.hash = 'destinations';
+              }}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '8px',
-                color: '#0a2e24',
+                backgroundColor: '#FF8C00',
+                color: '#ffffff',
                 fontWeight: 700,
                 fontSize: '0.95rem',
                 textDecoration: 'none',
-                borderBottom: '2px solid #FF8C00',
-                paddingBottom: '4px',
-                transition: 'color 0.2s',
+                padding: '14px 32px',
+                borderRadius: '100px',
+                boxShadow: '0 8px 24px rgba(255, 140, 0, 0.3)',
+                transition: 'transform 0.2s, background-color 0.2s, box-shadow 0.2s',
                 letterSpacing: '0.5px',
               }}
-              onMouseOver={e => e.currentTarget.style.color = '#FF8C00'}
-              onMouseOut={e => e.currentTarget.style.color = '#0a2e24'}
+              onMouseOver={e => {
+                e.currentTarget.style.backgroundColor = '#e67e00';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 12px 28px rgba(255, 140, 0, 0.4)';
+              }}
+              onMouseOut={e => {
+                e.currentTarget.style.backgroundColor = '#FF8C00';
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 8px 24px rgba(255, 140, 0, 0.3)';
+              }}
             >
-              {t("Voir toutes nos offres")}
-              <ArrowRight size={16} />
+              {t("En savoir plus")}
+              <ArrowRight size={18} />
             </a>
           </div>
         )}

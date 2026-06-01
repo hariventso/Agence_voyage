@@ -25,6 +25,10 @@ for (let port = 5173; port <= 5179; port += 1) {
   if (!allowedOrigins.includes(localOrigin)) {
     allowedOrigins.push(localOrigin);
   }
+  const ipOrigin = `http://127.0.0.1:${port}`;
+  if (!allowedOrigins.includes(ipOrigin)) {
+    allowedOrigins.push(ipOrigin);
+  }
 }
 
 const config = {
