@@ -16,7 +16,7 @@ const Navbar = ({
   isAdminPage
 }) => {
   const { t } = useTranslate();
-  const linkColor = (active) => active ? '#FF8C00' : (isScrolledOrInnerPage ? '#222' : '#fff');
+  const linkColor = (active) => active ? '#FF8C00' : '#222';
 
   return (
     <nav className={`navbar ${isScrolledOrInnerPage ? 'scrolled' : ''}`} style={{
@@ -53,7 +53,7 @@ const Navbar = ({
             width: '36px',
             height: '36px',
             borderRadius: '50%',
-            backgroundColor: isScrolledOrInnerPage ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.1)',
+            backgroundColor: 'rgba(0,0,0,0.05)',
             transition: 'all 0.3s'
           }}>
             <User size={18} />
@@ -70,7 +70,7 @@ const Navbar = ({
             background: 'none',
             border: 'none',
             cursor: 'pointer',
-            color: isScrolledOrInnerPage ? '#222' : '#fff',
+            color: '#222',
             padding: '8px',
             borderRadius: '8px',
           }}

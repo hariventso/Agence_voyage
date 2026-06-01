@@ -141,7 +141,7 @@ const HomeFounder = () => {
                 color: '#fff',
                 fontStyle: 'italic'
               }}>
-                Andry Rakotomalala
+                Raphaël Andriamanantena
               </span>
               <span style={{
                 color: '#888',

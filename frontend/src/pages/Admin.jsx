@@ -69,6 +69,7 @@ const emptyFormData = {
   slide_order: 0,
   subtitle: "",
   gallery: "",
+  service_name: "",
 };
 
 const eventTypeOptions = [
@@ -394,6 +395,7 @@ const Admin = () => {
             type: formData.type,
             price: formData.price,
             status: formData.status,
+            service_name: formData.service_name,
             image_url: finalImageUrl,
             description: formData.description,
             itinerary: JSON.stringify(itineraryData),
@@ -871,6 +873,7 @@ const Admin = () => {
               setShowModal={setShowModal}
               uploading={uploading}
               employees={employees}
+              services={services}
               reminderLeadDays={adminConfig.reminderLeadDays}
               itineraryData={itineraryData}
               setItineraryData={setItineraryData}
@@ -1125,6 +1128,7 @@ const AdminForm = ({
   setShowModal,
   uploading,
   employees,
+  services,
   reminderLeadDays,
   itineraryData,
   setItineraryData,
@@ -1164,7 +1168,7 @@ const AdminForm = ({
       onSubmit={handleSubmit}
       style={modalType === "event" ? eventFormGridStyle : formGridStyle}
     >
-      {["destination", "post", "team", "testimonial", "slide"].includes(
+      {["destination", "post", "team", "testimonial", "slide", "service"].includes(
         modalType,
       ) ? (
         <div style={imageUploadAreaStyle}>
@@ -1701,6 +1705,43 @@ const AdminForm = ({
                 required
               />
             </FormField>
+            <div style={dualFieldGridStyle}>
+              <FormField label="Service associé">
+                <select
+                  style={inputStyle}
+                  value={formData.service_name || ""}
+                  onChange={(e) =>
+                    setFormData((current) => ({
+                      ...current,
+                      service_name: e.target.value,
+                    }))
+                  }
+                >
+                  <option value="">-- Aucun service --</option>
+                  {services.map((s) => (
+                    <option key={s.id} value={s.name}>
+                      {s.name}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+              <FormField label="Statut">
+                <select
+                  style={inputStyle}
+                  value={formData.status}
+                  onChange={(e) =>
+                    setFormData((current) => ({
+                      ...current,
+                      status: e.target.value,
+                    }))
+                  }
+                >
+                  <option value="Actif">Actif</option>
+                  <option value="Draft">Draft</option>
+                  <option value="Archive">Archive</option>
+                </select>
+              </FormField>
+            </div>
             <div style={dualFieldGridStyle}>
               <FormField label="Type">
                 <input
