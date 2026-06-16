@@ -254,7 +254,8 @@ const Admin = () => {
         apiService.getTeam(),
         apiService.getTestimonials(),
         apiService.getEmployees(),
-        apiService.getCalendarEvents(visibleMonth),
+        // Charger TOUS les événements sans filtre de mois
+        apiService.getCalendarEvents(),
         apiService.getSlides(),
       ]);
 
@@ -279,7 +280,7 @@ const Admin = () => {
     } finally {
       setLoading(false);
     }
-  }, [visibleMonth]);
+  }, []);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 1024);
@@ -521,7 +522,9 @@ const Admin = () => {
       }
 
       setShowModal(false);
-      await fetchData();
+      // Recharger les événements (tous les mois)
+      const events = await apiService.getCalendarEvents();
+      setCalendarEvents(events);
     } catch (error) {
       setDialog({
         show: true,
@@ -608,7 +611,9 @@ const Admin = () => {
     await apiService.updateCalendarEvent(item.id, payload);
     setSelectedDate(event_date);
     setVisibleMonth(monthKey(new Date(`${event_date}T00:00:00`)));
-    fetchData();
+    // Recharger les événements (tous les mois)
+    const events = await apiService.getCalendarEvents();
+    setCalendarEvents(events);
   };
 
   const handleSendReminders = async () => {
@@ -891,6 +896,10 @@ const Admin = () => {
                   openAddEventOnDate={openAddEventOnDate}
                   openEditModal={openEditModal}
                   onMoveEvent={handleMoveCalendarEvent}
+                  onDatesSet={(info) => {
+                    const month = monthKey(new Date(info.start));
+                    setVisibleMonth(month);
+                  }}
                   reminderLeadDays={adminConfig.reminderLeadDays}
                   smtpConfigured={adminConfig.smtpConfigured}
                   agendaViewMode={agendaViewMode}

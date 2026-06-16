@@ -18,15 +18,19 @@ const AgendaView = ({
 }) => {
   const calendarRef = useRef(null);
   const [currentTitle, setCurrentTitle] = useState('');
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  const [viewStart, setViewStart] = useState(null);
+  const [viewEnd, setViewEnd] = useState(null);
 
   const getCalendarApi = () => calendarRef.current?.getApi();
+
+  // Filtrer les événements pour la plage affichée (plus flexible)
+  const filteredCalendarEvents = events.filter(event => {
+    if (!viewStart || !viewEnd) return true;
+    const eventDate = new Date(`${event.event_date}T00:00:00`);
+    return eventDate >= viewStart && eventDate < viewEnd;
+  });
+
+  const monthTasksCount = filteredCalendarEvents.length;
 
   const handleEventClick = (clickInfo) => {
     const eventId = clickInfo.event.id;
@@ -59,7 +63,7 @@ const AgendaView = ({
     }
   };
 
-  const calendarEvents = events.map(event => ({
+  const calendarEvents = filteredCalendarEvents.map(event => ({
     id: String(event.id),
     title: event.title,
     start: `${event.event_date}T${event.event_time}`,
@@ -108,7 +112,7 @@ const AgendaView = ({
           </p>
         </div>
         <div style={heroStatsStyle}>
-          <MiniStat label="Tâches du mois" value={events.length} />
+          <MiniStat label="Tâches du mois" value={monthTasksCount} />
           <MiniStat label="Rappel" value={`Rappel automatique J-${reminderLeadDays}`} />
           <MiniStat label="SMTP" value={smtpConfigured ? 'Actif' : 'A configurer'} />
         </div>
@@ -193,6 +197,7 @@ const AgendaView = ({
             ref={calendarRef}
             plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
             initialView={agendaViewMode}
+            initialDate={new Date()}
             headerToolbar={false}
             events={calendarEvents}
             locale={frLocale}
@@ -201,7 +206,11 @@ const AgendaView = ({
             selectMirror={true}
             dayMaxEvents={true}
             weekends={true}
-            datesSet={(info) => setCurrentTitle(info.view.title)}
+            datesSet={(info) => {
+              setCurrentTitle(info.view.title);
+              setViewStart(info.start);
+              setViewEnd(info.end);
+            }}
             eventClick={handleEventClick}
             dateClick={handleDateClick}
             select={handleSelect}
